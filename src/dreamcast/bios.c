@@ -12,7 +12,8 @@
 #include "gemerror.h"
 #include "vt52.h"
 
-ETV_TIMER_T etv_timer;
+static void null_timer(int elapsed){(void)elapsed;}
+ETV_TIMER_T etv_timer=null_timer;
 volatile LONG hz_200,frclock;
 WORD timer_ms=20;
 static PFVOID vbl[8];PFVOID *vblqueue=vbl;

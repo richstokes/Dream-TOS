@@ -33,19 +33,6 @@ WORD ev_dclick(WORD rate, WORD setit);
  */
 static __inline__ LONG combine_cms(WORD clicks,WORD mask,WORD state)
 {
-    union {
-        LONG result;
-        struct {
-            WORD c;
-            UBYTE m;
-            UBYTE s;
-        } combined;
-    } u;
-
-    u.combined.c = clicks;
-    u.combined.m = mask;
-    u.combined.s = state;
-
-    return u.result;
+    return ((ULONG)(UWORD)clicks << 16) | ((ULONG)(UBYTE)mask << 8) | (UBYTE)state;
 }
 #endif

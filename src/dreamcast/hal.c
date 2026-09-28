@@ -9,6 +9,7 @@
 KOS_INIT_FLAGS(INIT_DEFAULT);
 static file_t disc = FILEHND_INVALID;
 static unsigned long last_present;
+static void *capture_mouse(void *);
 static const unsigned char scancode[256] = {
  [4]=0x1e,[5]=0x30,[6]=0x2e,[7]=0x20,[8]=0x12,[9]=0x21,[10]=0x22,[11]=0x23,
  [12]=0x17,[13]=0x24,[14]=0x25,[15]=0x26,[16]=0x32,[17]=0x31,[18]=0x18,[19]=0x19,
@@ -22,6 +23,8 @@ static const unsigned char scancode[256] = {
 void dc_hal_init(void) {
  vid_set_mode(DM_640x480, PM_RGB565);
  kbd_set_repeat_timing(300,40);
+ kthread_attr_t input_attr={.stack_size=8192,.prio=PRIO_DEFAULT-1,.label="EmuTOS Maple"};
+ if(!thd_create_ex(&input_attr,capture_mouse,NULL))arch_panic("Cannot start Maple input thread");
  disc=fs_open("/cd/DISC.IMG",O_RDONLY);
  printf("EmuTOS native SH-4: video 640x480; Maple ready; CD image %s\n",disc==FILEHND_INVALID?"absent":"open");
 }
@@ -42,18 +45,34 @@ void dc_present(const unsigned short *p, const unsigned short *pal) {
  sq_cpy(vram_s,rgb,sizeof(rgb));
 }
 
+/* Consume each Maple relative delta once. Capture independently of GEM redraws
+ * so a slow application cannot discard mouse packets or short button presses. */
+struct mouse_packet {int dx,dy,buttons;};
+static struct mouse_packet mouse_queue[128];
+static unsigned mouse_head,mouse_tail;
+static void *capture_mouse(void *unused) {
+ (void)unused;int previous_buttons=0;
+ for(;;) {
+  int dx=0,dy=0,buttons=0;maple_device_t *dev=maple_enum_type(0,MAPLE_FUNC_MOUSE);
+  irq_mask_t irq=irq_disable();
+  if(dev) {mouse_state_t *m=maple_dev_status(dev);if(m){dx=m->dx;dy=m->dy;m->dx=m->dy=0;buttons=((m->buttons&MOUSE_LEFTBUTTON)?1:0)|((m->buttons&MOUSE_RIGHTBUTTON)?2:0);}}
+  else {dev=maple_enum_type(0,MAPLE_FUNC_CONTROLLER);if(dev){cont_state_t *c=maple_dev_status(dev);if(c){
+   dx=(c->joyx>24?1:c->joyx < -24?-1:0)+!!(c->buttons&CONT_DPAD_RIGHT)-!!(c->buttons&CONT_DPAD_LEFT);
+   dy=(c->joyy>24?1:c->joyy < -24?-1:0)+!!(c->buttons&CONT_DPAD_DOWN)-!!(c->buttons&CONT_DPAD_UP);
+   buttons=((c->buttons&CONT_A)?1:0)|((c->buttons&CONT_B)?2:0);
+  }}}
+  if(dx||dy||buttons!=previous_buttons){unsigned next=(mouse_head+1)%128;
+   if(next!=mouse_tail){mouse_queue[mouse_head]=(struct mouse_packet){dx,dy,buttons};mouse_head=next;previous_buttons=buttons;}
+  }
+  irq_restore(irq);thd_sleep(4);
+ }
+ return NULL;
+}
 int dc_poll_mouse(int *dx,int *dy,int *buttons) {
- static unsigned long last_poll; unsigned long now=dc_millis();
- if(now-last_poll<16) return 0; last_poll=now;
- *dx=*dy=*buttons=0;
- maple_device_t *dev=maple_enum_type(0,MAPLE_FUNC_MOUSE);
- if(dev) { mouse_state_t *m=maple_dev_status(dev); if(m) { *dx=m->dx;*dy=m->dy;*buttons=((m->buttons&MOUSE_LEFTBUTTON)?1:0)|((m->buttons&MOUSE_RIGHTBUTTON)?2:0); } }
- else { dev=maple_enum_type(0,MAPLE_FUNC_CONTROLLER); if(dev) {cont_state_t *c=maple_dev_status(dev); if(c) {
- *dx=(c->joyx>24?1:c->joyx < -24?-1:0)*4+((c->buttons&CONT_DPAD_RIGHT)?4:0)-((c->buttons&CONT_DPAD_LEFT)?4:0);
- *dy=(c->joyy>24?1:c->joyy < -24?-1:0)*4+((c->buttons&CONT_DPAD_DOWN)?4:0)-((c->buttons&CONT_DPAD_UP)?4:0);
- *buttons=((c->buttons&CONT_A)?1:0)|((c->buttons&CONT_B)?2:0);
- } } }
- return 1;
+ irq_mask_t irq=irq_disable();
+ if(mouse_head==mouse_tail){irq_restore(irq);return 0;}
+ struct mouse_packet m=mouse_queue[mouse_tail];mouse_tail=(mouse_tail+1)%128;
+ irq_restore(irq);*dx=m.dx;*dy=m.dy;*buttons=m.buttons;return 1;
 }
 int dc_key_modifiers(void) {
  maple_device_t *d=maple_enum_type(0,MAPLE_FUNC_KEYBOARD); if(!d) return 0;
@@ -65,6 +84,15 @@ unsigned long dc_poll_key(void) {
  int raw=kbd_queue_pop(d,false); if(raw==KBD_QUEUE_END) return 0;
  unsigned key=raw&255;
  kbd_mods_t mods={.raw=(raw>>8)&255};kbd_leds_t leds={.raw=(raw>>16)&255};
+ /* Match TOS keyboard mouse controls: Alt-arrows, Alt-Insert click.
+  * Queue transitions, including release, so AES sees a complete click. */
+ if((mods.raw&0x44)&&((key>=79&&key<=82)||key==73||key==44)) {
+  int step=(mods.raw&0x22)?1:8;
+  irq_mask_t irq=irq_disable();unsigned n=(mouse_head+1)%128;
+  if(n!=mouse_tail){mouse_queue[mouse_head]=(struct mouse_packet){key==79?step:key==80?-step:0,key==81?step:key==82?-step:0,(key==73||key==44)?1:0};mouse_head=n;}
+  if(key==73||key==44){n=(mouse_head+1)%128;if(n!=mouse_tail){mouse_queue[mouse_head]=(struct mouse_packet){0,0,0};mouse_head=n;}}
+  irq_restore(irq);return 0;
+ }
  kbd_state_t *state=kbd_get_state(d);
  unsigned ascii=(unsigned char)kbd_key_to_ascii((kbd_key_t)key,state->region,mods,leds);
  if((mods.raw&0x11)&&key>=4&&key<=29)ascii=key-3;
@@ -93,10 +121,12 @@ static void (*entries[8])(void);
 static void *aes_process(void *arg) {int id=(int)(intptr_t)arg;sem_wait(&gates[id]);entries[id]();return NULL;}
 void dc_context_init(void) {for(int i=0;i<8;i++)sem_init(&gates[i],0);}
 int dc_context_create(int id,void (*entry)(void)) {
- kthread_attr_t attr={.stack_size=65536,.label="EmuTOS AES"};entries[id]=entry;
+ kthread_attr_t attr={.stack_size=65536,.prio=PRIO_DEFAULT,.label="EmuTOS AES"};entries[id]=entry;
  return thd_create_ex(&attr,aes_process,(void *)(intptr_t)id)?0:-1;
 }
 void dc_context_switch(int old_id,int new_id) {
  if(old_id==new_id)return;
  sem_signal(&gates[new_id]);sem_wait(&gates[old_id]);
 }
+
+void dc_sync_code(void *p,unsigned long bytes){dcache_wback_range((uintptr_t)p,bytes);icache_sync_range((uintptr_t)p,bytes);}

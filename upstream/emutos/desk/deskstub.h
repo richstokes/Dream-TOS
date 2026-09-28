@@ -10,6 +10,11 @@
 #ifndef _DESKSTUB_H
 #define _DESKSTUB_H
 
+#ifdef MACHINE_DREAMCAST
+/* The native desktop returns to the AES shell to launch an application. */
+void deskstart(void);
+#else
 void deskstart(void) NORETURN;   /* see deskstart.S */
+#endif
 
 #endif /* _DESKSTUB_H */

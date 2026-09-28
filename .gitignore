@@ -71,3 +71,5 @@ dist/
 *.elf
 *.cdi
 .DS_Store
+__pycache__/
+*.pyc

@@ -34,10 +34,6 @@ static unsigned get16(const UBYTE *p) {return p[0]|p[1]<<8;}
 void *balloc_stram(LONG n,BOOL top) { (void)top;return dc_alloc(n); }
 void *xmgetblk(WORD kind) { (void)kind;return dc_alloc(128); }
 void xmfreblk(void *p) {dc_free(p);}
-void *xmalloc(long n) {return n==-1?(void *)dc_available():n>0?dc_alloc(n):NULL;}
-void *xmxalloc(long n,int mode) { (void)mode;return xmalloc(n); }
-long xmfree(void *p) {dc_free(p);return 0;}
-long xsetblk(int n,void *p,long len) {(void)n;(void)p;(void)len;return EINVFN;}
 void dc_storage_init(void) {
  extern void time_init(void);
  ramdisk=dc_alloc(SECTORS*512);if(!ramdisk) {extern void panic(const char *,...);panic("RAM disk allocation failed\n");}
@@ -62,13 +58,15 @@ LONG dc_rwabs(WORD rw,void *buf,WORD count,LONG sector,WORD drive) {
 }
 BPB *dc_getbpb(WORD drive) {return drive==2?&ram_bpb:drive==3&&(drvbits&8)?&disc_bpb:NULL;}
 static int readonly_path(const char *p) {int d=run->p_curdrv;if(p&&p[0]&&p[1]==':')d=toupper(p[0])-'A';return d!=2;}
-static int readonly_handle(int h) {OFD *o=getofd(h);return o&&o->o_dmd->m_drvnum!=2;}
+static int readonly_handle(int h) {OFD *o=getofd(h);return o&&(ULONG)o<(ULONG)-3&&o->o_dmd->m_drvnum!=2;}
 /* Every va_arg matches the promoted native SH ABI. No 68k word-stack casts. */
 static long dispatch(int op,va_list ap) {
  int h,a,b;long n;char *p,*q;void *buf;
  extern LONG dc_console_in(void),dc_console_status(void);
  extern void dc_console_out(WORD);
  switch(op) {
+ case 0x00:case 0x4c:{extern long dc_native_terminate(int);return dc_native_terminate(op?va_arg(ap,int):0);}
+ case 0x4b:{extern long trap1_pexec(short,const char *,const char *,const char *);a=va_arg(ap,int);p=va_arg(ap,char *);q=va_arg(ap,char *);const char *env=va_arg(ap,char *);return trap1_pexec(a,p,q,env);}
  case 0x01:case 0x07:case 0x08:return dc_console_in();
  case 0x02:dc_console_out(va_arg(ap,int));return 0;
  case 0x06:a=va_arg(ap,int);if(a==0xff)return dc_console_status()?dc_console_in():0;dc_console_out(a);return 0;
@@ -111,10 +109,6 @@ long trap1(int op,...) {
  if(setjmp(errbuf))return errcode;
  va_start(ap,op);result=dispatch(op,ap);va_end(ap);return result;
 }
-long trap1_pexec(short mode,const char *path,const char *tail,const char *env) {
- (void)mode;(void)tail;(void)env;
- kprintf("Pexec rejected: native SH-4 loader required: %s\n",path?path:"");return EPLFMT;
-}
 void dc_storage_selftest(void) {
  static const char hello[]="Native EmuTOS on Dreamcast\r\nC: is a volatile RAM disk.\r\n";
  char buf[sizeof(hello)];long h=trap1(0x3c,"C:\\WELCOME.TXT",0),r;
@@ -125,7 +119,27 @@ void dc_storage_selftest(void) {
  r=trap1(0x3f,(int)h,(long)sizeof(buf),buf);trap1(0x3e,(int)h);
  if(r!=sizeof(hello)-1||memcmp(buf,hello,r))goto fail;
  if(trap1(0x39,"C:\\TEMP"))goto fail;
+ /* Cross-sector FAT allocation, seek, rename, deletion, and space recovery. */
+ UBYTE pattern[2049],copy[2049];LONG before[4],after[4];
+ for(unsigned i=0;i<sizeof(pattern);i++)pattern[i]=(i*37)^((i>>8)+7);
+ if(trap1(0x36,before,3))goto fail;
+ h=trap1(0x3c,"C:\\TEMP\\CHAIN.BIN",0);if(h<0)goto fail;
+ if(trap1(0x40,(int)h,(long)sizeof(pattern),pattern)!=sizeof(pattern))goto fail;
+ if(trap1(0x42,0L,(int)h,0))goto fail;
+ if(trap1(0x3f,(int)h,(long)sizeof(copy),copy)!=sizeof(copy)||memcmp(pattern,copy,sizeof(copy)))goto fail;
+ if(trap1(0x3e,(int)h)||trap1(0x56,0,"C:\\TEMP\\CHAIN.BIN","C:\\TEMP\\RENAMED.BIN"))goto fail;
+ if(trap1(0x41,"C:\\TEMP\\RENAMED.BIN"))goto fail;
+ if(trap1(0x36,after,3)||before[0]!=after[0])goto fail;
+ void *block=xmalloc(4096);if(!block||xsetblk(0,block,128)||xmfree(block)||xmfree(block)!=EIMBA)goto fail;
+ kprintf("SELFTEST: FAT cluster chain/seek/rename/delete/space and Mshrink PASS\n");
  if(trap1(0x3c,"D:\\FORBID.TXT",0)!=EWRPRO)goto fail;
- kprintf("SELFTEST: GEMDOS create/write/close/read/mkdir/read-only PASS\n");return;
+ kprintf("SELFTEST: GEMDOS create/write/close/read/mkdir/read-only PASS\n");
+ if(drvbits&8) {
+  extern long trap1_pexec(short,const char *,const char *,const char *);
+  static const char test_tail[]={4,'T','E','S','T',0};
+  if(trap1_pexec(0,"D:\\HELLO.PRG",test_tail,NULL)!=42)goto fail;
+  kprintf("SELFTEST: native SH-4 relocation/BSS/GEMDOS/return PASS\n");
+ }
+ return;
  fail: {extern void panic(const char *,...);panic("SELFTEST: filesystem failed h=%ld err=%ld\n",h,errcode);}
 }

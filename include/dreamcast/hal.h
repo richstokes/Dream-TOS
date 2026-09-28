@@ -17,3 +17,5 @@ void dc_core_main(void);
 void dc_context_init(void);
 int dc_context_create(int id, void (*entry)(void));
 void dc_context_switch(int old_id,int new_id);
+
+void dc_sync_code(void *p,unsigned long bytes);
