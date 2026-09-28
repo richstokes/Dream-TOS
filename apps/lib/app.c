@@ -165,6 +165,10 @@ void app_status(const char *s)
 }
 void app_alert(const char *s)
 {
+    if (!active) {
+        dc_os->gemdos(9, "Native application failed.\r\n");
+        return;
+    }
     char b[240];
     snprintf(b, sizeof(b), "[1][%.180s][OK]", s);
     ai[0] = 1;

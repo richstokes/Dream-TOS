@@ -340,3 +340,10 @@ int _gettimeofday_r(struct _reent *r, struct timeval *tv, void *tz)
     (void)r;
     return _gettimeofday(tv, tz);
 }
+
+/* KOS's stdlib header leaves process abort to the host, like its syscalls. */
+void abort(void)
+{
+    app_alert("The application aborted");
+    exit(1);
+}
