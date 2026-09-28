@@ -1,3 +1,6 @@
+#ifdef MACHINE_DREAMCAST
+#include "dreamcast/asm.h"
+#else
 /*
  * asm.h - Assembler help routines
  *
@@ -352,3 +355,5 @@ __extension__                                      \
   })
 
 #endif /* ASM_H */
+
+#endif

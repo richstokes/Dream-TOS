@@ -54,7 +54,7 @@ char ob_sst(OBJECT *tree, WORD obj, LONG *pspec, WORD *pstate, WORD *ptype,
     case G_BOX:
     case G_BOXCHAR:
     case G_IBOX:
-        th = *(((char *)pspec)+1);
+        th = (SBYTE)((ULONG)*pspec >> 16);
         break;
     case G_BUTTON:
         th--;
@@ -69,7 +69,7 @@ char ob_sst(OBJECT *tree, WORD obj, LONG *pspec, WORD *pstate, WORD *ptype,
         th -= 256;
     *pth = th;
 
-    return *(char *)pspec;  /* only useful for G_BOXCHAR */
+    return (char)((ULONG)*pspec >> 24);  /* G_BOXCHAR, independent of byte order */
 }
 
 

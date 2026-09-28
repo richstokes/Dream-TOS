@@ -1,0 +1,2 @@
+#define COPYRIGHT_YEAR "2026"
+#define VERSION_STRING "1.4.0 DC"

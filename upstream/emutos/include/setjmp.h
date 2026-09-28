@@ -1,3 +1,6 @@
+#ifdef MACHINE_DREAMCAST
+#include_next <setjmp.h>
+#else
 /*
  * setjmp.h - EmuTOS's own version of the ANSI standard header
  *
@@ -19,3 +22,5 @@ int setjmp(jmp_buf state);
 void longjmp(jmp_buf state, WORD value) NORETURN;
 
 #endif /* SETJMP_H */
+
+#endif

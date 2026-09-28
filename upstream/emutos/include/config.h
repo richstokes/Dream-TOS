@@ -19,6 +19,9 @@
 
 #ifndef _CONFIG_H
 #define _CONFIG_H
+#ifdef MACHINE_DREAMCAST
+#include "dreamcast/config.h"
+#endif
 
 /*
  * File localconf.h will be included if reported present by the Makefile.

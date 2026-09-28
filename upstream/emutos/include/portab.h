@@ -213,7 +213,13 @@ typedef WORD WORD_ALIAS MAY_ALIAS;
 typedef ULONG ULONG_ALIAS MAY_ALIAS;
 typedef LONG LONG_ALIAS MAY_ALIAS;
 
-#define ULONG_AT(p) (*(ULONG_ALIAS *)(p)) /* ULONG pointed by p, regardless of pointer type */
+#ifdef MACHINE_DREAMCAST
+/* VDI pointers at WORD offsets require unaligned-safe SH-4 accesses. */
+typedef struct __attribute__((packed,may_alias)) { ULONG value; } DC_ULONG;
+#define ULONG_AT(p) (((DC_ULONG *)(p))->value)
+#else
+#define ULONG_AT(p) (*(ULONG_ALIAS *)(p))
+#endif /* ULONG pointed by p, regardless of pointer type */
 
 /*
  * GCC 7 needs special care to avoid warning when using switch/case fallthrough:

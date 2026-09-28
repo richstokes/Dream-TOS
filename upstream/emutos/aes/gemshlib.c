@@ -569,6 +569,10 @@ static void sh_chdef(SHELL *psh)
 
 LONG aes_run_rom_program(PRG_ENTRY *entry)
 {
+#ifdef MACHINE_DREAMCAST
+    entry();
+    return 0;
+#else
     PD *pd;     /* this is the BDOS PD structure, not the AESPD */
 
     /* Create a basepage with the standard Pexec() */
@@ -577,6 +581,7 @@ LONG aes_run_rom_program(PRG_ENTRY *entry)
 
     /* Run the program with dos_exec() for AES reentrancy issues */
     return dos_exec(PE_GOTHENFREE, NULL, (const char *)pd, NULL);
+#endif
 }
 
 

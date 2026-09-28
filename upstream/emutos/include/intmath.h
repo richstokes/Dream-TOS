@@ -1,3 +1,6 @@
+#ifdef MACHINE_DREAMCAST
+#include "dreamcast/intmath.h"
+#else
 /*
  * intmath.h - misc integer math routines
  *
@@ -118,3 +121,5 @@ static __inline__ UWORD divu(ULONG d1, UWORD d2)
 
     return (UWORD)d1;
 }
+
+#endif

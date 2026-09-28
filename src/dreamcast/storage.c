@@ -1,0 +1,131 @@
+/* Native GEMDOS ABI and block devices. Retains upstream FAT/filesystem code.
+ * C: 4 MiB volatile FAT16. D: read-only FAT volume in /cd/DISC.IMG.
+ * GPL-2.0-or-later. */
+#include "emutos.h"
+#include "string.h"
+#include "fs.h"
+#include "mem.h"
+#include "bdosstub.h"
+#include "gemerror.h"
+#include "tosvars.h"
+#include "ahdi.h"
+#include "biosbind.h"
+#include "dreamcast/hal.h"
+#include <stdarg.h>
+
+#define SECTORS 8192UL
+#define FATSECS 32
+#define ROOTSECS 8
+#define DATASEC (1+2*FATSECS+ROOTSECS)
+static UBYTE *ramdisk;
+static BPB ram_bpb={512,1,512,ROOTSECS,FATSECS,1+FATSECS,DATASEC,SECTORS-DATASEC,B_16};
+static BPB disc_bpb;
+static PD basepage;
+PD *run=&basepage;
+static DTA dta;
+LONG drvbits=4,drvrem;
+WORD bootdev=2,nflops;
+UBYTE bootflags;
+BCB *bufl[2];
+static PUN_INFO pun={.max_sect_siz=512};
+PUN_INFO *pun_ptr=&pun;
+static void put16(UBYTE *p,unsigned v) {p[0]=v;p[1]=v>>8;}
+static unsigned get16(const UBYTE *p) {return p[0]|p[1]<<8;}
+void *balloc_stram(LONG n,BOOL top) { (void)top;return dc_alloc(n); }
+void *xmgetblk(WORD kind) { (void)kind;return dc_alloc(128); }
+void xmfreblk(void *p) {dc_free(p);}
+void *xmalloc(long n) {return n==-1?(void *)dc_available():n>0?dc_alloc(n):NULL;}
+void *xmxalloc(long n,int mode) { (void)mode;return xmalloc(n); }
+long xmfree(void *p) {dc_free(p);return 0;}
+long xsetblk(int n,void *p,long len) {(void)n;(void)p;(void)len;return EINVFN;}
+void dc_storage_init(void) {
+ extern void time_init(void);
+ ramdisk=dc_alloc(SECTORS*512);if(!ramdisk) {extern void panic(const char *,...);panic("RAM disk allocation failed\n");}
+ memcpy(ramdisk,"\xeb\x3c\x90" "EMUTOSDC",11);
+ put16(ramdisk+11,512);ramdisk[13]=1;put16(ramdisk+14,1);ramdisk[16]=2;put16(ramdisk+17,128);put16(ramdisk+19,SECTORS);
+ ramdisk[21]=0xf8;put16(ramdisk+22,FATSECS);put16(ramdisk+24,32);put16(ramdisk+26,64);ramdisk[38]=0x29;
+ memcpy(ramdisk+43,"EMUTOS RAM ",11);memcpy(ramdisk+54,"FAT16   ",8);ramdisk[510]=0x55;ramdisk[511]=0xaa;
+ for(int i=0;i<2;i++){put16(ramdisk+(1+i*FATSECS)*512,0xfff8);put16(ramdisk+(1+i*FATSECS)*512+2,0xffff);}
+ UBYTE boot[512];
+ if(dc_disc_read(boot,0,512)==512&&get16(boot+11)==512&&boot[13]==1&&boot[16]==2&&get16(boot+22)==32&&get16(boot+17)==128&&get16(boot+19)==8192) {disc_bpb=ram_bpb;drvbits|=8;}
+ memset(&basepage,0,sizeof(basepage));run->p_curdrv=2;run->p_xdta=&dta;run->p_flags=PF_STANDARD;
+ for(int i=0;i<NUMSTD;i++)run->p_uft[i]=-1;
+ bufl_init();time_init();
+ kprintf("GEMDOS: C: 4 MiB FAT16 RAM, D: %s\n",(drvbits&8)?"read-only CD":"no disc");
+}
+LONG dc_rwabs(WORD rw,void *buf,WORD count,LONG sector,WORD drive) {
+ if(count<0||sector<0||(ULONG)sector>SECTORS||(ULONG)count>SECTORS-(ULONG)sector)return ESECNF;
+ if(!count)return 0;
+ if(drive==2){if(rw&1)memcpy(ramdisk+sector*512,buf,count*512);else memcpy(buf,ramdisk+sector*512,count*512);return 0;}
+ if(drive==3&&(drvbits&8)){if(rw&1)return EWRPRO;return dc_disc_read(buf,sector*512,count*512)==count*512?0:EREADF;}
+ return EDRVNR;
+}
+BPB *dc_getbpb(WORD drive) {return drive==2?&ram_bpb:drive==3&&(drvbits&8)?&disc_bpb:NULL;}
+static int readonly_path(const char *p) {int d=run->p_curdrv;if(p&&p[0]&&p[1]==':')d=toupper(p[0])-'A';return d!=2;}
+static int readonly_handle(int h) {OFD *o=getofd(h);return o&&o->o_dmd->m_drvnum!=2;}
+/* Every va_arg matches the promoted native SH ABI. No 68k word-stack casts. */
+static long dispatch(int op,va_list ap) {
+ int h,a,b;long n;char *p,*q;void *buf;
+ extern LONG dc_console_in(void),dc_console_status(void);
+ extern void dc_console_out(WORD);
+ switch(op) {
+ case 0x01:case 0x07:case 0x08:return dc_console_in();
+ case 0x02:dc_console_out(va_arg(ap,int));return 0;
+ case 0x06:a=va_arg(ap,int);if(a==0xff)return dc_console_status()?dc_console_in():0;dc_console_out(a);return 0;
+ case 0x09:p=va_arg(ap,char *);while(*p)dc_console_out(*p++);return 0;
+ case 0x0b:return dc_console_status();
+ case 0x0e:return xsetdrv(va_arg(ap,int));
+ case 0x19:return xgetdrv();
+ case 0x1a:xsetdta(va_arg(ap,void *));return 0;
+ case 0x2a:return current_date;
+ case 0x2c:return current_time;
+ case 0x2f:return (long)xgetdta();
+ case 0x30:return 0x2000;
+ case 0x36:buf=va_arg(ap,void *);a=va_arg(ap,int);return xgetfree(buf,a);
+ case 0x39:p=va_arg(ap,char *);return readonly_path(p)?EWRPRO:xmkdir(p);
+ case 0x3a:p=va_arg(ap,char *);return readonly_path(p)?EWRPRO:xrmdir(p);
+ case 0x3b:return xchdir(va_arg(ap,char *));
+ case 0x3c:p=va_arg(ap,char *);a=va_arg(ap,int);return readonly_path(p)?EWRPRO:xcreat(p,a);
+ case 0x3d:p=va_arg(ap,char *);a=va_arg(ap,int);return a&&readonly_path(p)?EWRPRO:xopen(p,a);
+ case 0x3e:return xclose(va_arg(ap,int));
+ case 0x3f:h=va_arg(ap,int);n=va_arg(ap,long);buf=va_arg(ap,void *);return n<0?EINVFN:xread(h,n,buf);
+ case 0x40:h=va_arg(ap,int);n=va_arg(ap,long);buf=va_arg(ap,void *);return n<0?EINVFN:readonly_handle(h)?EWRPRO:xwrite(h,n,buf);
+ case 0x41:p=va_arg(ap,char *);return readonly_path(p)?EWRPRO:xunlink(p);
+ case 0x42:n=va_arg(ap,long);h=va_arg(ap,int);a=va_arg(ap,int);return xlseek(n,h,a);
+ case 0x43:p=va_arg(ap,char *);a=va_arg(ap,int);b=va_arg(ap,int);return a&&readonly_path(p)?EWRPRO:xchmod(p,a,b);
+ case 0x44:n=va_arg(ap,long);a=va_arg(ap,int);return (long)xmxalloc(n,a);
+ case 0x47:p=va_arg(ap,char *);a=va_arg(ap,int);return xgetdir(p,a);
+ case 0x48:return (long)xmalloc(va_arg(ap,long));
+ case 0x49:return xmfree(va_arg(ap,void *));
+ case 0x4a:a=va_arg(ap,int);buf=va_arg(ap,void *);n=va_arg(ap,long);return xsetblk(a,buf,n);
+ case 0x4e:p=va_arg(ap,char *);a=va_arg(ap,int);return xsfirst(p,a);
+ case 0x4f:return xsnext();
+ case 0x56:a=va_arg(ap,int);p=va_arg(ap,char *);q=va_arg(ap,char *);return readonly_path(p)||readonly_path(q)?EWRPRO:xrename(a,p,q);
+ case 0x57:buf=va_arg(ap,void *);h=va_arg(ap,int);a=va_arg(ap,int);return a&&readonly_handle(h)?EWRPRO:xgsdtof(buf,h,a);
+ default:kprintf("Unimplemented native GEMDOS call %02x\n",op);return EINVFN;
+ }
+}
+long trap1(int op,...) {
+ va_list ap;long result;
+ /* The FAT implementation reports physical IO failures with longjmp. */
+ if(setjmp(errbuf))return errcode;
+ va_start(ap,op);result=dispatch(op,ap);va_end(ap);return result;
+}
+long trap1_pexec(short mode,const char *path,const char *tail,const char *env) {
+ (void)mode;(void)tail;(void)env;
+ kprintf("Pexec rejected: native SH-4 loader required: %s\n",path?path:"");return EPLFMT;
+}
+void dc_storage_selftest(void) {
+ static const char hello[]="Native EmuTOS on Dreamcast\r\nC: is a volatile RAM disk.\r\n";
+ char buf[sizeof(hello)];long h=trap1(0x3c,"C:\\WELCOME.TXT",0),r;
+ if(h<0)goto fail;
+ r=trap1(0x40,(int)h,(long)sizeof(hello)-1,(void *)hello);if(r!=sizeof(hello)-1)goto fail;
+ if(trap1(0x3e,(int)h))goto fail;
+ h=trap1(0x3d,"C:\\WELCOME.TXT",0);if(h<0)goto fail;
+ r=trap1(0x3f,(int)h,(long)sizeof(buf),buf);trap1(0x3e,(int)h);
+ if(r!=sizeof(hello)-1||memcmp(buf,hello,r))goto fail;
+ if(trap1(0x39,"C:\\TEMP"))goto fail;
+ if(trap1(0x3c,"D:\\FORBID.TXT",0)!=EWRPRO)goto fail;
+ kprintf("SELFTEST: GEMDOS create/write/close/read/mkdir/read-only PASS\n");return;
+ fail: {extern void panic(const char *,...);panic("SELFTEST: filesystem failed h=%ld err=%ld\n",h,errcode);}
+}

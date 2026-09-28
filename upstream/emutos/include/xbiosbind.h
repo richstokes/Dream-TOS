@@ -1,3 +1,6 @@
+#ifdef MACHINE_DREAMCAST
+#include "dreamcast/xbiosbind.h"
+#else
 /*
  * xbiosbind.h - Bindings for XBIOS access
  *
@@ -387,3 +390,5 @@ static __inline__ long xbios_l_lll(int op, long a, long b, long c)
 
 
 #endif /* XBIOSBIND_H */
+
+#endif

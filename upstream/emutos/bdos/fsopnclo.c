@@ -47,6 +47,7 @@
 /* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
+#include "endian.h"
 #include "asm.h"
 #include "fs.h"
 #include "gemerror.h"
@@ -188,9 +189,9 @@ long ixcreat(char *name, UBYTE attr)
     for (i = 0; i < 10; i++)
         fcb->f_fill[i] = 0;
     fcb->f_td.time = current_time;
-    swpw(fcb->f_td.time);
+    dc_le16(fcb->f_td.time);
     fcb->f_td.date = current_date;
-    swpw(fcb->f_td.date);
+    dc_le16(fcb->f_td.date);
     fcb->f_clust = 0;
     fcb->f_fileln = 0;
     ixlseek(fd,pos);
@@ -313,9 +314,9 @@ static long makopn(FCB *f, DND *dn, int h, int mod)
         dfd->o_td.date = f->f_td.date;  /* note: OFD time/date are  */
         dfd->o_td.time = f->f_td.time;  /*  actually little-endian! */
         dfd->o_strtcl = f->f_clust;     /* 1st cluster of file */
-        swpw(dfd->o_strtcl);
+        dc_le16(dfd->o_strtcl);
         dfd->o_fileln = f->f_fileln;    /* init length of file */
-        swpl(dfd->o_fileln);
+        dc_le32(dfd->o_fileln);
     }
 
     p->o_dfd = dfd;                     /* for future reference ... */
@@ -461,7 +462,7 @@ long xclose(int h)
     {
         ftab = &sft[h-NUMSTD];
 
-        if ((long)ftab->f_ofd < 0L)
+        if ((ULONG)ftab->f_ofd >= (ULONG)-3L)
         {
             if (--ftab->f_use == 0)
             {
@@ -536,8 +537,8 @@ long ixclose(OFD *fd, int part)
         fcb = ixgetfcb(fd->o_dirfil);
         attr = fcb->f_attrib;               /* get attributes */
         memcpy(&fcb->f_td,&dfd->o_td,10);   /* copy date/time, start, length */
-        swpw(fcb->f_clust);                 /*  & fixup byte order */
-        swpl(fcb->f_fileln);
+        dc_le16(fcb->f_clust);                 /*  & fixup byte order */
+        dc_le32(fcb->f_fileln);
 
         if (part & CL_DIR)
             fcb->f_fileln = 0L;             /* dir lengths on disk are zero */
@@ -673,7 +674,7 @@ long ixdel(DND *dn, FCB *f, long pos)
      */
     dm = dn->d_drv;
     n = f->f_clust;
-    swpw(n);
+    dc_le16(n);
 
     while (n && !endofchain(n))
     {

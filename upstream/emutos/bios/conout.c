@@ -25,6 +25,13 @@
 #include "conout.h"
 #include "../vdi/vdi_defs.h"    /* for phys_work stuff */
 
+/* Logical big-endian byte positions inside numeric native planar words. */
+#ifdef MACHINE_DREAMCAST
+#define CELL_BYTE(p) (*(UBYTE *)((ULONG)(p) ^ 1UL))
+#else
+#define CELL_BYTE(p) (*(p))
+#endif
+
 #define PLANE_OFFSET    2       /* interleaved planes */
 
 #if CONF_WITH_VIDEL
@@ -240,7 +247,7 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
             if (fg & 0x0001) {
                 /* back:1  fore:1  =>  all ones */
                 for (i = v_cel_ht; i--; ) {
-                    *dst = 0xff;                /* inject a block */
+                    CELL_BYTE(dst) = 0xff;                /* inject a block */
                     dst += line_wr;
                 }
             }
@@ -248,7 +255,7 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
                 /* back:1  fore:0  =>  invert block */
                 for (i = v_cel_ht; i--; ) {
                     /* inject the inverted source block */
-                    *dst = ~*src;
+                    CELL_BYTE(dst) = ~CELL_BYTE(src);
                     dst += line_wr;
                     src += fnt_wr;
                 }
@@ -258,7 +265,7 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
             if (fg & 0x0001) {
                 /* back:0  fore:1  =>  direct substitution */
                 for (i = v_cel_ht; i--; ) {
-                    *dst = *src;
+                    CELL_BYTE(dst) = CELL_BYTE(src);
                     dst += line_wr;
                     src += fnt_wr;
                 }
@@ -266,7 +273,7 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
             else {
                 /* back:0  fore:0  =>  all zeros */
                 for (i = v_cel_ht; i--; ) {
-                    *dst = 0x00;                /* inject a block */
+                    CELL_BYTE(dst) = 0x00;                /* inject a block */
                     dst += line_wr;
                 }
             }
@@ -308,7 +315,7 @@ static void neg_cell(UBYTE *cell)
             WORD i;
             UWORD *addr;
             for (i = 8, addr = (UWORD *)cell; i--; addr++)
-                *addr = ~*addr;
+                CELL_BYTE(addr) = ~CELL_BYTE(addr);
             cell += lin_wr;
         }
     }
@@ -320,7 +327,7 @@ static void neg_cell(UBYTE *cell)
 
             /* reset cell length counter */
             for (len = cell_len; len--; ) {
-                *addr = ~*addr;
+                CELL_BYTE(addr) = ~CELL_BYTE(addr);
                 addr += lin_wr;
             }
             cell += PLANE_OFFSET;       /* a1 -> top of block in next plane */
@@ -654,7 +661,11 @@ void blank_out(int topx, int topy, int botx, int boty)
             /* loop through all cell pairs */
             for (pair = pairs; pair--;) {
                 for (i = 0; i < v_planes / 2; i++) {
+                    #ifdef MACHINE_DREAMCAST
+                    *(ULONG*)addr = (pair_planes[i] << 16) | (pair_planes[i] >> 16);
+#else
                     *(ULONG*)addr = pair_planes[i];
+#endif
                     addr += sizeof(ULONG);
                 }
             }

@@ -21,6 +21,10 @@ void gsx2(void)
 {
     vdipb.contrl = contrl;
 
+#ifdef MACHINE_DREAMCAST
+    extern void dc_vdi(VDIPB *);
+    dc_vdi(&vdipb);
+#else
     __asm__ volatile
     (
         "move.l  %0,d1\n\t"
@@ -30,4 +34,5 @@ void gsx2(void)
     : "g"(&vdipb)
     : "d0", "d1", "d2", "a0", "a1", "a2", "memory", "cc"
     );
+#endif
 }

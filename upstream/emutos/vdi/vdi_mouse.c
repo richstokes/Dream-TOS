@@ -880,7 +880,7 @@ void cur_display (Mcdb *sprite, MCS *mcs, WORD x, WORD y)
     UWORD * addr, * mask_start;
     UWORD shft, cdb_fg, cdb_bg;
     UWORD cdb_mask;             /* for checking cdb_bg/cdb_fg */
-    ULONG *save;
+    UWORD *save;
 
 #if CONF_WITH_VDI_16BIT
     /*
@@ -957,7 +957,7 @@ void cur_display (Mcdb *sprite, MCS *mcs, WORD x, WORD y)
     inc = v_planes;             /* # distance to next word in same plane */
     dst_inc = v_lin_wr >> 1;    /* calculate number of words in a scan line */
 
-    save = mcs->area;           /* for long stores */
+    save = (UWORD *)mcs->area;           /* for long stores */
 
     cdb_bg = sprite->bg_col;    /* get mouse background color bits */
     cdb_fg = sprite->fg_col;    /* get mouse foreground color bits */
@@ -982,7 +982,8 @@ void cur_display (Mcdb *sprite, MCS *mcs, WORD x, WORD y)
              */
             bits = ((ULONG)*dst) << 16; /* bring to left pos. */
             bits |= *(dst + inc);
-            *save++ = bits;
+            *save++ = (UWORD)(bits >> 16);
+            *save++ = (UWORD)bits;
 
             /*
              * align the forms with the cursor position on the screen

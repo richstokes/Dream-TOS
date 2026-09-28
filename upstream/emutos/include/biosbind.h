@@ -1,3 +1,6 @@
+#ifdef MACHINE_DREAMCAST
+#include "dreamcast/biosbind.h"
+#else
 /*
  * biosbind.h - Bindings for BIOS access
  *
@@ -164,3 +167,5 @@ bios_l_wlwwwl(int op, short a, long b, short c, short d, short e, long f)
 }
 
 #endif /* BIOSBIND_H */
+
+#endif

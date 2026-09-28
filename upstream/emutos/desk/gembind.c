@@ -71,6 +71,10 @@ static LONG             addr_out[AO_SIZE];
 
 static __inline__ WORD gem(const GEMBLK *gb)
 {
+#ifdef MACHINE_DREAMCAST
+    extern LONG super(WORD, void *);
+    return super(200, (void *)gb);
+#else
     register WORD retval __asm__("d0");
     register WORD opcode __asm__("d0") = 200; /* AES */
     register const GEMBLK *gbreg __asm__("d1") = gb;
@@ -84,6 +88,7 @@ static __inline__ WORD gem(const GEMBLK *gb)
     );
 
     return retval;
+#endif
 }
 
 static void gem_if0(UWORD ctrlcode)
@@ -777,10 +782,22 @@ WORD wind_set(WORD w_handle, WORD w_field, ...) /* WORD w2, WORD w3, WORD w4, WO
 
     WM_HANDLE = w_handle;
     WM_WFIELD = w_field;
-    WM_IX = va_arg(ap, int);
-    WM_IY = va_arg(ap, int);
-    WM_IW = va_arg(ap, int);
-    WM_IH = va_arg(ap, int);
+#ifdef MACHINE_DREAMCAST
+    /* SH-4 uses 32-bit int/pointers; a pointer occupies two GEM words. */
+    if (w_field == WF_NAME || w_field == WF_INFO || w_field == WF_NEWDESK)
+    {
+        ULONG_AT(&WM_IX) = (ULONG)va_arg(ap, void *);
+        WM_IW = va_arg(ap, int);
+        WM_IH = va_arg(ap, int);
+    }
+    else
+#endif
+    {
+        WM_IX = va_arg(ap, int);
+        WM_IY = va_arg(ap, int);
+        WM_IW = va_arg(ap, int);
+        WM_IH = va_arg(ap, int);
+    }
     va_end(ap);
     return gem_if(AES_CTRL_CODE(WIND_SET, 6, 1, 0));
 }

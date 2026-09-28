@@ -11,6 +11,7 @@
 /* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
+#include "endian.h"
 #include "asm.h"
 #include "fs.h"
 #include "gemerror.h"
@@ -51,7 +52,7 @@ void clfix(CLNO cl, CLNO link, DMD *dm)
     if (dm->m_16)
     {
         buf = getrec(recnum,dm->m_fatofd,1);
-        swpw(link);
+        dc_le16(link);
         *(CLNO *)(buf+offset) = link;
         return;
     }
@@ -122,7 +123,7 @@ CLNO getrealcl(CLNO cl, DMD *dm)
     if (dm->m_16)
     {
         f = *(CLNO *)buf;
-        swpw(f);
+        dc_le16(f);
         return f;
     }
 

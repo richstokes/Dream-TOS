@@ -600,7 +600,7 @@ static void OPTIMIZE_SMALL swblit_rect_common(const VwkAttrib *attr, const Rect 
                 if (color & 0x0001) {
                     *work |= pattern & b.leftmask;  /* left section */
                     work += vplanes;
-#ifdef __mcoldfire__
+#if defined(__mcoldfire__) || defined(MACHINE_DREAMCAST)
                     for (n = centre; n >= 0; n--) { /* centre section */
                         *work |= pattern;
                         work += vplanes;
@@ -621,7 +621,7 @@ static void OPTIMIZE_SMALL swblit_rect_common(const VwkAttrib *attr, const Rect 
                 } else {
                     *work &= ~(pattern & b.leftmask);   /* left section */
                     work += vplanes;
-#ifdef __mcoldfire__
+#if defined(__mcoldfire__) || defined(MACHINE_DREAMCAST)
                     for (n = centre; n >= 0; n--) { /* centre section */
                         *work &= ~pattern;
                         work += vplanes;
@@ -658,7 +658,7 @@ static void OPTIMIZE_SMALL swblit_rect_common(const VwkAttrib *attr, const Rect 
 
                 *work ^= pattern & b.leftmask;      /* left section */
                 work += vplanes;
-#ifdef __mcoldfire__
+#if defined(__mcoldfire__) || defined(MACHINE_DREAMCAST)
                 for (n = centre; n >= 0; n--) {    /* centre section */
                     *work ^= pattern;
                     work += vplanes;
@@ -695,7 +695,7 @@ static void OPTIMIZE_SMALL swblit_rect_common(const VwkAttrib *attr, const Rect 
                 if (color & 0x0001) {
                     *work |= pattern & b.leftmask;  /* left section */
                     work += vplanes;
-#ifdef __mcoldfire__
+#if defined(__mcoldfire__) || defined(MACHINE_DREAMCAST)
                     for (n = centre; n >= 0; n--) { /* centre section */
                         *work |= pattern;
                         work += vplanes;
@@ -716,7 +716,7 @@ static void OPTIMIZE_SMALL swblit_rect_common(const VwkAttrib *attr, const Rect 
                 } else {
                     *work &= ~(pattern & b.leftmask);   /* left section */
                     work += vplanes;
-#ifdef __mcoldfire__
+#if defined(__mcoldfire__) || defined(MACHINE_DREAMCAST)
                     for (n = centre; n >= 0; n--) { /* centre section */
                         *work &= ~pattern;
                         work += vplanes;
@@ -755,7 +755,7 @@ static void OPTIMIZE_SMALL swblit_rect_common(const VwkAttrib *attr, const Rect 
                 data |= pattern & b.leftmask;
                 *work = data;
                 work += vplanes;
-#ifdef __mcoldfire__
+#if defined(__mcoldfire__) || defined(MACHINE_DREAMCAST)
                 for (n = centre; n >= 0; n--) {     /* centre section */
                     *work = pattern;
                     work += vplanes;

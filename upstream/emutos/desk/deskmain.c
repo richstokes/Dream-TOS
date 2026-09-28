@@ -45,7 +45,11 @@
 #include "biosdefs.h"
 #include "nls.h"
 #include "version.h"
+#ifdef MACHINE_DREAMCAST
+#include "dc_version.h"
+#else
 #include "../obj/header.h"
+#endif
 
 #include "aesbind.h"
 #include "desksupp.h"
@@ -849,7 +853,7 @@ static WORD do_optnmenu(WORD item)
         rebld = ins_devices();
         if (rebld)
         {
-            app_blddesk();
+    app_blddesk();
         }
         break;
     case IAPPITEM:
@@ -864,7 +868,7 @@ static WORD do_optnmenu(WORD item)
         rebld = ins_icon(curr);
         if (rebld > 0)
         {
-            app_blddesk();
+    app_blddesk();
         }
 #if CONF_WITH_WINDOW_ICONS
         else if (rebld < 0)
@@ -879,7 +883,7 @@ static WORD do_optnmenu(WORD item)
             rebld = rmv_icon(curr);
         if (rebld)
         {
-            app_blddesk();
+    app_blddesk();
         }
         break;
     case PREFITEM:
