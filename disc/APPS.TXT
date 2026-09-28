@@ -14,9 +14,14 @@ N next sample; O open; G greyscale; M mirror; S export BMP; Esc exit.
 Bundled samples: SONIC.PNG (generated fan art) and SPACE.PNG.
 Maximum image: 640x480; encoded file: 1 MiB. Display/export: 16 colours.
 
-CALC.PRG - scientific expression calculator using tinyexpr
-Enter expression, Return to evaluate; Ctrl+U clears; Esc exits.
-Try sqrt(144)+2^3 or ans*2. Trig uses radians. ^ is left associative.
+CALC.PRG - graphical scientific calculator using tinyexpr
+Click the keypad or type expressions. Return or = evaluates; Esc exits.
+Tab selects keypad; arrows move; Space presses a button. Typing edits.
+Left/Right/Home/End move the caret; Backspace/Delete edit the expression.
+AC or Ctrl+U clears all; DEL backspaces; +/- changes the expression sign.
+After =, an operator continues with ans; digits start a new calculation.
+Close function parentheses with ). Try sqrt(144)+2^3 or ans*2.
+Trig uses radians. ^ is left associative. Display: 12 significant digits.
 
 WORM.PRG - Jeffrey Armstrong's Atari GEM Worm
 P starts/pauses; arrows or WASD steer; N new; H scores; Esc exits.

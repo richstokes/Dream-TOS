@@ -14,7 +14,7 @@ into the Dreamcast programs; they are not imitations of those programs.
 |---|---|---|
 | `EDITOR.PRG` | [Kilo](https://github.com/antirez/kilo), BSD-2-Clause | Plain-text editing, open/save/save-as, search, C syntax colours, CRLF input |
 | `IMAGES.PRG` | [stb_image](https://github.com/nothings/stb), MIT/public domain | PNG/JPEG/BMP, 16-colour quantization, greyscale, mirror, BMP export |
-| `CALC.PRG` | [tinyexpr](https://github.com/codeplea/tinyexpr), zlib | Scientific expressions, functions, parentheses and `ans` |
+| `CALC.PRG` | [tinyexpr](https://github.com/codeplea/tinyexpr), zlib | Graphical keypad, editable expression and result display, scientific functions and `ans` |
 | `WORM.PRG` | [GEM Worm](https://github.com/ArmstrongJ/gemworm), GPL-3.0-or-later | Original movement, field renderer, food and high-score code; new fullscreen GEM interface |
 | `FIFTEEN.PRG` | [Simon Tatham's puzzles](https://www.chiark.greenend.org.uk/~sgtatham/puzzles/), MIT | Sliding tiles, undo/redo, new game, RAM-disk saves |
 | `MINES.PRG` | Same collection, MIT | Minesweeper, keyboard cursor/flags, undo/redo, saves |
@@ -46,9 +46,18 @@ buttons and movement. Flycast verification primarily used the keyboard.
   BMP, Esc exit. Input is limited to 640×480 and 1 MiB encoded files.
   Display/export uses 16 colours; larger-than-384-pixel-tall images fit the
   viewing area. The export retains the decoded image dimensions.
-- Calculator: Return evaluates, Ctrl+U clears, Esc exits. `ans` holds the
-  last successful evaluation. Angles are radians; exponentiation is left
-  associative, as in the default tinyexpr configuration.
+- Calculator: click the graphical keypad or type an expression; Return or
+  `=` evaluates, Ctrl+U / AC clears all, Esc exits. Tab selects the keypad,
+  arrows move between buttons, and Space presses the focused button.
+  Typing returns to the expression; Left/Right, Home/End, Backspace and
+  Delete edit it. Click the expression to position the caret. DEL on the
+  keypad is Backspace. Functions insert an opening parenthesis; close it
+  with `)`. `+/-` negates the current expression or the evaluated result.
+  `ans` holds the last successful evaluation; an operator after `=` continues
+  from that answer, and a digit starts a new calculation. Errors preserve
+  the previous answer and leave the expression editable. Angles are radians;
+  exponentiation is left associative, as in the default tinyexpr configuration.
+  The display shows 12 significant digits; calculations retain double precision.
 - Worm: P starts/pauses, arrows or WASD steer, N restarts, H shows scores,
   Esc exits. High scores go to `C:\WORM.HI`.
 - Puzzles: arrows move, Space/Return select, F is the second action
@@ -58,6 +67,8 @@ buttons and movement. Flycast verification primarily used the keyboard.
 Use DOS 8.3 names when opening or saving. **C: is a RAM disk: reset and
 power-off erase documents, exported images, scores and game saves.**
 D: remains read-only. No persistent storage was added.
+
+<a href="screenshots/calculator.jpg"><img src="screenshots/calculator.jpg" width="640" alt="The native graphical calculator in Flycast, showing sqrt(144)+2^3 = 20 with its clickable scientific keypad"></a>
 
 ## Source and build
 
@@ -109,7 +120,10 @@ separate from the games and are not extracted commercial game assets.
 Flycast, using the native CDI and keyboard input:
 
 - Boot-time native allocation/stdio/math/read-only protection/cleanup test.
-- Calculator: `sqrt(144)+2^3 = 20`, then `ans*2 = 40`.
+- Calculator: keyboard navigation of the graphical keypad (`7+8 = 15`),
+  GEM pointer click on Multiply followed by typed `2` (`30`), syntax-error
+  correction with Delete (`2+*3` to `2+3 = 5`), and `sqrt(144)+2^3 = 20`.
+  Escape restores the desktop and its palette.
 - Editor: two-line input, save to C:, new buffer, reopen, search, exit.
 - Viewer: both PNG samples; mirror/greyscale; BMP export to C: and reopen.
 - Fifteen: tile movement, save, new game, restore saved board.
@@ -120,6 +134,7 @@ Flycast, using the native CDI and keyboard input:
 
 Host ASan/UBSan tests cover Kilo editing/CRLF/save round trips, image
 quantization and exact exported BMP pixel recovery, puzzle state save/load,
-Worm movement/restart/scores, and calculator expressions/error handling.
+Worm movement/restart/scores, and calculator keypad/keyboard input, cancelled
+clicks, expression editing, result chaining, bounded input and error recovery.
 The host checks complement real SH-4 execution; they are not a substitute
 for it. Physical Dreamcast testing remains pending.

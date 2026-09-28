@@ -46,6 +46,6 @@ class BundleTests(unittest.TestCase):
             '-Iapps/vendor/gemworm','apps/vendor/gemworm/field.c',
             'apps/vendor/gemworm/player.c','apps/vendor/gemworm/scores.c'])
 
-    def test_calculator_variables_and_invalid_expressions(self):
+    def test_graphical_calculator_buttons_keyboard_and_errors(self):
         self.build_run('calc','tests/calc_host.c',[
             '-Iapps/vendor/tinyexpr','apps/vendor/tinyexpr/tinyexpr.c'])
