@@ -4,8 +4,10 @@
 #include <dc/maple/mouse.h>
 #include <dc/maple/controller.h>
 #include <malloc.h>
+#include <kos/version.h>
 #include <time.h>
 #include "dreamcast/hal.h"
+#include "dreamcast/system_info.h"
 KOS_INIT_FLAGS(INIT_DEFAULT);
 static file_t disc = FILEHND_INVALID;
 static unsigned long last_present;
@@ -130,3 +132,48 @@ void dc_context_switch(int old_id,int new_id) {
 }
 
 void dc_sync_code(void *p,unsigned long bytes){dcache_wback_range((uintptr_t)p,bytes);icache_sync_range((uintptr_t)p,bytes);}
+
+/* Keep KOS structs on this side of the packing boundary. No bus transactions
+ * are sent here: Maple info comes from devices already enumerated by KOS. */
+void dc_hal_system_info(struct dc_system_info *info)
+{
+    int region;
+    info->system_type = hardware_sys_mode(&region);
+    info->ram_bytes = HW_MEMSIZE;
+    info->heap_used_bytes = mallinfo().uordblks;
+    info->uptime_seconds = timer_ms_gettime64() / 1000;
+    strlcpy(info->kos_version, kos_version_string(), sizeof(info->kos_version));
+    info->video_cable = vid_check_cable();
+    if (vid_mode) {
+        info->flags |= DC_INFO_VIDEO;
+        info->video_width = vid_mode->width;
+        info->video_height = vid_mode->height;
+        info->video_pixel_mode = vid_mode->pm;
+        info->video_flags = vid_mode->flags;
+    }
+    /* Copy under the IRQ gate so asynchronous detach cannot invalidate a
+     * device pointer partway through the snapshot. */
+    irq_mask_t irq = irq_disable();
+    for (int p = 0; p < MAPLE_PORT_COUNT; p++) {
+        for (int u = 0; u < MAPLE_UNIT_COUNT; u++) {
+            maple_device_t *dev = maple_enum_dev(p, u);
+            if (!dev || info->device_count == DC_SYSTEM_INFO_DEVICES)
+                continue;
+            struct dc_device_info *dst = &info->devices[info->device_count++];
+            dst->port = p;
+            dst->unit = u;
+            dst->functions = dev->info.functions;
+            unsigned n = 0;
+            for (; n < sizeof(dev->info.product_name); n++) {
+                unsigned char c = dev->info.product_name[n];
+                if (!c)
+                    break;
+                dst->name[n] = (c >= 32 && c < 127) ? c : '?';
+            }
+            while (n && dst->name[n - 1] == ' ')
+                n--;
+            dst->name[n] = 0;
+        }
+    }
+    irq_restore(irq);
+}

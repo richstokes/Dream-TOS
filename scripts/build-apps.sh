@@ -5,7 +5,7 @@ set +u
 source "${KOS_ENV:-${KOS_BASE:-$HOME/.local/share/dreamcast/kos}/environ.sh}"
 set -u
 mkdir -p "$root/build/apps"
-for app in hello vditest; do
+for app in hello vditest sysinfo; do
 "$KOS_CC" -m4-single -ml -O2 -ffreestanding -fno-pic -fno-pie -fpack-struct=2 -fno-common \
  -fno-unwind-tables -fno-asynchronous-unwind-tables -nostdlib -I"$root/include" \
  -Wl,--emit-relocs -Wl,-T,"$root/apps/native.ld" "$root/apps/$app.c" -o "$root/build/apps/$app.elf"

@@ -11,6 +11,7 @@
 #include "ahdi.h"
 #include "biosbind.h"
 #include "dreamcast/hal.h"
+#include "dreamcast/system_info.h"
 #include <stdarg.h>
 
 #define SECTORS 8192UL
@@ -138,6 +139,18 @@ static int readonly_handle(int h)
 {
     OFD *o = getofd(h);
     return o && (ULONG)o < (ULONG)-3 && o->o_dmd->m_drvnum != 2;
+}
+
+void dc_storage_system_info(struct dc_system_info *info)
+{
+    info->drive_mask = drvbits;
+    info->volatile_mask = ramdisk ? (1u << 2) : 0;
+    for (int d = 0; d < 26; d++) {
+        char path[] = "A:\\";
+        path[0] += d;
+        if ((info->drive_mask & (1u << d)) && readonly_path(path))
+            info->readonly_mask |= 1u << d;
+    }
 }
 /* Every va_arg matches the promoted native SH ABI. No 68k word-stack casts. */
 static long dispatch(int op, va_list ap)

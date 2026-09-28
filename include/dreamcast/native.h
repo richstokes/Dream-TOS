@@ -14,6 +14,8 @@ struct dc_native_api {
     void (*yield)(void);
     /* Optional extension; check size before accessing. Monotonic milliseconds. */
     unsigned long (*millis)(void);
+    /* Optional extension; check size. See dreamcast/system_info.h. */
+    long (*system_info)(void *buffer, uint32_t bytes);
 };
 /* Return a GEMDOS exit status. tail is the standard length-prefixed command
  * line; env is a double-NUL-terminated environment, owned by the caller. */

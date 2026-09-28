@@ -11,6 +11,7 @@
 #include "mem.h"
 #include "dreamcast/hal.h"
 #include "dreamcast/native.h"
+#include "dreamcast/system_info.h"
 extern long trap1(int, ...);
 extern LONG super(WORD, void *);
 extern void dc_vdi(void *), dc_poll(void);
@@ -20,7 +21,8 @@ static void native_aes(void *pb)
     super(200, pb);
 }
 static const struct dc_native_api api = {DC_NATIVE_ABI, sizeof(api), trap1,
-                                         native_aes,    dc_vdi,      dc_poll, dc_millis};
+                                         native_aes,    dc_vdi,      dc_poll, dc_millis,
+                                         dc_system_info};
 static jmp_buf term_context;
 static int executing;
 static long exit_status;

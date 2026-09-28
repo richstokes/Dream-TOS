@@ -7,6 +7,7 @@
 #include "mem.h"
 #include "gemerror.h"
 #include "dreamcast/hal.h"
+#include "dreamcast/system_info.h"
 #define ARENA_BYTES (3UL * 1024 * 1024)
 #define ALIGN 32UL
 typedef struct block {
@@ -102,4 +103,20 @@ void dc_free_process_memory(PD *owner)
         if (b->owner == owner)
             b->owner = NULL;
     merge();
+}
+
+void dc_memory_system_info(struct dc_system_info *info)
+{
+    info->gem_pool_bytes = ARENA_BYTES;
+    if (!arena) {
+        info->gem_free_bytes = info->gem_largest_bytes = ARENA_BYTES - sizeof(Block);
+        return;
+    }
+    for (Block *b = arena; b; b = b->next) {
+        if (!b->owner) {
+            info->gem_free_bytes += b->bytes;
+            if (b->bytes > info->gem_largest_bytes)
+                info->gem_largest_bytes = b->bytes;
+        }
+    }
 }
