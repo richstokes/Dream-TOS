@@ -11,7 +11,7 @@ static struct {
 static struct {
     int16_t *c, *i, *p, *o, *q;
 } vpb = {vc, vi, vp, vo, vq};
-static int active;
+static int active, fullscreen;
 static int16_t old_palette[16][3];
 void aes_call(int op, int ni, int no, int na)
 {
@@ -49,7 +49,7 @@ void app_palette(int index, int r, int g, int b)
     vi[3] = b;
     vdi_call(14, 0, 4);
 }
-int app_begin(const char *title)
+static int begin(int full)
 {
     aes_call(10, 0, 1, 0);
     if (ao[0] < 0)
@@ -64,21 +64,25 @@ int app_begin(const char *title)
         aes_call(19, 0, 1, 0);
         return 0;
     }
-    for (int i = 0; i < 16; i++) {
+    fullscreen = full;
+    for (int i = 0; full && i < 16; i++) {
         vi[0] = i;
         vi[1] = 0;
         vdi_call(26, 0, 2);
         memcpy(old_palette[i], vo + 1, 6);
     }
-    /* Own the display until app_end. Events still pass through AES. */
-    ai[0] = 1;
-    aes_call(107, 1, 1, 0);
-    ai[0] = 3;
-    aes_call(107, 1, 1, 0);
+    if (full) {
+        /* Fullscreen apps own display and mouse until app_end. */
+        ai[0] = 1;
+        aes_call(107, 1, 1, 0);
+        ai[0] = 3;
+        aes_call(107, 1, 1, 0);
+    }
     ai[0] = 0;
     aa[0] = 0;
     aes_call(78, 1, 1, 1); /* arrow, not inherited busy cursor */
-    app_mouse(0);
+    if (full)
+        app_mouse(0);
     active = 1;
     attr(23, 1);
     attr(104, 0);
@@ -86,6 +90,16 @@ int app_begin(const char *title)
     vp[0] = 0;
     vp[1] = 13;
     vdi_call(12, 1, 0);
+    return 1;
+}
+int app_begin_windowed(void)
+{
+    return begin(0);
+}
+int app_begin(const char *title)
+{
+    if (!begin(1))
+        return 0;
     app_clear(0);
     app_box(0, 0, 640, 24, 1);
     app_text(8, 17, title, 0);
@@ -97,13 +111,15 @@ void app_end(void)
         return;
     active = 0;
     app_unclip();
-    for (int i = 0; i < 16; i++)
-        app_palette(i, old_palette[i][0], old_palette[i][1], old_palette[i][2]);
-    app_mouse(1);
-    ai[0] = 2;
-    aes_call(107, 1, 1, 0);
-    ai[0] = 0;
-    aes_call(107, 1, 1, 0);
+    if (fullscreen) {
+        for (int i = 0; i < 16; i++)
+            app_palette(i, old_palette[i][0], old_palette[i][1], old_palette[i][2]);
+        app_mouse(1);
+        ai[0] = 2;
+        aes_call(107, 1, 1, 0);
+        ai[0] = 0;
+        aes_call(107, 1, 1, 0);
+    }
     vdi_call(101, 0, 0);
     aes_call(19, 0, 1, 0);
 }

@@ -1,5 +1,6 @@
 /* Graphical GEM calculator frontend for tinyexpr. GPL-2.0-or-later. */
 #include "app.h"
+#include "window.h"
 #include "tinyexpr.h"
 #include <math.h>
 #include <string.h>
@@ -8,16 +9,20 @@
 #define COLS 6
 #define ROWS 5
 #define KEY_COUNT (COLS * ROWS)
-#define KEY_X 40
-#define KEY_Y 182
-#define KEY_W 86
-#define KEY_H 42
-#define KEY_DX 94
-#define KEY_DY 48
-#define DISPLAY_CHARS 65
+static AppWindow window;
+static struct { int x, y, w, h, dx, dy, chars; } layout = {0, 0, 480, 360, 76, 40, 54};
+#define KEY_X 10
+#define KEY_Y 124
+#define KEY_W (layout.dx - 6)
+#define KEY_H (layout.dy - 6)
+#define KEY_DX layout.dx
+#define KEY_DY layout.dy
+#define DISPLAY_CHARS layout.chars
 
 enum { INSERT, CLEAR, BACKSPACE, NEGATE, EQUALS };
-enum { PAPER, INK, BACKGROUND, FACE, EDGE, BLUE, GREEN, RED, DISPLAY, FOCUS };
+/* Standard GEM logical colours: a window must share the desktop palette. */
+enum { PAPER = 0, INK = 1, BACKGROUND = 8, FACE = 8, EDGE = 9,
+       BLUE = 4, GREEN = 11, RED = 2, DISPLAY = 0, FOCUS = 6 };
 static const struct button {
     const char *label, *input;
     int action, colour;
@@ -185,9 +190,9 @@ static int event(int key, int x, int y, int buttons)
         calc.pressed = calc.hover;
         if (calc.hover >= 0)
             calc.focus = calc.hover;
-        else if (x >= 48 && x < 592 && y >= 70 && y < 98) {
+        else if (x >= 18 && x < layout.w - 18 && y >= 30 && y < 54) {
             calc.focus = -1;
-            calc.cursor = display_start() + (x - 56 + 4) / 8;
+            calc.cursor = display_start() + (x - 22 + 4) / 8;
             if (calc.cursor < 0)
                 calc.cursor = 0;
             if (calc.cursor > (int)strlen(calc.expr))
@@ -240,101 +245,159 @@ static int event(int key, int x, int y, int buttons)
     return 1;
 }
 
+static void resize_layout(void)
+{
+    layout.x = window.work.x;
+    layout.y = window.work.y;
+    layout.w = window.work.w;
+    layout.h = window.work.h;
+    layout.dx = (layout.w - 20) / COLS;
+    layout.dy = (layout.h - KEY_Y - 36) / ROWS;
+    layout.chars = (layout.w - 44) / 8;
+    calc.hover = calc.pressed = -1;
+}
+static void box(int x, int y, int w, int h, int colour)
+{
+    app_box(layout.x + x, layout.y + y, w, h, colour);
+}
+static void text(int x, int y, const char *s, int colour)
+{
+    app_text(layout.x + x, layout.y + y, s, colour);
+}
+static void line(int x, int y, int x2, int y2, int colour)
+{
+    app_line(layout.x + x, layout.y + y, layout.x + x2, layout.y + y2, colour);
+}
 static void border(int x, int y, int w, int h, int colour)
 {
-    app_line(x, y, x + w - 1, y, colour);
-    app_line(x, y, x, y + h - 1, colour);
-    app_line(x + w - 1, y, x + w - 1, y + h - 1, colour);
-    app_line(x, y + h - 1, x + w - 1, y + h - 1, colour);
+    line(x, y, x + w - 1, y, colour);
+    line(x, y, x, y + h - 1, colour);
+    line(x + w - 1, y, x + w - 1, y + h - 1, colour);
+    line(x, y + h - 1, x + w - 1, y + h - 1, colour);
 }
-
-static void draw(int full)
+/* Called once per visible rectangle, with the GEM clipping region in force. */
+static void draw(void)
 {
-    static int last_focus = -1, last_hover = -1, last_pressed = -1;
-    if (full) {
-        app_clear(BACKGROUND);
-        app_text(40, 45, "SCIENTIFIC CALCULATOR", INK);
-        app_text(408, 45, "RAD / 12 DIGITS", BLUE);
-        app_text(40, 438, "Tab/arrows: keypad   Space: press   Ctrl+U: clear", INK);
-        app_status("Type or click | Enter/= calculate | Esc quit");
-    }
-    app_box(40, 56, 556, 92, DISPLAY);
-    border(40, 56, 556, 92, EDGE);
-    app_line(41, 57, 594, 57, INK);
-    app_line(41, 57, 41, 146, INK);
-    char visible[DISPLAY_CHARS + 1];
-    snprintf(visible, sizeof(visible), "%s", calc.expr + display_start());
-    app_text(56, 85, visible, INK);
+    box(0, 0, layout.w, layout.h, BACKGROUND);
+    text(10, 18, "SCIENTIFIC", INK);
+    text(layout.w - 130, 18, "RAD / 12 DIGITS", BLUE);
+    box(10, 26, layout.w - 20, 70, DISPLAY);
+    border(10, 26, layout.w - 20, 70, EDGE);
+    line(11, 27, layout.w - 12, 27, INK);
+    line(11, 27, 11, 94, INK);
+    char visible[128];
+    snprintf(visible, DISPLAY_CHARS + 1, "%s", calc.expr + display_start());
+    text(22, 46, visible, INK);
     if (display_start())
-        app_text(44, 85, "<", EDGE);
+        text(12, 46, "<", EDGE);
     if (calc.focus < 0) {
-        int x = 56 + (calc.cursor - display_start()) * 8;
-        app_line(x, 89, x + 6, 89, BLUE);
+        int x = 22 + (calc.cursor - display_start()) * 8;
+        line(x, 50, x + 6, 50, BLUE);
     }
     const char *result = calc.error ? "Error" : calc.result;
     vp[0] = 0;
     vp[1] = 26;
     vdi_call(12, 1, 0);
-    app_text(580 - (int)strlen(result) * 16, 134, result, calc.error ? RED : INK);
+    text(layout.w - 24 - (int)strlen(result) * 16, 88, result, calc.error ? RED : INK);
     vp[0] = 0;
     vp[1] = 13;
     vdi_call(12, 1, 0);
-    app_box(40, 150, 556, 26, BACKGROUND);
-    app_text(40, 168, calc.message[0] ? calc.message : "ans recalls the last answer.  AC clears all.",
-             calc.error ? RED : INK);
+    text(10, 116, calc.message[0] ? calc.message : "ans: last answer   AC: clear   Esc: quit",
+         calc.error ? RED : INK);
     for (int i = 0; i < KEY_COUNT; i++) {
-        if (!full && i != calc.focus && i != calc.hover && i != calc.pressed &&
-            i != last_focus && i != last_hover && i != last_pressed)
-            continue;
         int x = KEY_X + (i % COLS) * KEY_DX, y = KEY_Y + (i / COLS) * KEY_DY;
         int down = calc.pressed == i && calc.hover == i;
         int colour = keys[i].colour;
-        app_box(x + 2, y + 2, KEY_W, KEY_H, EDGE);
-        app_box(x, y, KEY_W, KEY_H, colour);
+        box(x + 2, y + 2, KEY_W, KEY_H, EDGE);
+        box(x, y, KEY_W, KEY_H, colour);
         border(x, y, KEY_W, KEY_H, INK);
-        app_line(x + 1, y + 1, x + KEY_W - 2, y + 1, down ? EDGE : PAPER);
-        app_line(x + 1, y + 1, x + 1, y + KEY_H - 2, down ? EDGE : PAPER);
-        app_line(x + 1, y + KEY_H - 2, x + KEY_W - 2, y + KEY_H - 2, down ? PAPER : EDGE);
-        app_line(x + KEY_W - 2, y + 1, x + KEY_W - 2, y + KEY_H - 2, down ? PAPER : EDGE);
+        line(x + 1, y + 1, x + KEY_W - 2, y + 1, down ? EDGE : PAPER);
+        line(x + 1, y + 1, x + 1, y + KEY_H - 2, down ? EDGE : PAPER);
+        line(x + 1, y + KEY_H - 2, x + KEY_W - 2, y + KEY_H - 2, down ? PAPER : EDGE);
+        line(x + KEY_W - 2, y + 1, x + KEY_W - 2, y + KEY_H - 2, down ? PAPER : EDGE);
         if (calc.focus == i || calc.hover == i)
             border(x + 4, y + 4, KEY_W - 8, KEY_H - 8, FOCUS);
-        app_text(x + (KEY_W - (int)strlen(keys[i].label) * 8) / 2 + down,
-                 y + 26 + down, keys[i].label, colour >= BLUE && colour <= RED ? PAPER : INK);
+        text(x + (KEY_W - (int)strlen(keys[i].label) * 8) / 2 + down,
+             y + (KEY_H + 13) / 2 + down, keys[i].label,
+             colour == BLUE || colour == RED ? PAPER : INK);
     }
-    last_focus = calc.focus;
-    last_hover = calc.hover;
-    last_pressed = calc.pressed;
+    text(10, layout.h - 20, "Tab/arrows: keypad  Space: press  Enter: =", INK);
+    text(10, layout.h - 4, "Ctrl+arrows: move  +Shift: size  F5: full", INK);
 }
-
+static void finish(void)
+{
+    app_window_close(&window);
+    app_end();
+}
+static int window_key(int key, int modifiers)
+{
+    int scan = (key >> 8) & 255;
+    if (scan == 0x3f) { /* F5: GEM fuller box, accessible from the keyboard. */
+        app_window_full(&window);
+    } else if ((modifiers & 4) && (scan == 72 || scan == 80 || scan == 75 || scan == 77)) {
+        AppRect bounds = window.border;
+        int dx = scan == 75 ? -16 : scan == 77 ? 16 : 0;
+        int dy = scan == 72 ? -16 : scan == 80 ? 16 : 0;
+        if (modifiers & 3) {
+            bounds.w += dx;
+            bounds.h += dy;
+        } else {
+            bounds.x += dx;
+            bounds.y += dy;
+        }
+        app_window_bounds(&window, bounds);
+        window.full = 0;
+    } else {
+        return 0;
+    }
+    resize_layout();
+    return 1;
+}
 int app_main(int argc, char **argv)
 {
     if (argc > 1 && !strcmp(argv[1], "TEST"))
         return fabs(te_interp("sqrt(144)+2^3", 0) - 20) > 1e-9;
-    if (!app_begin("CALCULATOR"))
+    if (!app_begin_windowed())
         return 1;
-    atexit(app_end);
-    static const int palette[][3] = {
-        {1000, 1000, 1000}, {0, 0, 0}, {800, 820, 820}, {920, 920, 880},
-        {400, 440, 440}, {80, 230, 550}, {80, 430, 290}, {650, 120, 100},
-        {950, 1000, 910}, {1000, 630, 0}
-    };
-    for (int i = 0; i < (int)(sizeof(palette) / sizeof(palette[0])); i++)
-        app_palette(i, palette[i][0], palette[i][1], palette[i][2]);
-    reset();
-    draw(1);
-    app_mouse(1);
-    for (;;) {
-        int x, y, buttons;
-        int key = app_event(20, &x, &y, &buttons);
-        int redraw = event(key, x, y, buttons);
-        if (redraw < 0)
-            break;
-        if (redraw) {
-            app_mouse(0);
-            draw(0);
-            app_mouse(1);
-        }
+    if (!app_window_open(&window, "Calculator", 480, 360, 432, 328)) {
+        app_alert("Unable to open the calculator window.");
+        app_end();
+        return 1;
     }
-    app_mouse(0); /* Balance app_end's final show. */
+    atexit(finish);
+    reset();
+    resize_layout();
+    app_window_redraw(&window, window.work, draw);
+    for (;;) {
+        AppEvent e;
+        app_window_event(&e, 20, calc.buttons);
+        int redraw = 0;
+        if (e.flags & APP_MESSAGE) {
+            int result = app_window_message(&window, e.message);
+            if (result == WINDOW_CLOSE)
+                break;
+            if (result == WINDOW_CHANGED) {
+                resize_layout();
+                redraw = 1;
+            } else if (result == WINDOW_REDRAW) {
+                AppRect damage = window.work;
+                if (e.message[0] == 20)
+                    damage = (AppRect){e.message[4], e.message[5], e.message[6], e.message[7]};
+                app_window_redraw(&window, damage, draw);
+            }
+        }
+        if (window_key(e.key, e.modifiers)) {
+            redraw = 1;
+        } else {
+            int inside = app_window_contains(&window, e.x, e.y);
+            int result = event(e.key, inside ? e.x - layout.x : -1,
+                               inside ? e.y - layout.y : -1, e.buttons);
+            if (result < 0)
+                break;
+            redraw |= result;
+        }
+        if (redraw)
+            app_window_redraw(&window, window.work, draw);
+    }
     return 0;
 }

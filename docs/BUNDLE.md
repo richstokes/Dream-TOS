@@ -14,7 +14,7 @@ into the Dreamcast programs; they are not imitations of those programs.
 |---|---|---|
 | `EDITOR.PRG` | [Kilo](https://github.com/antirez/kilo), BSD-2-Clause | Plain-text editing, open/save/save-as, search, C syntax colours, CRLF input |
 | `IMAGES.PRG` | [stb_image](https://github.com/nothings/stb), MIT/public domain | PNG/JPEG/BMP, 16-colour quantization, greyscale, mirror, BMP export |
-| `CALC.PRG` | [tinyexpr](https://github.com/codeplea/tinyexpr), zlib | Graphical keypad, editable expression and result display, scientific functions and `ans` |
+| `CALC.PRG` | [tinyexpr](https://github.com/codeplea/tinyexpr), zlib | Movable/resizable GEM window, graphical keypad, editable expression and result display, scientific functions and `ans` |
 | `WORM.PRG` | [GEM Worm](https://github.com/ArmstrongJ/gemworm), GPL-3.0-or-later | Original movement, field renderer, food and high-score code; new fullscreen GEM interface |
 | `FIFTEEN.PRG` | [Simon Tatham's puzzles](https://www.chiark.greenend.org.uk/~sgtatham/puzzles/), MIT | Sliding tiles, undo/redo, new game, RAM-disk saves |
 | `MINES.PRG` | Same collection, MIT | Minesweeper, keyboard cursor/flags, undo/redo, saves |
@@ -58,6 +58,12 @@ buttons and movement. Flycast verification primarily used the keyboard.
   the previous answer and leave the expression editable. Angles are radians;
   exponentiation is left associative, as in the default tinyexpr configuration.
   The display shows 12 significant digits; calculations retain double precision.
+  Drag the GEM title bar to move the window and its lower-right size gadget
+  to resize it; the keypad adapts to the available space. The upper-right
+  full-size gadget or F5 toggles full size and the previous size/position.
+  Ctrl+arrows moves the window; Ctrl+Shift+arrows resizes it. The close box
+  or Escape exits. The minimum work area is 432x328 pixels. This remains
+  a single foreground TOS application; the file manager resumes on exit.
 - Worm: P starts/pauses, arrows or WASD steer, N restarts, H shows scores,
   Esc exits. High scores go to `C:\WORM.HI`.
 - Puzzles: arrows move, Space/Return select, F is the second action
@@ -68,7 +74,7 @@ Use DOS 8.3 names when opening or saving. **C: is a RAM disk: reset and
 power-off erase documents, exported images, scores and game saves.**
 D: remains read-only. No persistent storage was added.
 
-<a href="screenshots/calculator.jpg"><img src="screenshots/calculator.jpg" width="640" alt="The native graphical calculator in Flycast, showing sqrt(144)+2^3 = 20 with its clickable scientific keypad"></a>
+<a href="screenshots/calculator.jpg"><img src="screenshots/calculator.jpg" width="640" alt="The calculator in a native GEM window in Flycast, showing sqrt(144)+2^3 = 20 with its clickable scientific keypad"></a>
 
 ## Source and build
 
@@ -115,6 +121,12 @@ interleaved four-plane bitmap through VDI. The [sample artwork and prompts](../a
 include generated hedgehog fan art and an original space scene. These are
 separate from the games and are not extracted commercial game assets.
 
+The calculator uses AES window creation, move/size/top/close messages and
+visible-rectangle redraws. Its VDI drawing is clipped to the intersection
+of the damage rectangle, visible rectangles and window work area. It uses
+the shared desktop palette and holds the screen lock only during redraws;
+other bundled fullscreen apps keep their existing display ownership.
+
 ## Validation
 
 Flycast, using the native CDI and keyboard input:
@@ -123,7 +135,9 @@ Flycast, using the native CDI and keyboard input:
 - Calculator: keyboard navigation of the graphical keypad (`7+8 = 15`),
   GEM pointer click on Multiply followed by typed `2` (`30`), syntax-error
   correction with Delete (`2+*3` to `2+3 = 5`), and `sqrt(144)+2^3 = 20`.
-  Escape restores the desktop and its palette.
+  Window move/resize and full-size/restore retain the result. Native GEM
+  full-size and close gadgets work with the keyboard-controlled pointer.
+  Closing the window restores EmuDesk with unchanged desktop colours.
 - Editor: two-line input, save to C:, new buffer, reopen, search, exit.
 - Viewer: both PNG samples; mirror/greyscale; BMP export to C: and reopen.
 - Fifteen: tile movement, save, new game, restore saved board.
@@ -136,5 +150,9 @@ Host ASan/UBSan tests cover Kilo editing/CRLF/save round trips, image
 quantization and exact exported BMP pixel recovery, puzzle state save/load,
 Worm movement/restart/scores, and calculator keypad/keyboard input, cancelled
 clicks, expression editing, result chaining, bounded input and error recovery.
+Window binding tests cover move/resize constraints, full-size restoration,
+partial/obscured redraw clipping, input and close/failure cleanup. They also
+check that existing fullscreen apps still release their mouse/screen locks
+and restore their palette.
 The host checks complement real SH-4 execution; they are not a substitute
 for it. Physical Dreamcast testing remains pending.

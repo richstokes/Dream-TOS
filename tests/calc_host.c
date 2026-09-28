@@ -95,6 +95,25 @@ int main(void)
     assert(!calc.expr[0]);
     reset(); type("2+3"); click("+/-"); click("=");
     assert(calc.ans == -5);
+    /* Resize changes hit areas and text capacity without resetting a calculation. */
+    const AppRect sizes[] = {{91, 75, 432, 328}, {60, 40, 480, 360}, {1, 38, 620, 420}};
+    for (unsigned n = 0; n < sizeof(sizes) / sizeof(sizes[0]); n++) {
+        window.work = sizes[n];
+        calc.pressed = 2;
+        resize_layout();
+        assert(calc.ans == -5 && calc.pressed == -1);
+        assert(layout.x == sizes[n].x && layout.y == sizes[n].y);
+        assert(DISPLAY_CHARS * 8 <= layout.w - 44);
+        for (int i = 0; i < KEY_COUNT; i++) {
+            int x = KEY_X + i % COLS * KEY_DX;
+            int y = KEY_Y + i / COLS * KEY_DY;
+            assert(hit_key(x + KEY_W / 2, y + KEY_H / 2) == i);
+            assert(hit_key(x + KEY_W + 1, y) == -1);
+            assert(y + KEY_H < layout.h - 30);
+        }
+    }
+    click("+"); click("7"); click("=");
+    assert(calc.ans == 2);
     assert(event(27, 0, 0, 0) == -1);
     puts("Graphical calculator buttons, keyboard, errors and editing: PASS");
     return 0;

@@ -12,6 +12,8 @@ void aes_call(int op, int ni, int no, int na);
 void vdi_call(int op, int np, int ni);
 unsigned long app_millis(void);
 int app_begin(const char *title);
+/* Open AES/VDI without clearing the desktop, owning the mouse or changing colours. */
+int app_begin_windowed(void);
 void app_end(void);
 void app_clear(int colour);
 void app_box(int x, int y, int w, int h, int colour);
