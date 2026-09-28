@@ -31,6 +31,16 @@ Atari executables cannot run; applications must be rebuilt for this port's
       <strong>Net puzzle</strong>
     </td>
   </tr>
+  <tr>
+    <td width="50%" align="center">
+      <a href="docs/screenshots/control-panel.jpg"><img src="docs/screenshots/control-panel.jpg" width="480" alt="Dreamcast Control Panel desk accessory showing input settings, live device diagnostics and a teal desktop"></a><br>
+      <strong>Dreamcast Control Panel</strong>
+    </td>
+    <td width="50%" align="center">
+      <a href="docs/screenshots/vmu-toolbox.jpg"><img src="docs/screenshots/vmu-toolbox.jpg" width="480" alt="Read-only VMU Toolbox displaying synthetic test files, free blocks, copy flags and a selected file timestamp"></a><br>
+      <strong>VMU Toolbox (read only)</strong>
+    </td>
+  </tr>
 </table>
 
 Captured from the native SH-4 build running in Flycast. Click an image for full size.
