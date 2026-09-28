@@ -88,12 +88,16 @@ On macOS the latter dependencies can be installed with
 ```sh
 ./scripts/bootstrap-mkdcdisc.sh  # one-time pinned disc-image tool build
 ./scripts/build-cdi.sh
-./scripts/run-flycast.sh "$PWD/dist/emutos-dreamcast.cdi"
+./scripts/run-flycast.sh
 ```
 
 Output: `dist/emutos-dreamcast.cdi`, `dist/emutos-dreamcast.elf` and SHA256SUMS.
 `MKDCDISC` can select an existing mkdcdisc executable. `FLYCAST_BIN` can select
-Flycast. `./scripts/build.sh` builds only the ELF; direct ELF boot has no D:.
+Flycast. With no arguments, the launcher boots `dist/emutos-dreamcast.cdi`
+and builds it if missing. Rebuild with `./scripts/build-cdi.sh` after source
+changes. Pass an image path to boot another image. `./scripts/build.sh`
+builds only the ELF; explicitly booting that ELF has no disc, D: drive or
+bundled applications/accessories.
 Add files with DOS 8.3 names to `disc/` and rebuild to include them on D:.
 
 For keyboard-only Flycast testing, detach the host mouse route:
