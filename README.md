@@ -10,6 +10,31 @@ code is compiled for the Dreamcast. **There is no 68000 emulator.** Existing
 Atari executables cannot run; applications must be rebuilt for this port's
 [native ABI](docs/NATIVE-ABI.md).
 
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <a href="docs/screenshots/desktop.jpg"><img src="docs/screenshots/desktop.jpg" width="480" alt="EmuDesk running on Dreamcast with the read-only D: drive open"></a><br>
+      <strong>EmuDesk desktop</strong>
+    </td>
+    <td width="50%" align="center">
+      <a href="docs/screenshots/image-viewer.jpg"><img src="docs/screenshots/image-viewer.jpg" width="480" alt="Native image viewer displaying the bundled Sonic fan-art sample in 16 colours"></a><br>
+      <strong>Native image viewer</strong>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <a href="docs/screenshots/text-editor.jpg"><img src="docs/screenshots/text-editor.jpg" width="480" alt="Kilo text editor displaying the bundled application guide from D: APPS.TXT"></a><br>
+      <strong>Kilo text editor</strong>
+    </td>
+    <td width="50%" align="center">
+      <a href="docs/screenshots/net-puzzle.jpg"><img src="docs/screenshots/net-puzzle.jpg" width="480" alt="Simon Tatham's Net puzzle running natively with five connected tiles"></a><br>
+      <strong>Net puzzle</strong>
+    </td>
+  </tr>
+</table>
+
+Captured from the native SH-4 build running in Flycast. Click an image for full size.
+
 The bootable CDI runs in Flycast. Verified operations include launching a
 separately compiled SH-4 GEM application and returning to the desktop, reading
 files from the disc, creating folders using the keyboard, and RAM-disk file
