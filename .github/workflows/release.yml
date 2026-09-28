@@ -1,0 +1,91 @@
+name: Build Dreamcast release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Do not interrupt a release while its downloadable assets are being updated.
+concurrency:
+  group: emutos-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  KOS_COMMIT: cd340378043f00cd1d05284ee0d02548d33d6054
+  TOOLCHAIN_IMAGE: pcercuei/dreamcast-toolchain@sha256:62ed5653ac1c71c7323942dda3f32033db56a4830625187681f5329f623e6c9f
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Build SDK, native programs and CDI; run checks
+        run: |
+          export SOURCE_DATE_EPOCH
+          SOURCE_DATE_EPOCH=$(git show -s --format=%ct HEAD)
+          docker pull "$TOOLCHAIN_IMAGE"
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE:/workspace" \
+            --workdir /workspace \
+            --env KOS_COMMIT --env SOURCE_DATE_EPOCH \
+            "$TOOLCHAIN_IMAGE" \
+            sh .github/scripts/build-in-container.sh
+
+      - name: Record build provenance and verify downloads
+        run: |
+          # Docker writes artifacts as root; return ownership to the runner.
+          sudo chown -R "$(id -u):$(id -g)" dist
+          {
+            printf 'Source: https://github.com/%s/tree/%s\n' "$GITHUB_REPOSITORY" "$GITHUB_SHA"
+            printf 'Workflow: https://github.com/%s/actions/runs/%s\n' "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+            printf 'KallistiOS: %s\nToolchain image: %s\n' "$KOS_COMMIT" "$TOOLCHAIN_IMAGE"
+            printf 'mkdcdisc: %s\n' "$(git -c safe.directory="$GITHUB_WORKSPACE/build/tools/mkdcdisc" -C build/tools/mkdcdisc rev-parse HEAD)"
+          } > dist/BUILD-INFO.txt
+          (cd dist && sha256sum emutos-dreamcast.cdi emutos-dreamcast.elf BUILD-INFO.txt > SHA256SUMS)
+          (cd dist && sha256sum --check SHA256SUMS)
+
+      - name: Keep tested build artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: emutos-dreamcast
+          path: |
+            dist/emutos-dreamcast.cdi
+            dist/emutos-dreamcast.elf
+            dist/BUILD-INFO.txt
+            dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs: build
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out publishing script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Download tested artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: emutos-dreamcast
+          path: dist
+
+      - name: Publish rolling release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/publish-release.sh dist

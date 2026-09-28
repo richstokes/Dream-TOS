@@ -1,5 +1,9 @@
 # Native EmuTOS for Sega Dreamcast
 
+[Download the latest CDI](https://github.com/richstokes/dreamcast-EmuTOS-port/releases/download/continuous/emutos-dreamcast.cdi)
+or browse [GitHub releases](https://github.com/richstokes/dreamcast-EmuTOS-port/releases/tag/continuous).
+Successful CI builds from `main` update these downloads; see [CI details](docs/CI.md).
+
 A native SH-4 port of [EmuTOS](https://emutos.sourceforge.io/), using KallistiOS
 for Dreamcast hardware. The actual EmuDesk, AES, VDI and GEMDOS filesystem C
 code is compiled for the Dreamcast. **There is no 68000 emulator.** Existing
