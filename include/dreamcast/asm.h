@@ -16,6 +16,7 @@ static inline void swpcopyw(const UWORD *s,UWORD *d) { *d=__builtin_bswap16(*s);
 #define rorw(a,n) ((a)=(UWORD)(((UWORD)(a)>>(n))|((UWORD)(a)<<(16-(n)))))
 #define rolw(a,n) ((a)=(UWORD)(((UWORD)(a)<<(n))|((UWORD)(a)>>(16-(n)))))
 #define get_sr() 0
-#define set_sr(x) ((void)(x),0)
+/* GEM event handlers run cooperatively, never in a hardware IRQ. */
+static inline UWORD set_sr(UWORD value) { (void)value;return 0; }
 #define regsafe_call(a) ((PFVOID)(a))()
 #define delay_loop(n) do { volatile ULONG i=(n); while(i--) {} } while(0)

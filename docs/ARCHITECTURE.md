@@ -13,7 +13,9 @@ executes GEM at a time, preserving the original cooperative scheduling model.
 The graphics backend maintains a 640×480 four-plane buffer. Native C rendering
 updates it; the HAL converts changed frames to RGB565 and copies them to video
 RAM using SH-4 store queues. Font data and planar pixels remain numeric 16-bit
-words. Byte-order adaptations cover console cells, FAT disk fields, AES event
+words. The native glyph renderer handles scaling, styling and rotation using numeric
+font words, with host sanitizer tests and a loadable VDI test application.
+Byte-order adaptations cover console cells, FAT disk fields, AES event
 packing, object specs and mouse save/restore buffers.
 
 Maple mouse input is collected in a separate KOS thread so short presses can

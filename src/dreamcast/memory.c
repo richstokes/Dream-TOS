@@ -65,7 +65,10 @@ void *xmalloc(long n)
 }
 void *xmxalloc(long n, int mode)
 {
-    return mode < 0 || mode > 3 ? NULL : xmalloc(n);
+    /* Like EmuTOS, ignore FreeMiNT protection flags (e.g. VDI's MX_SUPER).
+     * All four RAM preferences use the single native allocation arena. */
+    (void)mode;
+    return xmalloc(n);
 }
 long xmfree(void *p)
 {

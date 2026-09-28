@@ -13,14 +13,17 @@ mkdir -p "$root/build/disc" "$root/dist"
 # A fresh temporary staging directory prevents stale app files entering D:.
 stage=$(mktemp -d "$root/build/fat-stage.XXXXXX")
 cp "$root"/disc/* "$stage/"
-cp "$root/build/apps/HELLO.PRG" "$stage/"
+cp "$root/build/apps/HELLO.PRG" "$root/build/apps/VDITEST.PRG" "$stage/"
 python3 "$root/tools/fat_image.py" "$stage" "$root/build/disc/DISC.IMG"
 python3 - "$stage" <<'PY'
 import shutil,sys
 shutil.rmtree(sys.argv[1])
 PY
 export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1790553600}
-"$mkdcdisc" --allow-overwrite --main-elf "$root/build/emutos-dreamcast.elf" \
+# GDEMU and Flycast need no full-disc filler. Enable it for a padded CD-R image.
+padding=(--disable-data-track-padding)
+if [ "${CD_PADDING:-0}" = 1 ]; then padding=(); fi
+"$mkdcdisc" --allow-overwrite "${padding[@]}" --main-elf "$root/build/emutos-dreamcast.elf" \
  --directory-contents "$root/build/disc" --title 'EMUTOS DREAMCAST' \
  --author 'EMUTOS DC PORT' --release 20260928 --output "$root/dist/emutos-dreamcast.cdi"
 cp "$root/build/emutos-dreamcast.elf" "$root/dist/emutos-dreamcast.elf"

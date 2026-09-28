@@ -31,6 +31,13 @@ long dc_app_main(const struct dc_native_api *os, const char *tail, const char *e
     os->gemdos(0x3e, (int)h);
     if (result != sizeof(message) - 1)
         return -10;
+    /* Leave this allocation to process cleanup, exercising ownership. */
+    if (!os->gemdos(0x44, 1024L, 0x30))
+        return -39;
+    if (tail && (unsigned char)tail[0] == 4 && tail[1] == 'P') {
+        os->gemdos(0x4c, 43);
+        return -66;
+    }
     /* The boot test uses a length-prefixed TEST command line. */
     if (tail && (unsigned char)tail[0] == 4 && tail[1] == 'T')
         return 42;
