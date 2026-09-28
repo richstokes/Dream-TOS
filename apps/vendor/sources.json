@@ -1,0 +1,66 @@
+{
+  "gemworm": {
+    "url": "https://github.com/ArmstrongJ/gemworm",
+    "commit": "24892a2a9d39e02444e4bf3e90fa23e6349a0810",
+    "files": [
+      "worm.c",
+      "wormst.h",
+      "wormst.rsc",
+      "field.c",
+      "field.h",
+      "player.c",
+      "player.h",
+      "scores.c",
+      "scores.h",
+      "util.h",
+      "license.txt"
+    ]
+  },
+  "kilo": {
+    "url": "https://github.com/antirez/kilo",
+    "commit": "323d93b29bd89a2cb446de90c4ed4fea1764176e",
+    "files": [
+      "kilo.c",
+      "LICENSE"
+    ]
+  },
+  "tinyexpr": {
+    "url": "https://github.com/codeplea/tinyexpr",
+    "commit": "c3b2f32eee61762f4c9d89c2c08cf34556a4a780",
+    "files": [
+      "tinyexpr.c",
+      "tinyexpr.h",
+      "LICENSE"
+    ]
+  },
+  "stb": {
+    "url": "https://github.com/nothings/stb",
+    "commit": "2c980bb59875b0d32144a71867fbdebb2f77cd20",
+    "files": [
+      "stb_image.h",
+      "LICENSE"
+    ]
+  },
+  "puzzles": {
+    "url": "https://git.tartarus.org/simon/puzzles.git",
+    "commit": "616da16f25da428ccda805536209095bd062676e",
+    "files": [
+      "puzzles.h",
+      "tree234.h",
+      "midend.c",
+      "drawing.c",
+      "misc.c",
+      "malloc.c",
+      "random.c",
+      "tree234.c",
+      "dsf.c",
+      "fifteen.c",
+      "mines.c",
+      "net.c",
+      "LICENCE",
+      "README",
+      "devel.but",
+      "puzzles.but"
+    ]
+  }
+}
