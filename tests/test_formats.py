@@ -28,6 +28,22 @@ class Formats(unittest.TestCase):
         size=struct.unpack_from('<I',e,28)[0]
         self.assertEqual(out[:size],payload)
         self.assertEqual(struct.unpack_from('<HI',root,26),(0,0))
+    def test_native_clock_is_packaged_as_accessory(self):
+        expected=native.convert((ROOT/'build/apps/CLOCK.elf').read_bytes())
+        self.assertEqual((ROOT/'build/apps/CLOCK.ACC').read_bytes(),expected)
+        image=(ROOT/'build/disc/DISC.IMG').read_bytes()
+        entries=[image[i:i+32] for i in range(65*512,73*512,32)]
+        entry=next(e for e in entries if e[:11]==b'CLOCK   ACC')
+        cluster=struct.unpack_from('<H',entry,26)[0]
+        size=struct.unpack_from('<I',entry,28)[0]
+        payload=bytearray();seen=set()
+        while cluster<0xfff8:
+            self.assertGreaterEqual(cluster,2)
+            self.assertNotIn(cluster,seen);seen.add(cluster)
+            pos=(73+cluster-2)*512;payload+=image[pos:pos+512]
+            cluster=struct.unpack_from('<H',image,512+cluster*2)[0]
+        self.assertEqual(payload[:size],expected)
+
     def test_reject_bad_names(self):
         with tempfile.TemporaryDirectory() as temp:
             (Path(temp)/'too-long-name.txt').touch()

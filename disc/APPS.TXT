@@ -4,6 +4,14 @@ All programs are native SH-4 code. Atari 68000 executables cannot run.
 Open a .PRG in EmuDesk to start it. Save on C:, the temporary RAM disk.
 D: is read-only. Reset or power-off erases C:, including all saved work.
 
+CLOCK.ACC - resident GEM clock desk accessory
+Loaded automatically at boot. Choose Desk > Clock to open or raise it.
+Analogue face, 24-hour digital time and date from the console clock.
+GEMDOS time advances in two-second steps. The desktop stays usable.
+Close box or Esc hides; Desk > Clock reopens. Drag to move or resize,
+or use Ctrl+arrows / Ctrl+Shift+arrows. Program transitions hide the
+window; the accessory remains loaded. Do not launch .ACC as a .PRG.
+
 EDITOR.PRG - Kilo plain-text editor
 Ctrl+O open; Ctrl+N new; Ctrl+S save; Ctrl+A save as; Ctrl+F search;
 Ctrl+Q quit. Arrow/Home/End keys move. Limit: 64 KiB / 1023 lines.
@@ -45,6 +53,13 @@ Connect all the wires to the central power source.
 All three puzzles: N new, U undo, R redo, S save, L load, H help,
 Esc exit. Saves are C:\FIFTEEN.SAV, C:\MINES.SAV and C:\NET.SAV.
 Mouse controls are also supported by the puzzle games.
+
+BENCH.PRG - native CPU, memory, VDI and file benchmark
+R or Return runs; Esc cancels while running or exits when idle.
+S saves C:\BENCH.TXT; E cycles Unspecified / Real hardware / Flycast.
+Three samples per test; median and range. BENCH.DAT is its read-test input.
+C: tests use a temporary RAM file. D: reads include cache effects.
+Flycast scores are not physical Dreamcast measurements.
 
 RUNTIME.PRG tests native allocation, stdio, file access and math.
 VDITEST.PRG checks graphics. HELLO.PRG is the minimal ABI example.

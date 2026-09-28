@@ -27,3 +27,8 @@ appbuild EDITOR apps/ports/editor.c
 appbuild WORM apps/ports/worm.c apps/vendor/gemworm/{field,player,scores}.c -Iapps/vendor/gemworm
 appbuild IMAGES apps/ports/viewer.c -Iapps/vendor/stb
 appbuild RUNTIME apps/ports/runtime_test.c
+appbuild BENCH apps/ports/bench.c apps/ports/bench_core.c -ffp-contract=off
+
+# Accessories use the same validated native format, with a resident AES entry.
+appbuild CLOCK apps/ports/clock.c
+mv build/apps/CLOCK.PRG build/apps/CLOCK.ACC

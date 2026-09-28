@@ -103,7 +103,7 @@ void gem_main(void);            /* called only from gemstart.S */
 
 typedef struct {                     /* used by count_accs()/ldaccs() */
     LONG addr;                          /* DA load address */
-    char name[LEN_ZFNAME];              /* DA file name */
+    char name[LEN_ZFNAME+3];              /* DA file name */
 } ACC;
 
 static ACC      acc[NUM_ACCS];
@@ -242,6 +242,16 @@ static AESPD *iprocess(char *pname, PFVOID routine)
  */
 static void load_one_acc(ACC *acc)
 {
+#ifdef MACHINE_DREAMCAST
+    extern LONG dc_native_acc_load(const char *);
+    extern void dc_native_acc_start(void);
+    acc->addr = dc_native_acc_load(acc->name);
+    if (acc->addr != -1L)
+    {
+        AESPD *pd = pstart(dc_native_acc_start, acc->name, acc->addr);
+        p_nameit(pd, acc->name+3); /* skip the D:\\ prefix in the AES name */
+    }
+#else
     WORD    handle;
     WORD    err_ret;
     LONG    ret;
@@ -261,6 +271,7 @@ static void load_one_acc(ACC *acc)
         if (err_ret != -1)
             pstart(gotopgm, acc->name, acc->addr);
     }
+#endif
 }
 
 
@@ -276,7 +287,12 @@ static WORD count_accs(void)
     if (bootflags & BOOTFLAG_SKIP_AUTO_ACC)
         return 0;
 
+#ifdef MACHINE_DREAMCAST
+    /* C: is recreated at boot; bundled native accessories live on the disc. */
+    strcpy(D.g_work,"D:\\*.ACC");
+#else
     strcpy(D.g_work,"\\*.ACC");
+#endif
     dos_sdta(&D.g_dta);
 
     for (i = 0; i < NUM_ACCS; i++)
@@ -284,7 +300,12 @@ static WORD count_accs(void)
         rc = (i==0) ? dos_sfirst(D.g_work,FA_RO) : dos_snext();
         if (rc < 0)
             break;
+#ifdef MACHINE_DREAMCAST
+        strcpy(acc[i].name, "D:\\");
+        strlcpy(acc[i].name+3,D.g_dta.d_fname,LEN_ZFNAME);
+#else
         strlcpy(acc[i].name,D.g_dta.d_fname,LEN_ZFNAME);
+#endif
     }
 
     return i;
@@ -305,8 +326,15 @@ static void free_accs(WORD n)
     WORD i;
 
     for (i = 0; i < n; i++)
-        if (acc[i].addr >= 0L)
+        if (acc[i].addr != -1L)
+        {
+#ifdef MACHINE_DREAMCAST
+            extern void dc_native_acc_free(LONG);
+            dc_native_acc_free(acc[i].addr);
+#else
             dos_free((void *)acc[i].addr);
+#endif
+        }
 }
 
 

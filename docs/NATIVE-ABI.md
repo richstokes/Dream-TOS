@@ -24,7 +24,8 @@ There are no Motorola traps, register argument conventions or fixed Atari
 hardware addresses. Applications must not call KOS using this packed ABI.
 Unsupported GEMDOS functions return EINVFN. The initial loader supports
 synchronous Pexec mode 0 and termination by return, Pterm0 or Pterm; nested
-Pexec, TSRs, accessories, signals and process isolation are not implemented.
+Pexec, TSRs, signals and process isolation are not implemented. Native desk
+accessories are supported as described below.
 All native programs are trusted code sharing the OS address space.
 
 `apps/hello.c` is a complete separately linked example. Build it with
@@ -73,3 +74,26 @@ Child file handles and current directories are inherited; owned handles and
 GEMDOS allocations are reclaimed on normal termination. The loader restores
 the parent process and frees the program allocation before returning to AES.
 A CPU exception is currently fatal to the session; this is not a protected OS.
+
+## Native desk accessories
+
+`CLOCK.ACC` demonstrates a resident native GEM accessory. The build uses the
+same `DCNATIVE` image format, relocation checks and SH-4 API as `.PRG` files.
+At boot AES scans `D:\*.ACC`, loads each validated image, and starts it on a
+separate native cooperative AES context. It does not execute 68000 startup
+code. The accessory calls `appl_init`, opens a virtual VDI workstation,
+registers a Desk-menu entry with `menu_register`, then waits in `evnt_multi`.
+
+`AC_OPEN` opens or tops its window; `WM_CLOSED` hides it without `appl_exit` or
+`Pterm`. `AC_CLOSE` invalidates its window handle because the shell resets
+windows when switching the foreground program. Keep persistent allocations
+in initialization, before the first message wait: classic TOS accessories
+share the foreground GEMDOS process, whose later allocations are reclaimed
+at program exit. The clock performs no later application heap allocations.
+A hidden clock waits only for messages; a visible clock also uses a timer
+and paints through the window manager's visible rectangles.
+
+Foreground `Pexec` remains single-tasking. Accessory termination has its own
+SH-4 jump target and cannot terminate the foreground program. A returning
+accessory is parked in a message wait so that it cannot strand the scheduler.
+Accessories are loaded at boot, not by double-clicking their `.ACC` file.

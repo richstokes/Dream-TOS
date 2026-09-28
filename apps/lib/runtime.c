@@ -305,6 +305,11 @@ int _close_r(struct _reent *r, int fd)
     (void)r;
     return _close(fd);
 }
+int _unlink_r(struct _reent *r, const char *path)
+{
+    (void)r;
+    return _unlink(path);
+}
 _ssize_t _read_r(struct _reent *r, int fd, void *p, size_t n)
 {
     (void)r;

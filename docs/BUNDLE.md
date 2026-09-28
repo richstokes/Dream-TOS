@@ -1,6 +1,6 @@
 # Native application bundle
 
-Every `.PRG` is separately compiled and relocated SH-4 machine code, using
+Every `.PRG` and `.ACC` is separately compiled and relocated SH-4 machine code, using
 native GEM AES/VDI calls and GEMDOS file access. There is no 68000 emulator,
 SDL emulator, browser or host-side application doing the work.
 
@@ -19,6 +19,8 @@ into the Dreamcast programs; they are not imitations of those programs.
 | `FIFTEEN.PRG` | [Simon Tatham's puzzles](https://www.chiark.greenend.org.uk/~sgtatham/puzzles/), MIT | Sliding tiles, undo/redo, new game, RAM-disk saves |
 | `MINES.PRG` | Same collection, MIT | Minesweeper, keyboard cursor/flags, undo/redo, saves |
 | `NET.PRG` | Same collection, MIT | Wire rotation, locking, keyboard/mouse controls, saves |
+| `BENCH.PRG` | This project, GPL-2.0-or-later | [CPU, memory, VDI and file benchmarks](BENCHMARK.md), three samples, text reports |
+| `CLOCK.ACC` | This project, GPL-2.0-or-later | Resident GEM desk accessory; analogue face, digital time/date, movable/resizable window over the desktop |
 | `RUNTIME.PRG` | This project, GPL-2.0-or-later | Native libc, allocator, math and file-access diagnostic |
 
 `HELLO.PRG` and `VDITEST.PRG` remain the ABI example and graphics diagnostic.
@@ -32,12 +34,20 @@ does not provide an open-source grant for the original game's assets.
 
 ## Storage and controls
 
-All programs start from D: in EmuDesk. Use **Alt+D** to open the disc;
+Ordinary programs start from D: in EmuDesk. The clock accessory loads automatically
+at boot; open it with **Desk → Clock**. Use **Alt+D** to open the disc;
 Up/Down scroll the directory. Alt+arrows move the GEM pointer, Alt+Space
 clicks, and Ctrl+O opens a selected program. The applications work with a
 Dreamcast keyboard. The three puzzle frontends also accept Maple mouse
 buttons and movement. Flycast verification primarily used the keyboard.
 
+- Clock: **Desk → Clock** opens or raises its window while the desktop remains
+  usable. The close box or Esc hides it; choose the menu again to reopen.
+  Drag the title/size gadgets, or use Ctrl+arrows to move and Ctrl+Shift+arrows
+  to resize. It displays the console clock initialized from the Dreamcast RTC
+  (the emulated RTC in Flycast), in 24-hour format with GEMDOS two-second
+  precision. Starting or exiting a foreground program hides its window; the
+  accessory remains resident and can be reopened from the desktop.
 - Editor: Ctrl+O open, Ctrl+N new, Ctrl+S save, Ctrl+A save-as, Ctrl+F find,
   Ctrl+Q quit. Unsaved changes require repeated Ctrl+Q or confirmation
   before opening/creating another file. This is a plain-text editor, not
@@ -156,3 +166,7 @@ check that existing fullscreen apps still release their mouse/screen locks
 and restore their palette.
 The host checks complement real SH-4 execution; they are not a substitute
 for it. Physical Dreamcast testing remains pending.
+
+## Clock desk accessory
+
+<img src="screenshots/clock.jpg" width="640" alt="Native Clock desk accessory running alongside EmuDesk and its disk window in Flycast">

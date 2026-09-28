@@ -12,6 +12,11 @@
 #include "dreamcast/hal.h"
 #include "dreamcast/native.h"
 #include "dreamcast/system_info.h"
+#include "obdefs.h"
+#include "struct.h"
+#include "aesvars.h"
+#include "gemlib.h"
+#include "gemevlib.h"
 extern long trap1(int, ...);
 extern LONG super(WORD, void *);
 extern void dc_vdi(void *), dc_poll(void);
@@ -27,9 +32,17 @@ static jmp_buf term_context;
 static int executing;
 static long exit_status;
 static PD child;
+/* Accessories have independent SH-4 stacks and termination targets. Never let
+ * Pterm in an accessory jump into a foreground application's stack. */
+static jmp_buf acc_term[NUM_ACCS];
+static int acc_active[NUM_ACCS];
+struct native_image { UBYTE *code; ULONG entry; };
 long dc_native_terminate(int status)
 {
-    if (!executing)
+    int pid = rlr ? rlr->p_pid : 0;
+    if (pid >= 2 && pid < NUM_PDS && acc_active[pid - 2])
+        longjmp(acc_term[pid - 2], 1);
+    if (pid != 0 || !executing)
         return EINVFN;
     exit_status = status;
     longjmp(term_context, 1);
@@ -39,10 +52,8 @@ static ULONG le32(const UBYTE *p)
 {
     return (ULONG)p[0] | (ULONG)p[1] << 8 | (ULONG)p[2] << 16 | (ULONG)p[3] << 24;
 }
-long trap1_pexec(short mode, const char *path, const char *tail, const char *env)
+static long load_image(const char *path, struct native_image *loaded)
 {
-    if (mode != 0 || executing)
-        return EINVFN;
     if (!path)
         return EFILNF;
     long h = trap1(0x3d, path, 0);
@@ -87,6 +98,62 @@ long trap1_pexec(short mode, const char *path, const char *tail, const char *env
     trap1(0x3e, (int)h);
     h = -1;
     dc_sync_code(image, mem);
+    loaded->code = image;
+    loaded->entry = entry;
+    kprintf("Native SH-4: %s (%lu bytes, %lu relocations)\n", path, mem, relocs);
+    return 0;
+done:
+    if (h >= 0)
+        trap1(0x3e, (int)h);
+    dc_free(image);
+    return result;
+}
+
+LONG dc_native_acc_load(const char *path)
+{
+    struct native_image *image = dc_alloc(sizeof(*image));
+    if (!image)
+        return -1L;
+    long result = load_image(path, image);
+    if (result < 0) {
+        dc_free(image);
+        kprintf("Accessory load failed: %s (%ld)\n", path, result);
+        return -1L;
+    }
+    return (LONG)image;
+}
+void dc_native_acc_free(LONG address)
+{
+    struct native_image *image = (void *)address;
+    dc_free(image->code);
+    dc_free(image);
+}
+void dc_native_acc_start(void)
+{
+    struct native_image *image = (void *)rlr->p_ldaddr;
+    int id = rlr->p_pid - 2;
+    acc_active[id] = 1;
+    if (!setjmp(acc_term[id]))
+        ((dc_native_entry)(image->code + image->entry))(&api, "", "\0");
+    acc_active[id] = 0;
+    /* A returning accessory must not return from its scheduler thread and
+     * strand the AES gate. Park it while still acknowledging shell shutdown. */
+    for (;;) {
+        WORD message[8];
+        rlr->p_flags |= AP_MESAG;
+        ev_mesag(message);
+        if (message[0] == 41) /* AC_CLOSE */
+            rlr->p_flags |= AP_ACCLOSE;
+    }
+}
+long trap1_pexec(short mode, const char *path, const char *tail, const char *env)
+{
+    if (mode != 0 || executing || (rlr && rlr->p_pid != 0))
+        return EINVFN;
+    struct native_image loaded;
+    long result = load_image(path, &loaded);
+    if (result < 0)
+        return result;
     PD *parent = run;
     memset(&child, 0, sizeof(child));
     child.p_parent = parent;
@@ -107,12 +174,12 @@ long trap1_pexec(short mode, const char *path, const char *tail, const char *env
         if (d)
             dirtbl[d].use++;
     }
-    kprintf("Pexec: native SH-4 %s (%lu bytes, %lu relocations)\n", path, mem, relocs);
+    kprintf("Pexec: native SH-4 %s\n", path);
     run = &child;
     executing = 1;
     exit_status = 0;
     if (!setjmp(term_context))
-        exit_status = ((dc_native_entry)(image + entry))(&api, tail ? tail : "",
+        exit_status = ((dc_native_entry)(loaded.code + loaded.entry))(&api, tail ? tail : "",
                                                          child.p_env ? child.p_env : "\0");
     for (int i = 0; i < NUMSTD; i++)
         if (child.p_uft[i] > 0)
@@ -128,9 +195,6 @@ long trap1_pexec(short mode, const char *path, const char *tail, const char *env
     executing = 0;
     result = exit_status;
     kprintf("Pexec: native program returned %ld\n", result);
-done:
-    if (h >= 0)
-        trap1(0x3e, (int)h);
-    dc_free(image);
+    dc_free(loaded.code);
     return result;
 }

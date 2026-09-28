@@ -48,11 +48,16 @@ operations.
 
 The CDI includes a [native application bundle](docs/BUNDLE.md): Kilo text editor,
 an image viewer with two sample pictures and BMP export, a scientific
-calculator in a movable, resizable GEM window, GEM Worm, and Simon Tatham's
-Fifteen, Mines and Net. Sources and licenses are stored in `apps/`; all programs
+calculator in a movable, resizable GEM window, a [native benchmark](docs/BENCHMARK.md),
+GEM Worm, and Simon Tatham's Fifteen, Mines and Net. Sources and licenses are
+stored in `apps/`; all programs
 are rebuilt for SH-4. Open
 `APPS.TXT` on D: for controls. Documents, images and game saves go to C: and
 are lost at reset.
+
+The **Clock desk accessory** loads at boot. Choose **Desk → Clock** for an
+analogue and digital clock over the live desktop. Close or press Esc to hide
+it, then reopen it from the same menu. See the [clock screenshot and controls](docs/BUNDLE.md#clock-desk-accessory).
 
 ## Build and run
 

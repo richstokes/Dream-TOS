@@ -57,7 +57,11 @@ static int test(void)
             return 14;
         free(blocks[i]);
     }
-    dc_os->gemdos(0x41, "C:\\LIBCTEST.TXT");
+    if (unlink("C:\\LIBCTEST.TXT"))
+        return 15;
+    f = fopen("C:\\LIBCTEST.TXT", "rb");
+    if (f || errno != ENOENT)
+        return 16;
     return 0;
 }
 int app_main(int argc, char **argv)

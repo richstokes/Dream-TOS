@@ -4,7 +4,7 @@ import argparse
 import shutil
 from pathlib import Path
 
-APPS = ('HELLO', 'VDITEST', 'CALC', 'EDITOR', 'FIFTEEN', 'MINES', 'NET', 'WORM', 'IMAGES', 'RUNTIME')
+APPS = ('HELLO', 'VDITEST', 'CALC', 'EDITOR', 'FIFTEEN', 'MINES', 'NET', 'WORM', 'IMAGES', 'RUNTIME', 'BENCH')
 NOTICES = {
     'COPYING.TXT': 'COPYING',
     'WORMGPL.TXT': 'apps/vendor/gemworm/license.txt',
@@ -16,11 +16,14 @@ NOTICES = {
 }
 
 def stage(root, dest):
+    shutil.copy2(root/'build/apps/CLOCK.ACC', dest)
     for app in APPS:
         shutil.copy2(root/'build/apps'/f'{app}.PRG',dest)
     # SYSINFO is maintained alongside the core port and may be built separately.
     if (root/'apps/sysinfo.c').is_file():
         shutil.copy2(root/'build/apps/SYSINFO.PRG',dest)
+    # Deterministic 256 KiB input for the read-only file throughput test.
+    (dest/'BENCH.DAT').write_bytes(bytes(range(256)) * 1024)
     for name, source in NOTICES.items():
         shutil.copy2(root/source,dest/name)
 
