@@ -27,7 +27,12 @@ set +u
 set -u
 jobs=$(getconf _NPROCESSORS_ONLN 2>/dev/null || printf '2')
 export JOBS="$jobs"
-make -C "$kos_base" -j"$jobs" KOS_BUILD_SUBARCHS=pristine
+# Keep KOS's default target aliases enabled. Some SDK subdirectories have
+# all_naomi as their first make target even when KOS_SUBARCH is pristine;
+# restricting KOS_BUILD_SUBARCHS makes those default targets silently do nothing.
+make -C "$kos_base" -j"$jobs"
+test -s "$kos_base/lib/dreamcast/_kos_startup.o"
+test -s "$kos_base/lib/dreamcast/libkallisti.a"
 
 # Reuse the developer scripts, including the pinned mkdcdisc revision.
 bash scripts/bootstrap-mkdcdisc.sh
