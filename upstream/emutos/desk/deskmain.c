@@ -1862,6 +1862,48 @@ void install_shortcuts(void)
 }
 
 
+#ifdef MACHINE_DREAMCAST
+/* Extend the fixed-up about box without changing the shared upstream resource. */
+static void add_dreamcast_credit(void)
+{
+    static OBJECT about[DEOK+3];
+    static const char * const credit[] = { DC_PORT_CREDIT, DC_PORT_URL };
+    WORD width = (strlen(DC_PORT_URL)+4) * gl_wchar;
+    WORD offset;
+    int i;
+
+    /* DEOK is the last object in the original Desktop Info tree. */
+    memcpy(about, desk_rs_trees[ADDINFO], (DEOK+1)*sizeof(OBJECT));
+    if (width < about[ROOT].ob_width)
+        width = about[ROOT].ob_width;
+    offset = (width-about[ROOT].ob_width)/2;
+    about[ROOT].ob_width = width;
+    about[ROOT].ob_height += 3*gl_hchar;
+    about[ROOT].ob_tail = DEOK+2;
+    for (i = 1; i <= DEOK; i++)
+        about[i].ob_x += offset;
+
+    for (i = 0; i < 2; i++)
+    {
+        OBJECT *obj = &about[DEOK+1+i];
+        obj->ob_next = i ? ROOT : DEOK+2;
+        obj->ob_head = obj->ob_tail = NIL;
+        obj->ob_type = G_STRING;
+        obj->ob_flags = i ? LASTOB : NONE;
+        obj->ob_state = NORMAL;
+        obj->ob_spec = (LONG)credit[i];
+        obj->ob_width = strlen(credit[i])*gl_wchar;
+        obj->ob_height = gl_hchar;
+        obj->ob_x = (width-obj->ob_width)/2;
+        obj->ob_y = about[DEOK].ob_y+i*gl_hchar;
+    }
+    about[DEOK].ob_y += 3*gl_hchar;
+    about[DEOK].ob_flags &= ~LASTOB;
+    about[DEOK].ob_next = DEOK+1;
+    desk_rs_trees[ADDINFO] = about;
+}
+#endif
+
 /*
  *  translate and fixup desktop objects
  */
@@ -1913,6 +1955,10 @@ static WORD desk_xlate_fix(void)
      * translation and coordinate fixing
      */
     align_objects(desk_rs_obj, RS_NOBS);
+
+#ifdef MACHINE_DREAMCAST
+    add_dreamcast_credit();
+#endif
 
     return 0;
 }
