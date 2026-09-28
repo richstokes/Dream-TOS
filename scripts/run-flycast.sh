@@ -10,4 +10,10 @@ if [ ! -f "$image" ]; then
  else echo "Image not found: $image" >&2;exit 1;fi
 fi
 # All options are transient. Map physical host inputs to the correct Maple ports.
-exec "$flycast" -config "config:Debug.SerialConsoleEnabled=yes,input:device1=0,input:device2=5,input:device3=6,input:maple_sdl_keyboard=1,input:maple_sdl_mouse=${FLYCAST_HOST_MOUSE_PORT:-2}" "$image"
+options="config:Debug.SerialConsoleEnabled=yes,input:device1=0,input:device2=5,input:device3=6,input:maple_sdl_keyboard=1,input:maple_sdl_mouse=${FLYCAST_HOST_MOUSE_PORT:-2}"
+# Optional isolated VMU directory for repeatable, non-destructive toolbox tests.
+if [ -n "${FLYCAST_VMU_DIR:-}" ]; then
+ if [ ! -d "$FLYCAST_VMU_DIR" ]; then echo 'FLYCAST_VMU_DIR must be an existing directory.' >&2;exit 1;fi
+ options+=",config:Dreamcast.VMUPath=$FLYCAST_VMU_DIR,config:PerGameVmu=no,input:device1.1=1,input:device1.2=1"
+fi
+exec "$flycast" -config "$options" "$image"

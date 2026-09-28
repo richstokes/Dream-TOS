@@ -16,7 +16,8 @@ NOTICES = {
 }
 
 def stage(root, dest):
-    shutil.copy2(root/'build/apps/CLOCK.ACC', dest)
+    for accessory in ('CLOCK', 'CONTROL', 'MONITOR', 'VMUTOOL'):
+        shutil.copy2(root/'build/apps'/f'{accessory}.ACC', dest)
     for app in APPS:
         shutil.copy2(root/'build/apps'/f'{app}.PRG',dest)
     # SYSINFO is maintained alongside the core port and may be built separately.

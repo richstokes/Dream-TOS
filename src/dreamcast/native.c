@@ -12,6 +12,8 @@
 #include "dreamcast/hal.h"
 #include "dreamcast/native.h"
 #include "dreamcast/system_info.h"
+#include "dreamcast/control.h"
+#include "dreamcast/vmu_info.h"
 #include "obdefs.h"
 #include "struct.h"
 #include "aesvars.h"
@@ -27,7 +29,7 @@ static void native_aes(void *pb)
 }
 static const struct dc_native_api api = {DC_NATIVE_ABI, sizeof(api), trap1,
                                          native_aes,    dc_vdi,      dc_poll, dc_millis,
-                                         dc_system_info};
+                                         dc_system_info, dc_input_config, dc_input_snapshot, dc_vmu_info};
 static jmp_buf term_context;
 static int executing;
 static long exit_status;

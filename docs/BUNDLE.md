@@ -21,6 +21,9 @@ into the Dreamcast programs; they are not imitations of those programs.
 | `NET.PRG` | Same collection, MIT | Wire rotation, locking, keyboard/mouse controls, saves |
 | `BENCH.PRG` | This project, GPL-2.0-or-later | [CPU, memory, VDI and file benchmarks](BENCHMARK.md), three samples, text reports |
 | `CLOCK.ACC` | This project, GPL-2.0-or-later | Resident GEM desk accessory; analogue face, digital time/date, movable/resizable window over the desktop |
+| `CONTROL.ACC` | This project, GPL-2.0-or-later | Session input/display settings and live keyboard, mouse and controller diagnostics |
+| `MONITOR.ACC` | This project, GPL-2.0-or-later | Memory history, free disk space, uptime and Maple device list |
+| `VMUTOOL.ACC` | This project, GPL-2.0-or-later | Read-only card directory, space, file sizes, timestamps and copy flags |
 | `RUNTIME.PRG` | This project, GPL-2.0-or-later | Native libc, allocator, math and file-access diagnostic |
 
 `HELLO.PRG` and `VDITEST.PRG` remain the ABI example and graphics diagnostic.
@@ -34,8 +37,10 @@ does not provide an open-source grant for the original game's assets.
 
 ## Storage and controls
 
-Ordinary programs start from D: in EmuDesk. The clock accessory loads automatically
-at boot; open it with **Desk → Clock**. Use **Alt+D** to open the disc;
+Ordinary programs start from D: in EmuDesk. All four desk accessories load
+automatically at boot; open them from **Desk**. See the
+[Dreamcast accessories guide](ACCESSORIES.md) for the control panel, monitor
+and read-only VMU toolbox. Use **Alt+D** to open the disc;
 Up/Down scroll the directory. Alt+arrows move the GEM pointer, Alt+Space
 clicks, and Ctrl+O opens a selected program. The applications work with a
 Dreamcast keyboard. The three puzzle frontends also accept Maple mouse

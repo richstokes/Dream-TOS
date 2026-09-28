@@ -8,6 +8,10 @@
 #include <time.h>
 #include "dreamcast/hal.h"
 #include "dreamcast/system_info.h"
+#include "dreamcast/control.h"
+static unsigned mouse_percent=100;
+static int mouse_fraction_x, mouse_fraction_y;
+static struct dc_input_snapshot input_snapshot;
 KOS_INIT_FLAGS(INIT_DEFAULT);
 static file_t disc = FILEHND_INVALID;
 static unsigned long last_present;
@@ -63,6 +67,14 @@ static void *capture_mouse(void *unused) {
    dy=(c->joyy>24?1:c->joyy < -24?-1:0)+!!(c->buttons&CONT_DPAD_DOWN)-!!(c->buttons&CONT_DPAD_UP);
    buttons=((c->buttons&CONT_A)?1:0)|((c->buttons&CONT_B)?2:0);
   }}}
+  if(dev && (dev->info.functions&MAPLE_FUNC_MOUSE)) {
+   if(dx||dy||buttons!=previous_buttons) {
+    input_snapshot.mouse_dx=dx;input_snapshot.mouse_dy=dy;
+    input_snapshot.mouse_packets++;
+   }
+   dx=dc_scale_motion(dx,mouse_percent,&mouse_fraction_x);
+   dy=dc_scale_motion(dy,mouse_percent,&mouse_fraction_y);
+  }
   if(dx||dy||buttons!=previous_buttons){unsigned next=(mouse_head+1)%128;
    if(next!=mouse_tail){mouse_queue[mouse_head]=(struct mouse_packet){dx,dy,buttons};mouse_head=next;previous_buttons=buttons;}
   }
@@ -84,6 +96,7 @@ int dc_key_modifiers(void) {
 unsigned long dc_poll_key(void) {
  maple_device_t *d=maple_enum_type(0,MAPLE_FUNC_KEYBOARD); if(!d) return 0;
  int raw=kbd_queue_pop(d,false); if(raw==KBD_QUEUE_END) return 0;
+ input_snapshot.key_raw=(unsigned)raw;input_snapshot.key_events++;
  unsigned key=raw&255;
  kbd_mods_t mods={.raw=(raw>>8)&255};kbd_leds_t leds={.raw=(raw>>16)&255};
  /* Match TOS keyboard mouse controls: Alt-arrows, Alt-Insert click.
@@ -101,7 +114,8 @@ unsigned long dc_poll_key(void) {
  if(mods.raw&0x44)ascii=0; /* GEM Alt-letter drive shortcuts */
  if(key==76)ascii=127;
 
- return ((unsigned long)scancode[key]<<16)|ascii;
+ input_snapshot.key_tos=((unsigned long)scancode[key]<<16)|ascii;
+ return input_snapshot.key_tos;
 }
 unsigned long dc_datetime(void) {
  time_t t=time(NULL); struct tm *v=localtime(&t); if(!v) return 0;
@@ -176,4 +190,38 @@ void dc_hal_system_info(struct dc_system_info *info)
         }
     }
     irq_restore(irq);
+}
+
+void dc_hal_input_config_changed(uint32_t speed,uint32_t delay,uint32_t interval)
+{
+ irq_mask_t irq=irq_disable();
+ mouse_percent=speed;mouse_fraction_x=mouse_fraction_y=0;
+ irq_restore(irq);
+ kbd_set_repeat_timing(delay,interval);
+}
+long dc_input_snapshot(void *buffer,uint32_t bytes)
+{
+ if(!buffer)return bytes ? -64 : (long)sizeof(struct dc_input_snapshot);
+ if(bytes<sizeof(struct dc_input_snapshot))return -64;
+ struct dc_input_snapshot *out=buffer;
+ irq_mask_t irq=irq_disable();
+ *out=input_snapshot;
+ out->version=DC_CONTROL_VERSION;out->bytes=sizeof(*out);out->present=0;
+ maple_device_t *d=maple_enum_type(0,MAPLE_FUNC_MOUSE);
+ mouse_state_t *m=d ? maple_dev_status(d) : NULL;
+ if(m){out->present|=DC_INPUT_MOUSE;out->mouse_port=d->port;out->mouse_buttons=m->buttons;}
+ d=maple_enum_type(0,MAPLE_FUNC_KEYBOARD);
+ kbd_state_t *k=d ? maple_dev_status(d) : NULL;
+ if(k){out->present|=DC_INPUT_KEYBOARD;out->keyboard_port=d->port;
+  out->modifiers=k->cond.modifiers.raw;
+  for(int i=0;i<6;i++)out->keys[i]=k->cond.keys[i];
+ }
+ d=maple_enum_type(0,MAPLE_FUNC_CONTROLLER);
+ cont_state_t *c=d ? maple_dev_status(d) : NULL;
+ if(c){out->present|=DC_INPUT_CONTROLLER;out->controller_port=d->port;
+  out->controller_buttons=c->buttons;out->joy_x=c->joyx;out->joy_y=c->joyy;
+  out->trigger_left=c->ltrig;out->trigger_right=c->rtrig;
+ }
+ irq_restore(irq);
+ return sizeof(*out);
 }

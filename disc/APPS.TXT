@@ -12,6 +12,27 @@ Close box or Esc hides; Desk > Clock reopens. Drag to move or resize,
 or use Ctrl+arrows / Ctrl+Shift+arrows. Program transitions hide the
 window; the accessory remains loaded. Do not launch .ACC as a .PRG.
 
+CONTROL.ACC - Dreamcast Control Panel, Desk > DC Control
+Mouse speed, key repeat delay/interval and desktop colour.
+Tab selects a row; Left/Right adjusts; D restores defaults.
+Live mouse, keyboard and controller diagnostics. Settings last until reset.
+Mouse speed changes physical Maple mouse movement, not Alt+arrow movement.
+
+MONITOR.ACC - System Monitor, Desk > System Monitor
+Uptime, GEM free memory/history, KOS heap, C:/D: space and Maple devices.
+R refreshes; Space pauses/resumes; Up/Down scrolls devices.
+
+VMUTOOL.ACC - VMU Toolbox (READ ONLY), Desk > VMU Toolbox
+Lists connected cards, free blocks, files, timestamps and copy flags.
+Left/Right changes cards; Up/Down selects files; PgUp/PgDn moves 8 files.
+R refreshes. Connect a card then press R. Reads metadata only.
+No format, delete, write, restore, LCD changes or file-content operations.
+Supports standard 128 KiB VMU metadata; other layouts may be unsupported.
+
+All accessories: close box or Esc hides. Reopen from Desk.
+Ctrl+arrows moves; Ctrl+Shift+arrows resizes. Program transitions hide
+windows; the accessories remain resident. Do not double-click .ACC files.
+
 EDITOR.PRG - Kilo plain-text editor
 Ctrl+O open; Ctrl+N new; Ctrl+S save; Ctrl+A save as; Ctrl+F search;
 Ctrl+Q quit. Arrow/Home/End keys move. Limit: 64 KiB / 1023 lines.

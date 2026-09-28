@@ -59,6 +59,12 @@ The **Clock desk accessory** loads at boot. Choose **Desk → Clock** for an
 analogue and digital clock over the live desktop. Close or press Esc to hide
 it, then reopen it from the same menu. See the [clock screenshot and controls](docs/BUNDLE.md#clock-desk-accessory).
 
+Three more native desk accessories are available from **Desk**:
+**DC Control** adjusts mouse speed, keyboard repeat and desktop colour;
+**System Monitor** shows memory, disk space and connected devices;
+**VMU Toolbox** browses card directories and metadata using read commands only.
+See [screenshots, controls and VMU testing](docs/ACCESSORIES.md).
+
 ## Build and run
 
 Install a KallistiOS SDK with an SH-4 GCC toolchain. Set `KOS_ENV` to its

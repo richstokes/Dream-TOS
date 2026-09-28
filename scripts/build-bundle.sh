@@ -11,7 +11,7 @@ flags=(-m4-single -ml -O2 -g -ffunction-sections -fdata-sections -ffreestanding 
 # Older KOS-patched newlib headers include kos/cond.h and arch/types.h.
 # These are type declarations only: applications still link our own runtime.
 flags+=(-isystem "$KOS_BASE/include" -isystem "$KOS_BASE/kernel/arch/dreamcast/include" -D_arch_dreamcast=1 -D_arch_sub_pristine=1 -D__DREAMCAST__)
-runtime=(apps/lib/runtime.c apps/lib/app.c apps/lib/window.c)
+runtime=(apps/lib/runtime.c apps/lib/app.c apps/lib/window.c apps/lib/accessory.c)
 appbuild() {
  local name=$1; shift
  "$KOS_CC" "${flags[@]}" "${runtime[@]}" "$@" -Wl,--start-group -lm -lc -lgcc -Wl,--end-group -o "build/apps/$name.elf"
@@ -32,3 +32,9 @@ appbuild BENCH apps/ports/bench.c apps/ports/bench_core.c -ffp-contract=off
 # Accessories use the same validated native format, with a resident AES entry.
 appbuild CLOCK apps/ports/clock.c
 mv build/apps/CLOCK.PRG build/apps/CLOCK.ACC
+
+for accessory in CONTROL MONITOR VMUTOOL; do
+ source_name=$(printf '%s' "$accessory" | tr '[:upper:]' '[:lower:]')
+ appbuild "$accessory" "apps/ports/$source_name.c"
+ mv "build/apps/$accessory.PRG" "build/apps/$accessory.ACC"
+done

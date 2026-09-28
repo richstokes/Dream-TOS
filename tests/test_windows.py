@@ -9,13 +9,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class NativeWindows(unittest.TestCase):
-    def build_run(self, source):
+    def build_run(self, source, defines=()):
         with tempfile.TemporaryDirectory() as temp:
             binary = Path(temp) / "window-test"
             subprocess.run([
                 os.environ.get("CC", "cc"), "-std=c11", "-Wall", "-Wextra",
                 "-fsanitize=address,undefined", "-g", "-Iinclude", "-Iapps/lib",
-                source, "apps/lib/app.c", "apps/lib/window.c", "-lm",
+                source, "apps/lib/app.c", "apps/lib/window.c", "apps/lib/accessory.c", "-lm", *defines,
                 "-o", str(binary),
             ], cwd=ROOT, check=True)
             subprocess.run([str(binary)], check=True)
@@ -25,3 +25,11 @@ class NativeWindows(unittest.TestCase):
 
     def test_clock_accessory_lifecycle_and_midnight(self):
         self.build_run("tests/clock_host.c")
+
+    def test_resident_utility_window_lifecycle(self):
+        self.build_run("tests/accessory_host.c")
+
+    def test_control_monitor_and_vmu_frontends(self):
+        for define in ("TEST_CONTROL", "TEST_MONITOR", "TEST_VMUTOOL"):
+            with self.subTest(utility=define):
+                self.build_run("tests/utility_host.c", ["-D"+define])

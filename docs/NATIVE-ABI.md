@@ -20,6 +20,34 @@ GEMDOS exit status. The API definition is `include/dreamcast/native.h`:
   `size >= offsetof(struct dc_native_api, millis) + sizeof(api->millis)`
   before using this extension. The v1 prefix and program format are unchanged.
 
+Additional optional v1 callbacks are appended to the table. Check both the
+API `size` through the requested member and its non-null pointer; the shared
+accessory runtime provides `APP_HAS(member)`. Their fixed-width snapshot
+structures have a `version` and `bytes` header and work with both the native
+and GEM packing boundaries.
+
+- `system_info(buffer, bytes)`: system memory, uptime, drives and Maple devices;
+  see `include/dreamcast/system_info.h`.
+- `input_config(write, buffer, bytes)`: get (`write=0`) or atomically validate
+  and apply (`write=1`) session settings. Mouse speed is 25–400 percent;
+  repeat delay 100–1000 ms and repeat interval 20–200 ms. A write requires
+  the current structure version and exact structure `bytes` field.
+- `input_snapshot(buffer, bytes)`: cached input state without consuming keys
+  or mouse events; see `include/dreamcast/control.h` for both input structures.
+- `vmu_info(port, unit, buffer, bytes)`: bounded, read-only directory snapshot;
+  see `include/dreamcast/vmu_info.h`. Only root, FAT and directory blocks are
+  read, using KOS `vmu_block_read`. No VMU write interface is exposed.
+
+A null buffer with zero size queries the required structure size (input
+configuration queries use `write=0`). Successful calls return that size;
+invalid arguments return `-64` without modifying the caller's buffer. VMU
+inspection errors instead return a complete snapshot with a negative
+`status` and zero counts. The reader supports standard 128 KiB layouts
+with one FAT block and up to 16 directory blocks; it checks bounds, file
+chains, cycles and cross-links. It does not read save payloads or titles
+from VMS headers. Calls can take time for Maple I/O, so refresh VMUs on
+explicit user actions, not on a periodic timer.
+
 There are no Motorola traps, register argument conventions or fixed Atari
 hardware addresses. Applications must not call KOS using this packed ABI.
 Unsupported GEMDOS functions return EINVFN. The initial loader supports
@@ -89,7 +117,7 @@ registers a Desk-menu entry with `menu_register`, then waits in `evnt_multi`.
 windows when switching the foreground program. Keep persistent allocations
 in initialization, before the first message wait: classic TOS accessories
 share the foreground GEMDOS process, whose later allocations are reclaimed
-at program exit. The clock performs no later application heap allocations.
+at program exit. The bundled accessories perform no later application heap allocations.
 A hidden clock waits only for messages; a visible clock also uses a timer
 and paints through the window manager's visible rectangles.
 
@@ -97,3 +125,11 @@ Foreground `Pexec` remains single-tasking. Accessory termination has its own
 SH-4 jump target and cannot terminate the foreground program. A returning
 accessory is parked in a message wait so that it cannot strand the scheduler.
 Accessories are loaded at boot, not by double-clicking their `.ACC` file.
+
+`CONTROL.ACC`, `MONITOR.ACC` and `VMUTOOL.ACC` use `apps/lib/accessory.c` for
+this lifecycle, visible-rectangle painting, keyboard window movement and
+release-triggered buttons. Hidden accessories wait only for AES messages.
+The control panel samples cached input at 200 ms; the monitor samples system
+state at one second. VMU Toolbox's one-second timer enumerates devices only;
+opening, switching cards and explicit refresh read metadata. It uses a static
+snapshot buffer so foreground process cleanup cannot invalidate it.
