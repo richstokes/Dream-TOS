@@ -21,6 +21,13 @@ operations. Real Dreamcast hardware has not yet been tested.
 - D: read-only FAT16 volume embedded in the CD's ISO9660 filesystem.
 - Serial SD, persistent writable storage and 68000 binary compatibility are absent.
 
+The CDI includes a [native application bundle](docs/BUNDLE.md): Kilo text editor,
+an image viewer with two sample pictures and BMP export, a scientific
+calculator, GEM Worm, and Simon Tatham's Fifteen, Mines and Net. Sources and
+licenses are stored in `apps/`; all programs are rebuilt for SH-4. Open
+`APPS.TXT` on D: for controls. Documents, images and game saves go to C: and
+are lost at reset.
+
 ## Build and run
 
 Install a KallistiOS SDK with an SH-4 GCC toolchain. Set `KOS_ENV` to its

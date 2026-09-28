@@ -8,6 +8,9 @@ set -u
 cd "$root"
 mkdir -p build/apps
 flags=(-m4-single -ml -O2 -g -ffunction-sections -fdata-sections -ffreestanding -fno-pic -fno-pie -fno-common -fno-unwind-tables -fno-asynchronous-unwind-tables -Iinclude -Iapps/lib -D_GNU_SOURCE -nostdlib -Wl,--gc-sections -Wl,--emit-relocs -Wl,-T,apps/native.ld)
+# Older KOS-patched newlib headers include kos/cond.h and arch/types.h.
+# These are type declarations only: applications still link our own runtime.
+flags+=(-isystem "$KOS_BASE/include" -isystem "$KOS_BASE/kernel/arch/dreamcast/include" -D_arch_dreamcast=1 -D_arch_sub_pristine=1 -D__DREAMCAST__)
 runtime=(apps/lib/runtime.c apps/lib/app.c)
 appbuild() {
  local name=$1; shift
