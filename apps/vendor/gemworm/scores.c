@@ -40,35 +40,11 @@ char *defaults[10] = {
 
 static struct score scores[10];
 
+/* Dreamcast port: the application disc is read-only. */
 char *get_hi_score_filepath(const char *fullpath)
 {
-char *scorepath;
-char *tmp;
-size_t fpl;
-
-    if(fullpath != NULL)
-        fpl = strlen(fullpath) + strlen(SCOREFILE); /* fine... */
-    else
-        fpl = strlen(SCOREFILE);
-    scorepath = (char *)malloc(fpl);
-    
-    if(fullpath != NULL) {
-        strcpy(scorepath, fullpath);
-        tmp = strrchr(scorepath, '\\');
-        if(tmp == NULL)
-            tmp = strrchr(scorepath, '/');
-        if(tmp == NULL)
-            tmp = scorepath;
-        else
-            tmp++;    
-        tmp[0] = '\0';
-        
-    } else
-        scorepath[0] = '\0';
-        
-    strcat(scorepath, SCOREFILE);
-    
-    return scorepath;
+    (void)fullpath;
+    return strdup("C:\\WORM.HI");
 }
 
 void load_scores(const char *fullpath)
@@ -82,12 +58,11 @@ char linebuf[16];
     fp = fopen(filename, "r");
     if(fp != NULL) {
         for(i=0;i<10;i++) {
-            fgets(linebuf, 16, fp);
+            if (!fgets(linebuf, sizeof(linebuf), fp)) strcpy(linebuf, "--- 0");
             memcpy(scores[i].initials, linebuf, 3);
             scores[i].initials[3] = '\0';
             scores[i].score = atoi(&linebuf[3]);
         }
-        scores[i].initials[3] = '\0';
         fclose(fp);
     } else {
         for(i=0;i<10;i++) {
@@ -106,7 +81,7 @@ int i;
 
     filename = get_hi_score_filepath(fullpath);
     fp = fopen(filename, "w");
-    if(fp == NULL) return;
+    if(fp == NULL) { free(filename); return; }
     for(i=0;i<10;i++) {
         fwrite(scores[i].initials, 1, 3, fp);
         fprintf(fp, " %6d\n", scores[i].score);

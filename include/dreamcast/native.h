@@ -12,6 +12,8 @@ struct dc_native_api {
     void (*aes)(void *parameter_block);
     void (*vdi)(void *parameter_block);
     void (*yield)(void);
+    /* Optional extension; check size before accessing. Monotonic milliseconds. */
+    unsigned long (*millis)(void);
 };
 /* Return a GEMDOS exit status. tail is the standard length-prefixed command
  * line; env is a double-NUL-terminated environment, owned by the caller. */

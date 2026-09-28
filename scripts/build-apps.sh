@@ -12,3 +12,5 @@ for app in hello vditest; do
 name=$(printf '%s' "$app" | tr '[:lower:]' '[:upper:]')
 python3 "$root/tools/native_app.py" "$root/build/apps/$app.elf" "$root/build/apps/$name.PRG"
 done
+
+"$root/scripts/build-bundle.sh"

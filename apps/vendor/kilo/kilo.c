@@ -1,4 +1,5 @@
-/* Kilo -- A very simple editor in less than 1-kilo lines of code (as counted
+/* Dreamcast changes: conditional GEM frontend, CRLF stripping. See apps/ports/editor.c.
+ * Kilo -- A very simple editor in less than 1-kilo lines of code (as counted
  *         by "cloc"). Does not depend on libcurses, directly emits VT100
  *         escapes on the terminal.
  *
@@ -38,7 +39,9 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
+#ifndef DC_NATIVE
 #include <termios.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -47,7 +50,9 @@
 #include <ctype.h>
 #include <time.h>
 #include <sys/types.h>
+#ifndef DC_NATIVE
 #include <sys/ioctl.h>
+#endif
 #include <sys/time.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -199,6 +204,7 @@ struct editorSyntax HLDB[] = {
 
 /* ======================= Low level terminal handling ====================== */
 
+#ifndef DC_NATIVE
 static struct termios orig_termios; /* In order to restore at exit.*/
 
 void disableRawMode(int fd) {
@@ -362,6 +368,11 @@ failed:
 }
 
 /* ====================== Syntax highlight color scheme  ==================== */
+
+#else
+int editorReadKey(int fd);
+void editorRefreshScreen(void);
+#endif
 
 int is_separator(int c) {
     return c == '\0' || isspace(c) || strchr(",.()+-/*=~%[];",c) != NULL;
@@ -816,7 +827,7 @@ int editorOpen(char *filename) {
     size_t linecap = 0;
     ssize_t linelen;
     while((linelen = getline(&line,&linecap,fp)) != -1) {
-        if (linelen && (line[linelen-1] == '\n' || line[linelen-1] == '\r'))
+        while (linelen && (line[linelen-1] == '\n' || line[linelen-1] == '\r'))
             line[--linelen] = '\0';
         editorInsertRow(E.numrows,line,linelen);
     }
@@ -827,6 +838,7 @@ int editorOpen(char *filename) {
 }
 
 /* Save the current file on disk. Return 0 on success, 1 on error. */
+#ifndef DC_NATIVE
 int editorSave(void) {
     int len;
     char *buf = editorRowsToString(&len);
@@ -850,6 +862,10 @@ writeerr:
     editorSetStatusMessage("Can't save! I/O error: %s",strerror(errno));
     return 1;
 }
+
+#else
+int editorSave(void);
+#endif
 
 /* ============================= Terminal update ============================ */
 
@@ -879,6 +895,7 @@ void abFree(struct abuf *ab) {
 
 /* This function writes the whole screen using VT100 escape characters
  * starting from the logical state of the editor in the global state 'E'. */
+#ifndef DC_NATIVE
 void editorRefreshScreen(void) {
     int y;
     erow *r;
@@ -999,6 +1016,8 @@ void editorRefreshScreen(void) {
 
 /* Set an editor status message for the second line of the status, at the
  * end of the screen. */
+#endif
+
 void editorSetStatusMessage(const char *fmt, ...) {
     va_list ap;
     va_start(ap,fmt);
@@ -1258,6 +1277,7 @@ int editorFileWasModified(void) {
     return E.dirty;
 }
 
+#ifndef DC_NATIVE
 void updateWindowSize(void) {
     if (getWindowSize(STDIN_FILENO,STDOUT_FILENO,
                       &E.screenrows,&E.screencols) == -1) {
@@ -1306,3 +1326,5 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
+
+#endif /* !DC_NATIVE */

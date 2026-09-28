@@ -1,0 +1,47 @@
+NATIVE DREAMCAST APPLICATION BUNDLE
+==================================
+All programs are native SH-4 code. Atari 68000 executables cannot run.
+Open a .PRG in EmuDesk to start it. Save on C:, the temporary RAM disk.
+D: is read-only. Reset or power-off erases C:, including all saved work.
+
+EDITOR.PRG - Kilo plain-text editor
+Ctrl+O open; Ctrl+N new; Ctrl+S save; Ctrl+A save as; Ctrl+F search;
+Ctrl+Q quit. Arrow/Home/End keys move. Limit: 64 KiB / 1023 lines.
+Use DOS 8.3 filenames, for example C:\NOTES.TXT. No rich text or undo.
+
+IMAGES.PRG - PNG, JPEG and BMP viewer using stb_image
+N next sample; O open; G greyscale; M mirror; S export BMP; Esc exit.
+Bundled samples: SONIC.PNG (generated fan art) and SPACE.PNG.
+Maximum image: 640x480; encoded file: 1 MiB. Display/export: 16 colours.
+
+CALC.PRG - scientific expression calculator using tinyexpr
+Enter expression, Return to evaluate; Ctrl+U clears; Esc exits.
+Try sqrt(144)+2^3 or ans*2. Trig uses radians. ^ is left associative.
+
+WORM.PRG - Jeffrey Armstrong's Atari GEM Worm
+P starts/pauses; arrows or WASD steer; N new; H scores; Esc exits.
+Eat green food, avoid walls and your tail. Scores: C:\WORM.HI.
+
+FIFTEEN.PRG - Simon Tatham's sliding-tile puzzle
+Arrow keys slide tiles into the gap. Arrange numbers in order.
+
+MINES.PRG - Simon Tatham's Mines
+Arrows move the cursor; Space reveals; F flags a square.
+Reveal all safe squares while avoiding mines.
+
+NET.PRG - Simon Tatham's network puzzle
+Arrows move the cursor; Space rotates; F locks a tile.
+Connect all the wires to the central power source.
+
+All three puzzles: N new, U undo, R redo, S save, L load, H help,
+Esc exit. Saves are C:\FIFTEEN.SAV, C:\MINES.SAV and C:\NET.SAV.
+Mouse controls are also supported by the puzzle games.
+
+RUNTIME.PRG tests native allocation, stdio, file access and math.
+VDITEST.PRG checks graphics. HELLO.PRG is the minimal ABI example.
+SYSINFO.PRG (when included) reports live Dreamcast/OS/device information.
+
+Sources, pinned revisions and port notes are in apps/ and docs/BUNDLE.md:
+https://github.com/richstokes/dreamcast-EmuTOS-port
+Licenses: COPYING.TXT, WORMGPL.TXT, KILOLIC.TXT, PUZZLIC.TXT,
+STBLIC.TXT, TINYLIC.TXT and NEWLIB.TXT. See ARTWORK.TXT for samples.

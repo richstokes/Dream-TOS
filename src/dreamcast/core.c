@@ -81,6 +81,7 @@ LONG dos_exec(WORD mode,const char *path,const char *tail,const char *env) {
 void dc_core_main(void) {
  kprintf("EmuTOS: native CPU ABI, upstream AES/VDI/GEMDOS\n");
  dc_storage_init(); dc_storage_selftest();
+ extern void dc_bundle_selftest(void);dc_bundle_selftest();
  font_init();linea_init();extern void vt52_init(void);vt52_init();dc_context_init();
  ad_envrn=empty_env;ad_stail=tail;
  kprintf("EmuTOS: entering GEM desktop\n");

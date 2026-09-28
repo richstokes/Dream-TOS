@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+"""Stage exactly the supported native apps and their redistribution notices."""
+import argparse
+import shutil
+from pathlib import Path
+
+APPS = ('HELLO', 'VDITEST', 'CALC', 'EDITOR', 'FIFTEEN', 'MINES', 'NET', 'WORM', 'IMAGES', 'RUNTIME')
+NOTICES = {
+    'COPYING.TXT': 'COPYING',
+    'WORMGPL.TXT': 'apps/vendor/gemworm/license.txt',
+    'KILOLIC.TXT': 'apps/vendor/kilo/LICENSE',
+    'PUZZLIC.TXT': 'apps/vendor/puzzles/LICENCE',
+    'STBLIC.TXT': 'apps/vendor/stb/LICENSE',
+    'TINYLIC.TXT': 'apps/vendor/tinyexpr/LICENSE',
+    'NEWLIB.TXT': 'apps/vendor/newlib/COPYING.NEWLIB',
+}
+
+def stage(root, dest):
+    for app in APPS:
+        shutil.copy2(root/'build/apps'/f'{app}.PRG',dest)
+    # SYSINFO is maintained alongside the core port and may be built separately.
+    if (root/'apps/sysinfo.c').is_file():
+        shutil.copy2(root/'build/apps/SYSINFO.PRG',dest)
+    for name, source in NOTICES.items():
+        shutil.copy2(root/source,dest/name)
+
+if __name__ == '__main__':
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument('root',type=Path);p.add_argument('destination',type=Path)
+    a=p.parse_args();stage(a.root,a.destination)

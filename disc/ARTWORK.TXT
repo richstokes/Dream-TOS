@@ -1,0 +1,11 @@
+SAMPLE IMAGES
+SONIC.PNG: Generated blue hedgehog fan art, not an official Sega image.
+Sonic and related character rights belong to Sega. No commercial game
+assets were extracted. No affiliation with or endorsement by Sega.
+SPACE.PNG: An original generated pixel-art space scene.
+
+Created with OpenAI's image generation tool for this project, 2026-09-28.
+Original PNGs and generation prompts are in assets/samples/ and
+assets/samples/README.md. Disc copies are resized to 320x240.
+The project claims no exclusive copyright in AI-generated sample pixels.
+These samples are independent of the four open-source games in the bundle.

@@ -134,6 +134,7 @@ char lastx;
 
 void reset_player(WPLAYER *player)
 {
+    player->grow = 0; /* Dreamcast: a restarted game must not inherit growth. */
     player->length = STARTLENGTH;
     player->dir = WLEFT;
     player->head = reset_body(player->head);

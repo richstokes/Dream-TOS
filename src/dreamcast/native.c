@@ -20,7 +20,7 @@ static void native_aes(void *pb)
     super(200, pb);
 }
 static const struct dc_native_api api = {DC_NATIVE_ABI, sizeof(api), trap1,
-                                         native_aes,    dc_vdi,      dc_poll};
+                                         native_aes,    dc_vdi,      dc_poll, dc_millis};
 static jmp_buf term_context;
 static int executing;
 static long exit_status;

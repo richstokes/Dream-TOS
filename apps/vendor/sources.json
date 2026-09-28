@@ -60,7 +60,39 @@
       "LICENCE",
       "README",
       "devel.but",
-      "puzzles.but"
+      "puzzles.but",
+      "grid.c",
+      "grid.h",
+      "penrose.c",
+      "penrose-legacy.c",
+      "hat.c",
+      "spectre.c",
+      "sort.c",
+      "tdq.c",
+      "findloop.c",
+      "spectre-tables-auto.h",
+      "latin.h",
+      "hat.h",
+      "spectre-internal.h",
+      "penrose-legacy.h",
+      "version.h",
+      "spectre.h",
+      "matching.h",
+      "gtk.h",
+      "penrose.h",
+      "spectre-tables-manual.h",
+      "hat-internal.h",
+      "loopgen.h",
+      "hat-tables.h",
+      "penrose-internal.h"
     ]
+  },
+  "newlib": {
+    "url": "https://sourceware.org/newlib/",
+    "version": "SDK-supplied; local validation used 4.6.0.20260123",
+    "files": [
+      "COPYING.NEWLIB"
+    ],
+    "note": "C library linked from KOS toolchain, not an application engine; notice reproduced for binaries."
   }
 }

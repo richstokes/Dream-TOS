@@ -141,7 +141,7 @@ char i,j;
     for(i=1;i<CELLW-1;i++) {
         field[i][0] = CELLWALL;
         field[i][CELLH-1] = CELLWALL; 
-        for(j=1;j<CELLH-2;j++)
+        for(j=1;j<CELLH-1;j++)
             field[i][j] = CELLBLANK;
     }
 
