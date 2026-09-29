@@ -1,5 +1,6 @@
 /* Native GEM frontend to Kilo (BSD-2-Clause engine). GPL-2.0-or-later frontend. */
 #include "app.h"
+#include "dreamcast/system_info.h"
 #define DC_NATIVE
 #ifndef APP_HOST_TEST
 #define getline __getline
@@ -83,16 +84,41 @@ void editorRefreshScreen(void)
     app_text(8, 426, E.statusmsg, 1);
     app_status("^O:open ^N:new ^S:save ^A:save as ^F:find ^Q:quit");
 }
+static struct dc_system_info drive_info;
+/* Drive state from the OS: 0 = not writable, 1 = writable, 2 = writable but
+ * RAM-backed. Without the info call only the RAM disk is assumed writable. */
+static int drive_state(int letter)
+{
+    unsigned d = (unsigned)(toupper((unsigned char)letter) - 'A');
+    if (d >= 26)
+        return 0;
+    if (!dc_os || dc_os->size < offsetof(struct dc_native_api, system_info) + sizeof(dc_os->system_info) ||
+        !dc_os->system_info || dc_os->system_info(&drive_info, sizeof(drive_info)) != (long)sizeof(drive_info) ||
+        drive_info.version != DC_SYSTEM_INFO_VERSION)
+        return d == 2 ? 2 : 0;
+    if (!(drive_info.drive_mask & (1u << d)) || (drive_info.readonly_mask & (1u << d)))
+        return 0;
+    return drive_info.volatile_mask & (1u << d) ? 2 : 1;
+}
+static int has_drive(const char *path)
+{
+    return isalpha((unsigned char)path[0]) && path[1] == ':';
+}
 static int save_as(int force)
 {
     char path[80];
     snprintf(path, sizeof(path), "%s", E.filename ? E.filename : "C:\\NOTES.TXT");
-    if (force || !has_path || !E.filename || (path[0] != 'C' && path[0] != 'c') || path[1] != ':') {
-        strcpy(path, "C:\\NOTES.TXT");
-        if (!app_prompt("Save on RAM disk (C:\\NAME.TXT):", path, sizeof(path)))
+    if (force || !has_path || !E.filename || !has_drive(path) || !drive_state(path[0])) {
+        if (!has_path || !E.filename || !has_drive(path) || !drive_state(path[0]))
+            strcpy(path, "C:\\NOTES.TXT");
+        if (!app_prompt("Save as (C: RAM disk, or SD drive):", path, sizeof(path)))
             return 1;
-        if ((path[0] != 'C' && path[0] != 'c') || path[1] != ':') {
-            editorSetStatusMessage("Save on C:; disc D: is read-only.");
+        if (!has_drive(path)) {
+            editorSetStatusMessage("Give a drive, for example C:\\NAME.TXT.");
+            return 1;
+        }
+        if (!drive_state(path[0])) {
+            editorSetStatusMessage("%c: is read-only or not mounted.", toupper((unsigned char)path[0]));
             return 1;
         }
         FILE *exists = fopen(path, "rb");
@@ -120,7 +146,10 @@ static int save_as(int force)
         E.filename = strdup(path);
         has_path = 1;
         E.dirty = 0;
-        editorSetStatusMessage("Saved %d bytes on C: (lost at reset)", len);
+        if (drive_state(path[0]) == 2)
+            editorSetStatusMessage("Saved %d bytes on %c: (lost at reset)", len, toupper((unsigned char)path[0]));
+        else
+            editorSetStatusMessage("Saved %d bytes on %c:", len, toupper((unsigned char)path[0]));
     } else
         editorSetStatusMessage("Save failed: %s", strerror(errno));
     return !ok;
@@ -187,7 +216,7 @@ int app_main(int argc, char **argv)
         load_file(argv[1]);
     else {
         E.filename = strdup("C:\\NOTES.TXT");
-        editorSetStatusMessage("New document. C: is temporary storage; reset erases it.");
+        editorSetStatusMessage("New document. C: is temporary; save to an SD drive to keep it.");
     }
     for (;;) {
         editorRefreshScreen();
