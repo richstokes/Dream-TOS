@@ -4,7 +4,7 @@ import argparse
 import shutil
 from pathlib import Path
 
-APPS = ('HELLO', 'VDITEST', 'CALC', 'EDITOR', 'FIFTEEN', 'MINES', 'NET', 'WORM', 'IMAGES', 'RUNTIME', 'BENCH')
+APPS = ('HELLO', 'VDITEST', 'CALC', 'EDITOR', 'FIFTEEN', 'MINES', 'NET', 'WORM', 'IMAGES', 'RUNTIME', 'BENCH', 'MP3')
 CLI_TOOLS = ('GREP', 'WC', 'HEAD', 'TAIL', 'SORT', 'HEXDUMP', 'CKSUM', 'DATE', 'DF', 'FREE', 'UNAME', 'EXPR')
 NET_TOOLS = ('PING', 'NSLOOKUP', 'IFCONFIG')
 NOTICES = {
@@ -15,6 +15,7 @@ NOTICES = {
     'STBLIC.TXT': 'apps/vendor/stb/LICENSE',
     'TINYLIC.TXT': 'apps/vendor/tinyexpr/LICENSE',
     'NEWLIB.TXT': 'apps/vendor/newlib/COPYING.NEWLIB',
+    'MP3LIC.TXT': 'apps/vendor/minimp3/LICENSE',
 }
 
 def stage(root, dest):

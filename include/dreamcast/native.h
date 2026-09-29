@@ -26,6 +26,14 @@ struct dc_native_api {
     long (*net_info)(void *buffer, uint32_t bytes);
     long (*net_ping)(const uint8_t ip[4], uint32_t seq, uint32_t size, uint32_t timeout_ms, void *result, uint32_t bytes);
     long (*net_resolve)(const char *host, uint32_t timeout_ms, uint8_t ip[4]);
+
+    /* Optional audio output (AICA stream, non-blocking PCM ring); see audio.h. */
+    long (*audio_open)(uint32_t rate, uint32_t channels);
+    long (*audio_close)(void);
+    long (*audio_write)(const int16_t *pcm, uint32_t frames);
+    long (*audio_space)(void);
+    long (*audio_set)(uint32_t what, uint32_t value);
+    long (*audio_info)(void *buffer, uint32_t bytes);
 };
 /* Return a GEMDOS exit status. tail is the standard length-prefixed command
  * line; env is a double-NUL-terminated environment, owned by the caller. */

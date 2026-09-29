@@ -61,7 +61,7 @@ operations.
 The CDI includes a [native application bundle](docs/BUNDLE.md): Kilo text editor,
 an image viewer with two sample pictures and BMP export, a scientific
 calculator in a movable, resizable GEM window, a [native benchmark](docs/BENCHMARK.md),
-GEM Worm, and Simon Tatham's Fifteen, Mines and Net. Sources and licenses are
+GEM Worm, Simon Tatham's Fifteen, Mines and Net, and an [MP3/WAV player](docs/AUDIO.md) that plays files from the SD card. Sources and licenses are
 stored in `apps/`; all programs
 are rebuilt for SH-4. Open
 `APPS.TXT` on D: for controls. Documents, images and game saves go to C: and
