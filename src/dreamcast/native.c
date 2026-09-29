@@ -16,6 +16,7 @@
 #include "dreamcast/vmu_info.h"
 #include "dreamcast/settings.h"
 #include "dreamcast/net.h"
+#include "dreamcast/audio.h"
 #include "obdefs.h"
 #include "struct.h"
 #include "aesvars.h"
@@ -32,7 +33,9 @@ static void native_aes(void *pb)
 static const struct dc_native_api api = {DC_NATIVE_ABI, sizeof(api), trap1,
                                          native_aes,    dc_vdi,      dc_poll, dc_millis,
                                          dc_system_info, dc_input_config, dc_input_snapshot, dc_vmu_info,
-                                         dc_control_store, dc_net_info, dc_net_ping, dc_net_resolve};
+                                         dc_control_store, dc_net_info, dc_net_ping, dc_net_resolve,
+                                         dc_audio_open, dc_audio_close, dc_audio_write,
+                                         dc_audio_space, dc_audio_set, dc_audio_info};
 static jmp_buf term_context;
 static int executing;
 static long exit_status;
@@ -195,6 +198,7 @@ long trap1_pexec(short mode, const char *path, const char *tail, const char *env
     for (int i = 0; i < NUMCURDIR; i++)
         if (child.p_curdir[i])
             decr_curdir_usage(child.p_curdir[i]);
+    dc_audio_close(); /* never leave the AICA playing after an exit or Pterm */
     dc_free_process_memory(&child);
     run = parent;
     executing = 0;

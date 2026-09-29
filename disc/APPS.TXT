@@ -96,6 +96,15 @@ Three samples per test; median and range. BENCH.DAT is its read-test input.
 C: tests use a temporary RAM file. D: reads include cache effects.
 Flycast scores are not physical Dreamcast measurements.
 
+MP3.PRG - MP3 and WAV player with file browser and visualiser
+Pick a drive (E:-H: SD card, C:, D:) and folder; Return or double-click plays.
+Space play/pause, Left/Right seek 10 s, N/P next/previous, +/- volume,
+S stop, R repeat, D next drive, Backspace parent folder, Esc quit.
+Also mouse: transport buttons, progress bar, volume bar, file list.
+MP3 (any bitrate, 8-48 kHz, VBR) and 8/16-bit PCM WAV. Shows ID3 tags.
+The status line shows measured decode load. Files use 8.3 names.
+Needs the audio-capable OS build; see docs/AUDIO.md.
+
 RUNTIME.PRG tests native allocation, stdio, file access and math.
 VDITEST.PRG checks graphics. HELLO.PRG is the minimal ABI example.
 SYSINFO.PRG (when included) reports live Dreamcast/OS/device information.
@@ -103,4 +112,4 @@ SYSINFO.PRG (when included) reports live Dreamcast/OS/device information.
 Sources, pinned revisions and port notes are in apps/ and docs/BUNDLE.md:
 https://github.com/richstokes/dreamcast-EmuTOS-port
 Licenses: COPYING.TXT, WORMGPL.TXT, KILOLIC.TXT, PUZZLIC.TXT,
-STBLIC.TXT, TINYLIC.TXT and NEWLIB.TXT. See ARTWORK.TXT for samples.
+STBLIC.TXT, TINYLIC.TXT, MP3LIC.TXT and NEWLIB.TXT. See ARTWORK.TXT for samples.

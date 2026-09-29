@@ -15,6 +15,7 @@ NOTICES = {
     'STBLIC.TXT': 'apps/vendor/stb/LICENSE',
     'TINYLIC.TXT': 'apps/vendor/tinyexpr/LICENSE',
     'NEWLIB.TXT': 'apps/vendor/newlib/COPYING.NEWLIB',
+    'MP3LIC.TXT': 'apps/vendor/minimp3/LICENSE',
 }
 
 def stage(root, dest):

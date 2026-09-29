@@ -61,6 +61,24 @@ explicit user actions, not on a periodic timer.
   [networking](NETWORKING.md). Calls wait while servicing input; Ctrl+C returns
   `DC_NET_ERR_BREAK`.
 
+- `audio_open(rate, channels)`, `audio_close()`, `audio_write(pcm, frames)`,
+  `audio_space()`, `audio_set(what, value)` and `audio_info(buffer, bytes)`:
+  AICA sound output for signed 16-bit interleaved PCM, mono or stereo, 8000 to
+  48000 Hz; see `include/dreamcast/audio.h` and [audio](AUDIO.md). The
+  application decodes and the OS owns the AICA: `audio_write` copies into a
+  32768-frame ring and never blocks (it returns the frames taken, possibly
+  zero), and a KOS thread feeds the hardware, so sound continues while the
+  application decodes or redraws. `audio_set` takes `DC_AUDIO_VOLUME`
+  (0-255), `DC_AUDIO_PAUSE` and `DC_AUDIO_FLUSH` (drop queued sound and zero
+  the position). `audio_info` reports free/queued frames, the position in
+  frames handed to the AICA (sound is heard up to about 0.2 s later) and an
+  underrun count. Only one stream can be open (`DC_AUDIO_ERR_BUSY`). The sound
+  driver starts on the first `audio_open`, never at boot. The loader closes the
+  stream when the program returns or calls Pterm, so a program cannot leave
+  the AICA playing. Applications must not call KOS directly. Errors
+  are negative: `-64` bad arguments, `-1` no driver, `-2` busy, `-3` not open,
+  `-4` out of memory. This block was appended after the networking callbacks.
+
 There are no Motorola traps, register argument conventions or fixed Atari
 hardware addresses. Applications must not call KOS using this packed ABI.
 Unsupported GEMDOS functions return EINVFN. The initial loader supports

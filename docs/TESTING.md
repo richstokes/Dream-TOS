@@ -88,6 +88,8 @@ The default CDI omits full-disc filler for small Flycast/GDEMU images. Set
 8. Test the available video cable and keyboard region. Report exact hardware,
    cable, image SHA256, failing action and any serial log.
 
+Audio: see the checklist in [AUDIO.md](AUDIO.md#real-hardware-checklist).
+
 ## Limits
 
 This is an initial native platform port, not binary-compatible Atari TOS.
@@ -97,7 +99,8 @@ code cannot run. Native programs require porting to the documented ABI.
 There is one fixed 640×480 mode. The native glyph renderer supports built-in
 fonts, scaling, bold/light/italic/outline and right-angle rotations. Exact pixel
 parity with every Atari font-effect combination is not claimed. GDOS font
-loading is disabled. No audio, printer,
+loading is disabled. Audio exists only through the optional native API used by
+the MP3 player ([audio](AUDIO.md), unverified on hardware). No printer,
 MIDI, general TSRs, nested
 Pexec or crash isolation are implemented. BIOS/XBIOS/GEMDOS expose the subset
 needed by EmuDesk and the sample application; unsupported calls must not be

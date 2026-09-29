@@ -22,6 +22,7 @@ into the Dreamcast programs; they are not imitations of those programs.
 | `MINES.PRG` | Same collection, MIT | Minesweeper, keyboard cursor/flags, undo/redo, saves |
 | `NET.PRG` | Same collection, MIT | Wire rotation, locking, keyboard/mouse controls, saves |
 | `BENCH.PRG` | This project, GPL-2.0-or-later | [CPU, memory, VDI and file benchmarks](BENCHMARK.md), three samples, text reports |
+| `MP3.PRG` | [minimp3](https://github.com/lieff/minimp3), CC0-1.0 | [MP3/WAV player](AUDIO.md): SD/C:/D: file browser, playlist, ID3 tags, seek, volume, spectrum display; audio via the optional `audio_*` native API |
 | `CLOCK.ACC` | This project, GPL-2.0-or-later | Resident GEM desk accessory; analogue face, digital time/date, movable/resizable window over the desktop |
 | `CONTROL.ACC` | This project, GPL-2.0-or-later | Session input/display settings and live keyboard, mouse and controller diagnostics |
 | `MONITOR.ACC` | This project, GPL-2.0-or-later | Memory history, free disk space, uptime and Maple device list |
