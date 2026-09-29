@@ -47,6 +47,7 @@
 #include "version.h"
 #ifdef MACHINE_DREAMCAST
 #include "dc_version.h"
+#include "dreamcast/hal.h"
 #else
 #include "../obj/header.h"
 #endif
@@ -209,7 +210,7 @@ const UBYTE shortcut_mapping[NUM_SHORTCUTS] =
 #else
     0,
 #endif
-#if CONF_WITH_SHUTDOWN
+#if CONF_WITH_SHUTDOWN || defined(MACHINE_DREAMCAST)
     QUITITEM,
 #else
     0,
@@ -773,7 +774,15 @@ static WORD do_filemenu(WORD item)
         break;
 #endif
 
-#if CONF_WITH_SHUTDOWN
+#ifdef MACHINE_DREAMCAST
+    case QUITITEM:
+        if (form_alert(1, "[1][Boot the inserted disc via BIOS?|"
+                         "C: files and unsaved settings|"
+                         "will be lost. Insert the disc|"
+                         "you want to boot before Boot.][Cancel|Boot]") == 2)
+            dc_boot_disc();
+        break;
+#elif CONF_WITH_SHUTDOWN
     case QUITITEM:
         enable_ceh = FALSE; /* avoid possibility of useless form_alert()s */
         display_free_stack();
@@ -1917,6 +1926,12 @@ static WORD desk_xlate_fix(void)
 
     /* translate strings in objects */
     xlate_obj_array(desk_rs_obj, RS_NOBS);
+
+#ifdef MACHINE_DREAMCAST
+    /* Reuse the shutdown slot; set its text before sizing/copying strings so
+     * shortcut installation still writes to the normal padded RAM buffer. */
+    menu_text(desk_rs_trees[ADMENU], QUITITEM, "  Boot GD-ROM...");
+#endif
 
     /* copies menu item strings to RAM */
     if (copy_menu_items() < 0)

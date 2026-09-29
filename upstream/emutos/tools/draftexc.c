@@ -43,13 +43,13 @@ char *exclude_items[] =
 #if !CONF_WITH_EJECT
     "EJCTITEM",
 #endif
-#if !WITH_CLI && !CONF_WITH_SHUTDOWN
+#if !WITH_CLI && !CONF_WITH_SHUTDOWN && !defined(MACHINE_DREAMCAST)
     "SEP_FL2",
 #endif
 #if !WITH_CLI
     "CLIITEM",
 #endif
-#if !CONF_WITH_SHUTDOWN
+#if !CONF_WITH_SHUTDOWN && !defined(MACHINE_DREAMCAST)
     "QUITITEM",
 #endif
 

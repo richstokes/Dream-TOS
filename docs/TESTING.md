@@ -43,6 +43,12 @@ menu hide/show, crowded titles, font geometry and restoration of clipping.
 
 ## Real-console checklist
 
+The File → Boot GD-ROM… action has been checked in Flycast with its boot ROM:
+Return selects Cancel and leaves the desktop running; Boot restarts through
+the BIOS and reloads the inserted EmuTOS CDI. The HAL closes the D: image before
+KOS tears down ISO9660. Physical disc swaps, empty drives and GDEMU behavior
+still need console testing. C: files and unsaved settings are lost on Boot.
+
 The CDI is a development test image. Copy it to a GDEMU-compatible card using
 your usual image manager, or boot it with your usual Dreamcast disc workflow.
 Hardware has not yet been verified. C: is temporary and resets on every boot.

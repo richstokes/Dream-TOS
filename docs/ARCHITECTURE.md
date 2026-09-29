@@ -35,6 +35,12 @@ Control Panel preferences use a separate, named two-block VMU save with an icon
 through KOS. They load at accessory startup and write only on an explicit Save action;
 the VMU is not exposed as a writable GEMDOS drive.
 
+File → Boot GD-ROM… confirms a restart, then uses KOS's `ARCH_EXIT_REBOOT`
+exit path to shut down drivers and enter the Dreamcast boot ROM. The BIOS boots
+the inserted disc as usual; leaving the EmuTOS disc inserted boots EmuTOS again.
+C: files and settings not saved to VMU are lost. This does not select a GDEMU
+image or bypass BIOS disc compatibility checks.
+
 The native ABI replaces stack decoding of 68000 traps with typed C dispatch.
 The ROM desktop returns directly to the AES shell when launching a program.
 Applications use relocatable SH-4 containers and an explicit OS function table.

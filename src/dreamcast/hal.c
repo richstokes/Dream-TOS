@@ -35,6 +35,16 @@ void dc_hal_init(void) {
  printf("EmuTOS native SH-4: video 640x480; Maple ready; CD image %s\n",disc==FILEHND_INVALID?"absent":"open");
 }
 unsigned long dc_millis(void) { return (unsigned long)timer_ms_gettime64(); }
+/* Shut KOS down before entering the boot ROM. The BIOS chooses how to boot
+ * the currently inserted disc, including returning here for our own CDI. */
+void dc_boot_disc(void) {
+ printf("EmuTOS: rebooting to boot the inserted disc\n");
+ /* KOS tears ISO9660 down before its final file-table cleanup. Close our
+  * long-lived D: handle while the driver's mutexes are still alive. */
+ if(disc!=FILEHND_INVALID){fs_close(disc);disc=FILEHND_INVALID;}
+ arch_set_exit_path(ARCH_EXIT_REBOOT);
+ arch_exit();
+}
 void dc_sleep(unsigned int ms) { thd_sleep(ms); }
 void dc_present(const unsigned short *p, const unsigned short *pal) {
  static uint16_t previous[480*160] __attribute__((aligned(32)));

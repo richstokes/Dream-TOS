@@ -2,6 +2,7 @@
 #pragma once
 #include <stddef.h>
 void dc_hal_init(void);
+void dc_boot_disc(void) __attribute__((noreturn));
 unsigned long dc_millis(void);
 void dc_sleep(unsigned int ms);
 void dc_present(const unsigned short *planes, const unsigned short *palette);
