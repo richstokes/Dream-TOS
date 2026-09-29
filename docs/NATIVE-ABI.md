@@ -36,14 +36,16 @@ and GEM packing boundaries.
   or mouse events; see `include/dreamcast/control.h` for both input structures.
 - `vmu_info(port, unit, buffer, bytes)`: bounded, read-only directory snapshot;
   see `include/dreamcast/vmu_info.h`. Only root, FAT and directory blocks are
-  read, using KOS `vmu_block_read`. This interface cannot write to a card.
+  read, using KOS `vmu_block_read`. This interface cannot write to a card;
+  file writes use the separate `vmu_file_*` calls below.
 - `control_store(write, port, unit, buffer, bytes)`: load (`write=0`) or save
   (`write=1`) only `EMUTOS.CFG` on the specified VMU. The structure in
   `include/dreamcast/settings.h` contains input settings and the desktop colour.
   Returns the structure size on success, `-64` for invalid arguments, or a
   `DC_SETTINGS_*` error. Failed loads leave the buffer untouched. This does not
   apply settings; the panel applies validated input and palette values itself.
-  There is no general-purpose VMU file-write or formatting API.
+  Apart from the VMU file service below there is no VMU write API, and nothing
+  can format a card.
 
 A null buffer with zero size queries the required structure size (input
 configuration and control-store queries use `write=0`). Successful calls return
@@ -54,6 +56,59 @@ with one FAT block and up to 16 directory blocks; it checks bounds, file
 chains, cycles and cross-links. It does not read save payloads or titles
 from VMS headers. Calls can take time for Maple I/O, so refresh VMUs on
 explicit user actions, not on a periodic timer.
+
+- `vmu_file_read(port, unit, name, buffer, bytes)`,
+  `vmu_file_write(port, unit, name, data, bytes, flags)`,
+  `vmu_file_delete(port, unit, name)` and `vmu_screen(port, unit, bitmap, bytes)`:
+  the VMU file service and LCD (in the API table they follow the network calls,
+  in a block of their own; check `size` for each member, e.g. `APP_HAS(vmu_file_write)`). See
+  `include/dreamcast/vmu_file.h` for the error codes (`DC_VMUF_*`). All results
+  are negative on failure and never partially reported: each error says whether
+  the card was left unchanged.
+  - `vmu_file_read` returns the size (blocks x 512) and fills `buffer`; a NULL
+    buffer with `bytes==0` only returns the size. Copy-protected files are
+    refused (`DC_VMUF_PROTECTED`).
+  - `vmu_file_write` creates a file, or with `DC_VMUF_OVERWRITE` replaces one, and
+    returns the stored size after a read-back. `bytes` is 1 to 102400 (200
+    blocks) and is zero-padded to whole 512-byte blocks. New files are always
+    ordinary copyable data files (type 0x33); no games, no copy-protect flag.
+  - `vmu_file_delete` deletes one ordinary data file and returns 0.
+  - `vmu_screen` draws a 48x32 1-bit bitmap on the VMU LCD: 192 bytes, six per
+    row, top row first, most significant bit leftmost, 1 = dark pixel. The call
+    rotates it into KOS `vmu_draw_lcd_rotated` order. The LCD is not saved to
+    the card. `DC_VMUF_BUSY` means the Maple frame was busy: retry later.
+  - Names are 1 to 12 printable ASCII characters (trailing spaces trimmed, no
+    leading space). A file whose stored name contains other bytes cannot be
+    addressed.
+
+  Safety rules the OS enforces before the first write, in `src/dreamcast/vmu_file.c`:
+  the card must pass the same root/FAT/directory validation as `vmu_info`
+  (standard 128 KiB layout, at most 200 user blocks, one FAT block; chains
+  bounded, acyclic, not cross-linked, exactly the recorded length), or the call
+  fails with `DC_VMUF_CARD` without writing. Names are matched exactly as KOS
+  `vmufs` matches them (`strncmp` over the 12 stored bytes); duplicate or
+  differently padded look-alikes that could make KOS touch the wrong entry are
+  refused (`DC_VMUF_AMBIGUOUS`). Existing files are replaced only if they are
+  ordinary data files without copy protection and without a header offset; games
+  (0xcc), copy-protected and odd files are refused for write and delete.
+  Free blocks (an overwrite reuses its own blocks), directory slots and the
+  200-block limit are checked up front. The old contents of a file being
+  replaced are read first as a rollback copy. The single file-level change is
+  made by KOS `vmufs_write`/`vmufs_delete`, so blocks are allocated exactly as
+  a standard driver does and only the FAT and directory blocks change: the root
+  block is never written, and there is no format call. Afterwards the OS reads
+  the directory, FAT accounting, every other file and the new file's bytes back;
+  a mismatch triggers a restore of the previous contents where the card is still
+  consistent (`DC_VMUF_RESTORED`), else `DC_VMUF_VERIFY`. Limits: KOS writes the
+  FAT and directory after the data, so a power loss or card removal during a
+  write can leave leaked blocks or, in the worst window, an inconsistent card
+  that needs the console file manager; the call is not atomic and is not
+  re-entrant (one call at a time; `DC_VMUF_BUSY`). Calls block for many Maple
+  transactions (flash writes are slow: a full 200-block file can take many
+  seconds, plus its read-back), so call only from an explicit user action and
+  tell the user to keep the card connected. These paths were tested on the host against KOS's own
+  `vmufs.c` and an in-memory card, not on a real console; see
+  [testing](TESTING.md).
 
 - `net_info(buffer, bytes)`, `net_ping(ip, seq, size, timeout_ms, result, bytes)`
   and `net_resolve(host, timeout_ms, ip)`: Broadband Adapter status, one ICMP

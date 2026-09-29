@@ -103,6 +103,12 @@ Pexec or crash isolation are implemented. BIOS/XBIOS/GEMDOS expose the subset
 needed by EmuDesk and the sample application; unsupported calls must not be
 assumed to work. EmuCON is enabled; see [command-line support and limits](COMMAND-LINE.md).
 
+The VMU file service and VMUEDIT.PRG have only host coverage
+(`tests/test_vmu_write.py`, `tests/test_vmuedit.py`: in-memory cards, KOS's
+`vmufs.c` compiled on the host, injected faults). They have not run on a real VMU or
+in Flycast, and real flash timing, card removal mid-write and `vmu_draw_lcd_rotated`
+orientation on a physical LCD are unverified; try a spare card first.
+
 Native desk accessories are supported. Control Panel settings can be saved to
 a VMU and restored at boot; this does not persist C: files. Test VMU writes
 with isolated cards as described in ACCESSORIES.md. Real-hardware validation

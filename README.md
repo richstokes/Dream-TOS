@@ -85,7 +85,8 @@ Three more native desk accessories are available from **Desk**:
 **DC Control** adjusts mouse speed, keyboard repeat and desktop colour, with
 VMU save/load and automatic restoration at boot;
 **System Monitor** shows memory, disk space and connected devices;
-**VMU Toolbox** browses card directories and metadata using read commands only.
+**VMU Toolbox** browses card directories and metadata using read commands only;
+**VMUEDIT.PRG** is the VMU editor (file import/export/rename/delete, LCD and icon editors).
 See [screenshots, controls and VMU testing](docs/ACCESSORIES.md).
 
 ## Build and run

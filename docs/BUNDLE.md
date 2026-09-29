@@ -24,6 +24,7 @@ into the Dreamcast programs; they are not imitations of those programs.
 | `CONTROL.ACC` | This project, GPL-2.0-or-later | Session input/display settings and live keyboard, mouse and controller diagnostics |
 | `MONITOR.ACC` | This project, GPL-2.0-or-later | Memory history, free disk space, uptime and Maple device list |
 | `VMUTOOL.ACC` | This project, GPL-2.0-or-later | Read-only card directory, space, file sizes, timestamps and copy flags |
+| `VMUEDIT.PRG` | This project, GPL-2.0-or-later | VMU file manager (import/export/rename/delete with confirmations), 48x32 LCD editor with live push and BMP/raw files, VMS save-icon editor; [details](ACCESSORIES.md#vmu-editor-vmuedit-prg) |
 | `RUNTIME.PRG` | This project, GPL-2.0-or-later | Native libc, allocator, math and file-access diagnostic |
 
 `HELLO.PRG` and `VDITEST.PRG` remain the ABI example and graphics diagnostic.

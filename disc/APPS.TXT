@@ -31,6 +31,15 @@ R refreshes. Connect a card then press R. Reads metadata only.
 No format, delete, write, restore, LCD changes or file-content operations.
 Supports standard 128 KiB VMU metadata; other layouts may be unsupported.
 
+VMUEDIT.PRG - VMU Editor (open from EmuDesk; fullscreen)
+Files: I import a file from C:/D:/SD onto the VMU, E export it as a raw file,
+N rename, D delete (all ask first), R refresh, Left/Right card, Esc quit.
+L opens the 48x32 LCD editor: mouse left draws / right erases, arrows+Space,
+I invert C clear H/V flip Z undo, T live push to the VMU screen, L/S load or
+save a 1-bit BMP. C opens the icon editor for a VMS save (paint the 32x32
+icon, edit its 16 colours, S writes back). Never formats; refuses damaged
+cards, games and copy-protected files. Hardware-untested: see ACCESSORIES.md.
+
 All accessories: close box or Esc hides. Reopen from Desk.
 Ctrl+arrows moves; Ctrl+Shift+arrows resizes. Program transitions hide
 windows; the accessories remain resident. Do not double-click .ACC files.
