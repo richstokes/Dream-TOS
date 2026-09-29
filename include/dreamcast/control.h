@@ -25,6 +25,7 @@ struct dc_input_snapshot {
 /* Query with write=0; validate and apply atomically with write=1. NULL/0 queries
  * the required size. -64 means bad buffer/config; buffers are then untouched. */
 long dc_input_config(int write, void *buffer, uint32_t bytes);
+int dc_input_config_valid(const struct dc_input_config *config);
 long dc_input_snapshot(void *buffer, uint32_t bytes);
 void dc_hal_input_config_changed(uint32_t speed, uint32_t delay, uint32_t interval);
 int dc_scale_motion(int delta, unsigned percent, int *remainder);

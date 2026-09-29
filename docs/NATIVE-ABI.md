@@ -36,11 +36,18 @@ and GEM packing boundaries.
   or mouse events; see `include/dreamcast/control.h` for both input structures.
 - `vmu_info(port, unit, buffer, bytes)`: bounded, read-only directory snapshot;
   see `include/dreamcast/vmu_info.h`. Only root, FAT and directory blocks are
-  read, using KOS `vmu_block_read`. No VMU write interface is exposed.
+  read, using KOS `vmu_block_read`. This interface cannot write to a card.
+- `control_store(write, port, unit, buffer, bytes)`: load (`write=0`) or save
+  (`write=1`) only `EMUTOS.CFG` on the specified VMU. The structure in
+  `include/dreamcast/settings.h` contains input settings and the desktop colour.
+  Returns the structure size on success, `-64` for invalid arguments, or a
+  `DC_SETTINGS_*` error. Failed loads leave the buffer untouched. This does not
+  apply settings; the panel applies validated input and palette values itself.
+  There is no general-purpose VMU file-write or formatting API.
 
 A null buffer with zero size queries the required structure size (input
-configuration queries use `write=0`). Successful calls return that size;
-invalid arguments return `-64` without modifying the caller's buffer. VMU
+configuration and control-store queries use `write=0`). Successful calls return
+that size; invalid arguments return `-64` without modifying the caller's buffer. VMU
 inspection errors instead return a complete snapshot with a negative
 `status` and zero counts. The reader supports standard 128 KiB layouts
 with one FAT block and up to 16 directory blocks; it checks bounds, file
@@ -133,3 +140,10 @@ The control panel samples cached input at 200 ms; the monitor samples system
 state at one second. VMU Toolbox's one-second timer enumerates devices only;
 opening, switching cards and explicit refresh read metadata. It uses a static
 snapshot buffer so foreground process cleanup cannot invalidate it.
+
+Control Panel loads the first valid VMU settings save during accessory
+initialization. Its timer only enumerates devices and samples cached input;
+file reads after initialization and all writes require explicit Load/Save.
+The settings service validates card metadata, VMS ownership/header/CRC and
+versioned values. A save uses one fully padded 512-byte block through KOS,
+then reads it back for verification. Writes are not power-loss atomic.

@@ -22,9 +22,25 @@ accessories wait for messages without running their periodic updates.
 | Keyboard repeat interval | 20–200 ms | 40 ms |
 | Desktop colour | Original, Teal, Slate, Amber | Original |
 
-**Tab** selects a setting or Defaults. **Left/Right** adjusts a setting;
+**Tab** selects a setting, VMU or action. **Left/Right** adjusts a setting;
 **D** restores defaults. The on-screen minus, plus and Defaults buttons
-also accept mouse clicks. Changes apply immediately and last until reset.
+also accept mouse clicks. Changes apply immediately; **S / Save** stores them
+on the selected VMU and **L / Load** restores that card's saved settings.
+Select **Settings VMU** with Tab and use Left/Right, or click its arrow buttons,
+to choose a connected card. Saving writes only `EMUTOS.CFG`, a one-block
+(512-byte) EmuTOS save. Keep the card inserted until the result appears.
+Defaults changes the session; press Save to make those defaults persistent.
+
+At boot, `CONTROL.ACC` reads connected cards in port/unit order and applies
+the first valid save, including the desktop colour. Missing or invalid saves
+leave the initial settings unchanged. Reopening the panel does not reload or
+discard unsaved changes. Cards inserted later can be selected and loaded manually.
+There are no automatic writes; repeated saves of identical data do not rewrite
+the card. Failed loads leave the current settings unchanged. Full, missing,
+unformatted or damaged cards display an error. Foreign, protected or malformed
+VMS files named `EMUTOS.CFG` are not overwritten. Save verifies the data before
+reporting success. VMU Toolbox remains read-only.
+
 Mouse speed does not change the Alt+arrow keyboard pointer or controller
 fallback speed; fractional movement is retained at slow mouse settings.
 
@@ -95,7 +111,7 @@ FLYCAST_VMU_DIR="$PWD/build/vmu-test" FLYCAST_HOST_MOUSE_PORT=-1 \
 ```
 
 The launch override is transient. A1 contains 12 entries using 24 blocks
-(176 of 200 free); A2 is empty. After exiting Flycast, verify both images:
+(176 of 200 free); A2 is empty. After a toolbox-only test, exit Flycast and verify both images:
 
 ```sh
 python3 - <<'PY'
@@ -119,3 +135,19 @@ bounded metadata reads, malformed chains/cycles/cross-links, failed reads,
 read-only buffer integrity, frontends, hidden timers, cancelled/obscured
 clicks, window lifecycle and compatibility with older API tables. FAT-image
 checks verify all four relocated `.ACC` files are included on D:.
+
+For settings persistence, create a fresh fixture directory and launch with
+that `FLYCAST_VMU_DIR`. In DC Control, change all four settings, select **A2**
+and press **S**. Press **D**, then **L**, to verify restoration. Quit Flycast
+and launch again with the same directory: the preferences should restore
+before opening the panel. A1 must retain its original checksum; A2 is expected
+to change and contain a one-block `EMUTOS.CFG`.
+
+This save/defaults/load/cold-boot sequence passed in Flycast with mouse speed
+175%, repeat delay 600 ms, interval 80 ms and Slate. The saved VMS checksum,
+payload and zero padding were checked independently, and A1 was unchanged.
+Updating the existing save and loading the replacement also passed.
+Sanitized host tests cover invalid settings, missing/full/damaged cards,
+foreign files, failed writes/readback, unchanged-save suppression, card
+selection, no periodic file I/O and compatibility with older API tables.
+Physical VMU write testing remains pending.

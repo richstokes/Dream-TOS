@@ -20,6 +20,8 @@ struct dc_native_api {
     long (*input_config)(int write, void *buffer, uint32_t bytes);
     long (*input_snapshot)(void *buffer, uint32_t bytes);
     long (*vmu_info)(uint32_t port, uint32_t unit, void *buffer, uint32_t bytes);
+    /* Optional named Control Panel save; see settings.h. */
+    long (*control_store)(int write, uint32_t port, uint32_t unit, void *buffer, uint32_t bytes);
 };
 /* Return a GEMDOS exit status. tail is the standard length-prefixed command
  * line; env is a double-NUL-terminated environment, owned by the caller. */

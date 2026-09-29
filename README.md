@@ -54,7 +54,9 @@ operations.
 - Input: Maple keyboard and mouse; controller fallback when no mouse is attached.
 - C: 4 MiB FAT16 RAM disk. Contents disappear at reset.
 - D: read-only FAT16 volume embedded in the CD's ISO9660 filesystem.
-- Serial SD, persistent writable storage and 68000 binary compatibility are absent.
+- Serial SD, persistent writable GEMDOS drives and 68000 binary compatibility are absent.
+
+Writable SD support is planned once I have a serial-to-SD adapter to test with.
 
 The CDI includes a [native application bundle](docs/BUNDLE.md): Kilo text editor,
 an image viewer with two sample pictures and BMP export, a scientific
@@ -70,7 +72,8 @@ analogue and digital clock over the live desktop. Close or press Esc to hide
 it, then reopen it from the same menu. See the [clock screenshot and controls](docs/BUNDLE.md#clock-desk-accessory).
 
 Three more native desk accessories are available from **Desk**:
-**DC Control** adjusts mouse speed, keyboard repeat and desktop colour;
+**DC Control** adjusts mouse speed, keyboard repeat and desktop colour, with
+VMU save/load and automatic restoration at boot;
 **System Monitor** shows memory, disk space and connected devices;
 **VMU Toolbox** browses card directories and metadata using read commands only.
 See [screenshots, controls and VMU testing](docs/ACCESSORIES.md).

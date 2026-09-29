@@ -31,6 +31,10 @@ can later be added behind this block interface, including a serial SD driver.
 GEMDOS has a separate 3 MiB allocation arena with ownership and Mshrink support;
 KOS allocations, stacks and program images are separate.
 
+Control Panel preferences use a separate, named one-block VMU save through
+KOS. They load at accessory startup and write only on an explicit Save action;
+the VMU is not exposed as a writable GEMDOS drive.
+
 The native ABI replaces stack decoding of 68000 traps with typed C dispatch.
 The ROM desktop returns directly to the AES shell when launching a program.
 Applications use relocatable SH-4 containers and an explicit OS function table.

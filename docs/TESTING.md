@@ -65,10 +65,15 @@ There is one fixed 640×480 mode. The native glyph renderer supports built-in
 fonts, scaling, bold/light/italic/outline and right-angle rotations. Exact pixel
 parity with every Atari font-effect combination is not claimed. GDOS font
 loading is disabled. No audio, printer,
-MIDI, serial SD, persistent writes, resident programs/accessories, nested
+MIDI, serial SD, persistent writable GEMDOS drives, general TSRs, nested
 Pexec or crash isolation are implemented. BIOS/XBIOS/GEMDOS expose the subset
 needed by EmuDesk and the sample application; unsupported calls must not be
 assumed to work. The EmuCON command shell is disabled.
+
+Native desk accessories are supported. Control Panel settings can be saved to
+a VMU and restored at boot; this does not persist C: files. Test VMU writes
+with isolated cards as described in ACCESSORIES.md. Real-hardware validation
+of settings persistence remains pending.
 
 The patched development Flycast build installed locally is used on macOS 27;
 the stock installed build was unable to start reliably in this environment.

@@ -21,7 +21,7 @@ build/obj/%.o: %.S
 	@mkdir -p $(dir $@)
 	$(KOS_CC) $(KOS_CFLAGS) -c $< -o $@
 # KOS headers and structs use the SDK's normal alignment, unlike legacy GEM.
-build/obj/src/dreamcast/hal.o build/obj/src/dreamcast/hal_vmu.o: build/obj/src/dreamcast/%.o: src/dreamcast/%.c
+build/obj/src/dreamcast/hal.o build/obj/src/dreamcast/hal_vmu.o build/obj/src/dreamcast/hal_settings.o: build/obj/src/dreamcast/%.o: src/dreamcast/%.c
 	@mkdir -p $(dir $@)
 	$(KOS_CC) $(KOS_CFLAGS) -O2 -Iinclude -MMD -MP -c $< -o $@
 $(TARGET): $(OBJS)
