@@ -14,6 +14,7 @@ into the Dreamcast programs; they are not imitations of those programs.
 |---|---|---|
 | `EDITOR.PRG` | [Kilo](https://github.com/antirez/kilo), BSD-2-Clause | Plain-text editing, open/save/save-as, search, C syntax colours, CRLF input |
 | `IMAGES.PRG` | [stb_image](https://github.com/nothings/stb), MIT/public domain | PNG/JPEG/BMP, 16-colour quantization, greyscale, mirror, BMP export |
+| `PAINT.PRG` | This project, GPL-2.0-or-later | 16-colour paint: pencil, brush, shapes, fill, picker, multi-level undo, BMP open/save |
 | `CALC.PRG` | [tinyexpr](https://github.com/codeplea/tinyexpr), zlib | Movable/resizable GEM window, graphical keypad, editable expression and result display, scientific functions and `ans` |
 | `WORM.PRG` | [GEM Worm](https://github.com/ArmstrongJ/gemworm), GPL-3.0-or-later | Original movement, field renderer, food and high-score code; new fullscreen GEM interface |
 | `BLOCKS.PRG` | This project, GPL-2.0-or-later | Original falling-block game: 10x20 well, SRS-style turns and kicks, 7-bag, hold, ghost piece, levels, top-5 scores |
@@ -62,6 +63,7 @@ buttons and movement. Flycast verification primarily used the keyboard.
   BMP, Esc exit. Input is limited to 640×480 and 1 MiB encoded files.
   Display/export uses 16 colours; larger-than-384-pixel-tall images fit the
   viewing area. The export retains the decoded image dimensions.
+- Paint: mouse (left/right button = foreground/background colour) or keyboard. Tools P pen, B brush, X eraser, L line, R rectangle, F filled rectangle, E ellipse, K filled ellipse, G fill, I picker, H pan; colours 0-9 and !@#$%^, `[` `]` cycle, Tab swaps; `+`/`-` size; U/Ctrl+Z undo, Y/Ctrl+Y redo, C clear; arrows move a cross and Space/Return draw with the foreground/background colour (Alt+arrows and Alt+Space also work); Ctrl+N/O/S/A new/open/save/save-as (BMP, defaulting to the SD drive), `?` help. The 640x480 canvas scrolls in the view (Pan tool, Home/End/PgUp/PgDn, or drag past the edge); undo keeps up to 64 changed rectangles within 1 MiB. Opens the IMAGES viewer's BMP exports.
 - Calculator: click the graphical keypad or type an expression; Return or
   `=` evaluates, Ctrl+U / AC clears all, Esc exits. Tab selects the keypad,
   arrows move between buttons, and Space presses the focused button.

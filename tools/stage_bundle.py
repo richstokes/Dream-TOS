@@ -4,7 +4,7 @@ import argparse
 import shutil
 from pathlib import Path
 
-APPS = ('HELLO', 'VDITEST', 'CALC', 'EDITOR', 'FIFTEEN', 'MINES', 'NET', 'WORM', 'BLOCKS', 'IMAGES', 'RUNTIME', 'BENCH')
+APPS = ('HELLO', 'VDITEST', 'CALC', 'EDITOR', 'FIFTEEN', 'MINES', 'NET', 'WORM', 'BLOCKS', 'IMAGES', 'PAINT', 'MP3', 'VMUEDIT', 'RUNTIME', 'BENCH')
 CLI_TOOLS = ('GREP', 'WC', 'HEAD', 'TAIL', 'SORT', 'HEXDUMP', 'CKSUM', 'DATE', 'DF', 'FREE', 'UNAME', 'EXPR')
 NET_TOOLS = ('PING', 'NSLOOKUP', 'IFCONFIG')
 NOTICES = {
