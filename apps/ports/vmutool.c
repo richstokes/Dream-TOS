@@ -1,4 +1,4 @@
-/* Read-only card browser. No VMU mutation APIs are exposed. GPL-2.0-or-later. */
+/* Read-only card browser. It calls no VMU write API; VMUEDIT.PRG is the editor. GPL-2.0-or-later. */
 #include "accessory.h"
 #include "dreamcast/system_info.h"
 #include "dreamcast/vmu_info.h"
@@ -103,7 +103,7 @@ static void draw(void)
     accessory_button(&toolbox,12,12,80,"< Card",0);
     accessory_button(&toolbox,100,12,80,"Card >",0);
     accessory_button(&toolbox,376,12,130,"Refresh [R]",0);
-    accessory_text(&toolbox,204,29,"READ ONLY",4);
+    accessory_text(&toolbox,204,29,"READ ONLY (VMUEDIT)",4);
     if(!ready){accessory_text(&toolbox,12,70,"VMU inspection API unavailable.",2);return;}
     if(!card_count) {
         accessory_text(&toolbox,12,70,"No VMU or memory card connected.",1);

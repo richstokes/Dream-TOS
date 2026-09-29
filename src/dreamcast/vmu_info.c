@@ -14,7 +14,8 @@ static void timestamp(char *out, const unsigned char *p)
         strcpy(out,"Unknown");
     else snprintf(out,20,"%04d-%02d-%02d %02d:%02d",c*100+y,m,d,h,n);
 }
-int dc_vmu_inspect(struct dc_vmu_info *out, dc_vmu_reader read, void *context)
+int dc_vmu_inspect_ex(struct dc_vmu_info *out, unsigned char (*raw_names)[12],
+                      struct dc_vmu_layout *layout, dc_vmu_reader read, void *context)
 {
     unsigned char root[512], fat[512], directory[512], used[256] = {0};
     out->file_count = out->total_blocks = out->free_blocks = 0;
@@ -28,6 +29,10 @@ int dc_vmu_inspect(struct dc_vmu_info *out, dc_vmu_reader read, void *context)
         (fat_loc<=dir_loc && fat_loc>=dir_loc+1-dir_size)) return DC_VMU_CORRUPT;
     if (read(context,fat_loc,fat)) return DC_VMU_IO;
     out->total_blocks=blocks;
+    if (layout) {
+        layout->fat_loc=fat_loc; layout->dir_loc=dir_loc; layout->dir_size=dir_size;
+        layout->blocks=blocks; layout->dir_entries=dir_size*16;
+    }
     for (unsigned i=0;i<blocks;i++) if (le16(fat+2*i)==0xfffc) out->free_blocks++;
     for (unsigned block=0;block<dir_size;block++) {
         if (read(context,dir_loc-block,directory)) return DC_VMU_IO;
@@ -54,7 +59,12 @@ int dc_vmu_inspect(struct dc_vmu_info *out, dc_vmu_reader read, void *context)
             timestamp(file->modified,entry+16);
             file->blocks=count; file->type=entry[0]; file->protected_file=entry[1]!=0;
             file->first_block=first; file->header_block=header;
+            if (raw_names) memcpy(raw_names[out->file_count-1],entry+4,12);
         }
     }
     return DC_VMU_OK;
+}
+int dc_vmu_inspect(struct dc_vmu_info *out, dc_vmu_reader read, void *context)
+{
+    return dc_vmu_inspect_ex(out,NULL,NULL,read,context);
 }

@@ -34,6 +34,12 @@ struct dc_native_api {
     long (*audio_space)(void);
     long (*audio_set)(uint32_t what, uint32_t value);
     long (*audio_info)(void *buffer, uint32_t bytes);
+    /* --- Optional VMU file service and LCD; see vmu_file.h. Check size. --- */
+    long (*vmu_file_read)(uint32_t port, uint32_t unit, const char *name, void *buffer, uint32_t bytes);
+    long (*vmu_file_write)(uint32_t port, uint32_t unit, const char *name, const void *data, uint32_t bytes, uint32_t flags);
+    long (*vmu_file_delete)(uint32_t port, uint32_t unit, const char *name);
+    long (*vmu_screen)(uint32_t port, uint32_t unit, const void *bitmap, uint32_t bytes);
+    /* --- End of VMU file service. --- */
 };
 /* Return a GEMDOS exit status. tail is the standard length-prefixed command
  * line; env is a double-NUL-terminated environment, owned by the caller. */

@@ -31,6 +31,7 @@ appbuild PAINT apps/ports/paint.c
 appbuild RUNTIME apps/ports/runtime_test.c
 appbuild BENCH apps/ports/bench.c apps/ports/bench_core.c -ffp-contract=off
 appbuild MP3 apps/ports/mp3.c apps/ports/mp3_core.c -Iapps/vendor/minimp3
+appbuild VMUEDIT apps/ports/vmuedit.c apps/ports/vmuedit_core.c
 
 # Accessories use the same validated native format, with a resident AES entry.
 appbuild CLOCK apps/ports/clock.c

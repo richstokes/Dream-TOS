@@ -38,6 +38,12 @@ Control Panel preferences use a separate, named two-block VMU save with an icon
 through KOS. They load at accessory startup and write only on an explicit Save action;
 the VMU is not exposed as a writable GEMDOS drive.
 
+Native programs can also manage VMU files through a small, validated API
+(`vmu_file_read/write/delete`, `vmu_screen`): `src/dreamcast/vmu_file.c` checks
+the card, names, protection and space, then KOS `vmufs` makes the one file-level
+change and the engine reads everything back. Nothing can format a card. See
+[NATIVE-ABI.md](NATIVE-ABI.md); `VMUEDIT.PRG` is its user interface.
+
 File → Boot GD-ROM… confirms a restart, then uses KOS's `ARCH_EXIT_REBOOT`
 exit path to shut down drivers and enter the Dreamcast boot ROM. The BIOS boots
 the inserted disc as usual; leaving the EmuTOS disc inserted boots EmuTOS again.

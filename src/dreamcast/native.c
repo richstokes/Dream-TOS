@@ -17,6 +17,7 @@
 #include "dreamcast/settings.h"
 #include "dreamcast/net.h"
 #include "dreamcast/audio.h"
+#include "dreamcast/vmu_file.h"
 #include "obdefs.h"
 #include "struct.h"
 #include "aesvars.h"
@@ -35,7 +36,9 @@ static const struct dc_native_api api = {DC_NATIVE_ABI, sizeof(api), trap1,
                                          dc_system_info, dc_input_config, dc_input_snapshot, dc_vmu_info,
                                          dc_control_store, dc_net_info, dc_net_ping, dc_net_resolve,
                                          dc_audio_open, dc_audio_close, dc_audio_write,
-                                         dc_audio_space, dc_audio_set, dc_audio_info};
+                                         dc_audio_space, dc_audio_set, dc_audio_info,
+                                         /* VMU file service and LCD */
+                                         dc_vmu_file_read, dc_vmu_file_write, dc_vmu_file_delete, dc_vmu_screen};
 static jmp_buf term_context;
 static int executing;
 static long exit_status;
