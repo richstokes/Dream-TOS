@@ -38,6 +38,10 @@
 #include "rectfunc.h"
 #include "gemctrl.h"
 
+#ifdef MACHINE_DREAMCAST
+#include "dreamcast/menu_clock.h"
+#endif
+
 
 #define THEDESK 3       /* MUST be the same value as DESKMENU in desk/desk_rsc.h */
 
@@ -430,6 +434,7 @@ void ctlmgr(void)
     WORD    rets[6];
     WORD    wh;
     WORD    msgbuf[8];
+    LONG    tmcount = 0;
 
     /*
      * set defaults for multi wait
@@ -452,12 +457,18 @@ void ctlmgr(void)
         if (gl_mntree)                  /* only wait on bar when there  */
             ev_which |= MU_M1;          /* is a menu                    */
 
+#ifdef MACHINE_DREAMCAST
+        if (gl_mntree)
+            ev_which |= MU_TIMER;
+        tmcount = 1000L;
+#endif
+
 #if CONF_WITH_MENU_EXTENSION
         ev_which = ev_multi(ev_which, &gl_ctwait, &gl_ctwait, NULL,
-                                0x0L, 0x0001ff01L, msgbuf, rets);
+                                tmcount, 0x0001ff01L, msgbuf, rets);
 #else
         ev_which = ev_multi(ev_which, &gl_ctwait, &gl_ctwait,
-                                0x0L, 0x0001ff01L, msgbuf, rets);
+                                tmcount, 0x0001ff01L, msgbuf, rets);
 #endif
 
         wm_update(BEG_UPDATE);          /* take the screen */
@@ -479,6 +490,12 @@ void ctlmgr(void)
         /* handle messages for e.g. depressed activators */
         if (ev_which & MU_MESAG)
             hctl_msg(msgbuf);
+#endif
+
+#ifdef MACHINE_DREAMCAST
+        /* Also check after input, so busy menus cannot starve the timer.
+         * Drawing here respects modal dialogs and the AES screen lock. */
+        dc_menu_clock(FALSE);
 #endif
 
         wm_update(END_UPDATE);          /* give up the screen */

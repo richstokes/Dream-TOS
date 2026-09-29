@@ -67,7 +67,11 @@ are rebuilt for SH-4. Open
 `APPS.TXT` on D: for controls. Documents, images and game saves go to C: and
 are lost at reset.
 
-The **Clock desk accessory** loads at boot. Choose **Desk → Clock** for an
+The menu bar shows a **24-hour clock** at the upper right, using the console's
+system time initialized from the Dreamcast RTC (or Flycast's emulated RTC).
+It updates automatically and leaves room for application menu titles.
+
+The **Clock desk accessory** also loads at boot. Choose **Desk → Clock** for an
 analogue and digital clock over the live desktop. Close or press Esc to hide
 it, then reopen it from the same menu. See the [clock screenshot and controls](docs/BUNDLE.md#clock-desk-accessory).
 

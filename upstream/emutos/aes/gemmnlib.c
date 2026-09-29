@@ -42,6 +42,10 @@
 #include "gemmnext.h"
 #include "geminit.h"
 
+#ifdef MACHINE_DREAMCAST
+#include "dreamcast/menu_clock.h"
+#endif
+
 
 #define THESCREEN 0
 #define THEBAR 1
@@ -726,6 +730,10 @@ void mn_bar(OBJECT *tree, WORD showit)
         gl_mntree = NULL;
         rc_copy(&gl_rmenu, &gl_ctwait.m_gr);
     }
+
+#ifdef MACHINE_DREAMCAST
+    dc_menu_clock(TRUE);
+#endif
 
     /* make ctlmgr fix up the size of rect it's waiting for by sending fake key */
     post_keybd(ctl_pd->p_cda, 0x0000);

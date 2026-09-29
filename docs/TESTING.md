@@ -36,6 +36,11 @@ physical double clicks still need manual testing. Prefer keyboard navigation
 for reproducible emulator checks. Do not interpret the separate host pointer
 as a guest hit-test location.
 
+The menu-bar clock was verified in Flycast on 2026-09-29: correct placement
+with the desktop and D: window visible, and an automatic minute change.
+Sanitized host tests cover midnight rollover, unchanged-minute suppression,
+menu hide/show, crowded titles, font geometry and restoration of clipping.
+
 ## Real-console checklist
 
 The CDI is a development test image. Copy it to a GDEMU-compatible card using
