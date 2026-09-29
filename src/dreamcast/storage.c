@@ -207,7 +207,7 @@ static int readonly_handle(int h)
 
 /* BIOS devices can be direct handles, standard streams, or Fdup results.
  * SH-4 RAM addresses also have the high bit set: test only -1..-3. */
-static int console_handle(int h)
+static int device_handle(int h)
 {
     if (h >= 0 && h < NUMSTD)
         h = run->p_uft[h];
@@ -216,7 +216,7 @@ static int console_handle(int h)
         if ((ULONG)ofd >= (ULONG)-3L)
             h = (LONG)ofd;
     }
-    return h == -1;
+    return h >= -3 && h <= -1 ? h : 0;
 }
 
 static long stream_write(int h, long n, const UBYTE *buf)
@@ -226,8 +226,11 @@ static long stream_write(int h, long n, const UBYTE *buf)
     extern long dc_native_terminate(int);
     if (n < 0)
         return EINVFN;
-    if (!console_handle(h))
+    int device = device_handle(h);
+    if (!device)
         return readonly_handle(h) ? EWRPRO : xwrite(h, n, (void *)buf);
+    if (device != -1)
+        return EUNDEV;
     for (long i = 0; i < n; i++) {
         /* Text files keep their original bytes; only the VT52 display needs CR. */
         if (buf[i] == '\n')
@@ -246,8 +249,11 @@ static long stream_read(int h, long n, UBYTE *buf)
     extern long dc_native_terminate(int);
     if (n < 0)
         return EINVFN;
-    if (!console_handle(h))
+    int device = device_handle(h);
+    if (!device)
         return xread(h, n, buf);
+    if (device != -1)
+        return EUNDEV;
     long i = 0;
     while (i < n) {
         UBYTE ch = dc_console_in();
@@ -373,7 +379,7 @@ static long dispatch(int op, va_list ap)
         n = va_arg(ap, long);
         h = va_arg(ap, int);
         a = va_arg(ap, int);
-        return xlseek(n, h, a);
+        return device_handle(h) ? EIHNDL : xlseek(n, h, a);
     case 0x43:
         p = va_arg(ap, char *);
         a = va_arg(ap, int);

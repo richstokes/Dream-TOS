@@ -482,7 +482,19 @@ long xclose(int h)
     if (!(fd = getofd(h)))
         return EIHNDL;
 
+#ifdef MACHINE_DREAMCAST
+    /* Fforce/Pexec can share this handle, and Fdup can create another SFT
+     * entry for the same OFD. Flush each close, but unlink the OFD from the
+     * directory only after the final reference. Otherwise a later close
+     * reports EINTRN and simultaneous opens cannot find the shared file. */
+    int part = sft[h-NUMSTD].f_use > 1 ? 1 : 0; /* 1 = flush without unlink */
+    for (int i = 0; i < OPNFILES && !part; i++)
+        if (i != h-NUMSTD && sft[i].f_own && sft[i].f_ofd == fd)
+            part = 1;
+    rc = ixclose(fd,part);
+#else
     rc = ixclose(fd,0);
+#endif
 
     /*
      * finally, decrement the usage and, if it is now zero, zero out the

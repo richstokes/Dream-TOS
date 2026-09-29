@@ -41,6 +41,22 @@ with the desktop and D: window visible, and an automatic minute change.
 Sanitized host tests cover midnight rollover, unchanged-minute suppression,
 menu hide/show, crowded titles, font geometry and restoration of clipping.
 
+## EmuCON validation
+
+Flycast checks on 2026-09-29 verified Ctrl+Z entry, keyboard input through
+`head -n 1 -`, EOF through `wc -` and Ctrl+D, Ctrl+C interruption, PATH lookup,
+launching `editor C:\WELCOME.TXT`, return to the prompt, and `exit` back to
+EmuDesk. Repeated entry and exit also restore the desktop correctly.
+
+Boot self-tests run the real shell three times and check file commands,
+failed redirection, native tools, history, Tab completion, memory, handles
+and DTA restoration. A separate native runtime test redirects stdin, stdout
+and stderr independently and checks buffered output on exit. These also
+cover duplicated character handles and repeated executable loading from CD.
+The host suite uses ASan/UBSan for the utility, parser and command-tail tests
+and verifies all twelve `.TTP` payloads in the generated disc image.
+See [COMMAND-LINE.md](COMMAND-LINE.md) for usage and supported options.
+
 ## Real-console checklist
 
 SD card (serial adapter), not yet run on hardware: format a card with an MBR and

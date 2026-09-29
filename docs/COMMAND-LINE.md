@@ -112,11 +112,13 @@ to the closest limit. Display resolution changes are unsupported.
 Line-A geometry reads. The wrapper supplies an environment and private DTA,
 and frees history on every exit. Native GEMDOS implements Fdup/Fforce and
 console-aware Fread/Fwrite; the newlib runtime writes through inherited
-handles, including separately redirected stdout and stderr. GUI launches use
+handles, including separately redirected stdout and stderr. Shared file
+descriptors stay linked until their last handle is closed. GUI launches use
 AES's graphics/console transitions and clean up window state afterward.
 
-Boot checks execute the real shell three times, covering built-in file
-operations, PATH lookup, native utilities, redirection failures, history,
+Boot checks verify separately redirected stdin/stdout/stderr, buffered stdio
+flushing and safe character-device aliases, then execute the real shell three
+times, covering built-in file operations, PATH lookup, native utilities, redirection failures, history,
 Tab completion and restored memory/handle/DTA state. Host sanitizer tests
 exercise the actual utility sources with CRLF, binary, empty, long-line,
 large-file, sorting, checksum and argument-error fixtures. The test suite also

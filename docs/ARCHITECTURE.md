@@ -25,7 +25,9 @@ and region-specific characters. The physical keyboard/mouse can be on any
 Maple port; the first matching device is used.
 
 GEMDOS retains its FAT implementation. C: is a formatted 4 MiB allocation;
-D: exposes the same fixed geometry from `/cd/DISC.IMG`. Writes to D: are denied
+D: exposes the same fixed geometry from `/cd/DISC.IMG`. CD reads pass through
+a consistent 32-byte-aligned transfer buffer so KOS does not mix its streaming
+and cached paths when GEMDOS supplies differently aligned buffers. Writes to D: are denied
 both in the GEMDOS adapter and at the block-device layer. An SD card on the serial port is scanned at boot and its FAT12/FAT16
 partitions are exposed as writable E: to H: through the same block interface;
 see [SD card support](SD.md).

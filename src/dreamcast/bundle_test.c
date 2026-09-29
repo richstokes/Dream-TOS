@@ -10,6 +10,15 @@ static void stream_test(void)
     const char *paths[] = {"C:\\CLIIN.TXT", "C:\\CLIOUT.TXT", "C:\\CLIERR.TXT"};
     int saved[3], handles[3];
     long memory = trap1(0x48, -1L);
+    /* Character-device aliases must never be dereferenced as disk OFDs. */
+    int old = trap1(0x45, 4);
+    char byte = 'x';
+    if (old < 0 || trap1(0x46, 4, -2)) panic("SELFTEST: device handle setup failed\n");
+    int aux = trap1(0x45, 4);
+    if (aux < 0 || trap1(0x3f, aux, 1L, &byte) != -15 ||
+        trap1(0x40, aux, 1L, &byte) != -15 || trap1(0x42, 0L, aux, 1) != -37 ||
+        trap1(0x3e, aux) || trap1(0x46, 4, old) || trap1(0x3e, old))
+        panic("SELFTEST: device handle validation failed\n");
     for (int i = 0; i < 3; i++) {
         saved[i] = trap1(0x45, i);
         handles[i] = trap1(0x3c, paths[i], 0);
@@ -23,8 +32,13 @@ static void stream_test(void)
     const char tail[] = {6, 'S', 'T', 'R', 'E', 'A', 'M', 0};
     long result = trap1_pexec(0, "D:\\RUNTIME.PRG", tail, NULL);
     for (int i = 0; i < 3; i++) {
-        if (trap1(0x3e, i) || trap1(0x46, i, saved[i]) || trap1(0x3e, saved[i]) ||
-            trap1(0x3e, handles[i])) panic("SELFTEST: stream restoration failed\n");
+        long close_std = trap1(0x3e, i);
+        long force = trap1(0x46, i, saved[i]);
+        long close_saved = trap1(0x3e, saved[i]);
+        long close_file = trap1(0x3e, handles[i]);
+        if (close_std || force || close_saved || close_file)
+            panic("SELFTEST: stream %d restoration failed: %ld/%ld/%ld/%ld (program %ld)\n",
+                  i, close_std, force, close_saved, close_file, result);
     }
     const char *expected[] = {"alpha beta\n", "OUT:alpha beta\n", "ERR:separate\n"};
     for (int i = 0; i < 3; i++) {
