@@ -28,10 +28,11 @@ it sees one.
 
 ## Behaviour and limits
 
-- The Kilo text editor saves to any writable drive, including E:–H:. Ctrl+S on a
-  file opened from the read-only disc asks for a new path; the "lost at reset"
-  note is shown only for the RAM disk.
-
+- Applications: the Kilo editor and the image viewer save to any writable drive
+  (C: or E:-H:). Puzzle saves and Worm high scores go to the first mounted SD
+  drive, falling back to C:; puzzle loads also look on C:. The System Monitor
+  lists every mounted drive. Messages say "lost at reset" only for the RAM disk.
+  The shared logic is `apps/lib/drives.h`.
 - The card is probed **once at boot**. The adapter has no card-detect line, so
   insert or swap cards before powering on or resetting. File → Boot GD-ROM
   restarts and re-probes.

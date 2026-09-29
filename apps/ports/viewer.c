@@ -1,6 +1,7 @@
 /* Native GEM viewer using stb_image. Frontend GPL-2.0-or-later.
  * PNG, JPEG and BMP, bounded to 640x480 and 1 MiB encoded input. */
 #include "app.h"
+#include "drives.h"
 #include <stdlib.h>
 #include <string.h>
 #define STB_IMAGE_IMPLEMENTATION
@@ -183,10 +184,15 @@ static void put32(unsigned char *p, unsigned n)
 static void save(void)
 {
     char path[80] = "C:\\PICTURE.BMP";
-    if (!app_prompt("Export 16-colour BMP to RAM disk:", path, sizeof(path)))
+    path[0] = dc_storage_drive();
+    if (!app_prompt("Export 16-colour BMP (SD drive or C:):", path, sizeof(path)))
         return;
-    if ((path[0] != 'C' && path[0] != 'c') || path[1] != ':') {
-        app_alert("Save on C:; D: is read-only");
+    if (!isalpha((unsigned char)path[0]) || path[1] != ':') {
+        app_alert("Give a drive, e.g. C:\\PICTURE.BMP");
+        return;
+    }
+    if (!dc_drive_state(path[0])) {
+        app_alert("That drive is read-only or not mounted");
         return;
     }
     FILE *f = fopen(path, "rb");
@@ -229,7 +235,9 @@ static void save(void)
     }
     if (fclose(f))
         ok = 0;
-    app_alert(ok ? "Image saved on C: (lost at reset)" : "Image save failed");
+    char done[64];
+    snprintf(done, sizeof(done), "Image saved on %c:%s", toupper((unsigned char)path[0]), dc_drive_note(path[0]));
+    app_alert(ok ? done : "Image save failed");
 }
 int app_main(int argc, char **argv)
 {

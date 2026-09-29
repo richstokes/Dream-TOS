@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "drives.h"
 
 #ifdef __GNUC__
 
@@ -40,11 +41,15 @@ char *defaults[10] = {
 
 static struct score scores[10];
 
-/* Dreamcast port: the application disc is read-only. */
+/* Dreamcast port: the application disc is read-only. Scores go on the SD
+ * card when one is mounted, otherwise on the RAM disk. */
 char *get_hi_score_filepath(const char *fullpath)
 {
     (void)fullpath;
-    return strdup("C:\\WORM.HI");
+    char *path = strdup("C:\\WORM.HI");
+    if (path)
+        path[0] = dc_storage_drive();
+    return path;
 }
 
 void load_scores(const char *fullpath)

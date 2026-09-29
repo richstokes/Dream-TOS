@@ -325,7 +325,7 @@ static void save_report(void)
         ok = 0;
     static char saved_status[] = "Saved A:\\SYSINFO.TXT";
     saved_status[6] = 'A' + d;
-    status = ok ? saved_status : "Report write failed (possibly a full RAM disk).";
+    status = ok ? saved_status : "Report write failed (the drive may be full).";
 }
 static unsigned page_count(unsigned per_page)
 {
@@ -349,7 +349,7 @@ static void draw(unsigned page, unsigned per_page)
     for (unsigned i = 0; i < per_page && page * per_page + i < line_count; i++)
         text(16, 82 + 18 * i, lines[page * per_page + i]);
     bar(16, screen_height - 55, screen_width - 32, 1, 1);
-    text(16, screen_height - 34, status ? status : "S saves SYSINFO.TXT on the writable RAM disk.");
+    text(16, screen_height - 34, status ? status : "S saves SYSINFO.TXT on the RAM disk, else the first writable drive.");
     /* Reuse a spare line as a bounded footer scratch buffer, not part of report. */
     unsigned count = line_count, col = column, pages = page_count(per_page);
     line_count = MAX_LINES;

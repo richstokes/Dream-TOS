@@ -5,8 +5,40 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "drives.h"
+char *get_hi_score_filepath(const char *);
+static long fake_info(void *buffer, uint32_t bytes)
+{
+    struct dc_system_info *i = buffer;
+    if (bytes != sizeof(*i)) return -64;
+    memset(i, 0, sizeof(*i));
+    i->version = DC_SYSTEM_INFO_VERSION;
+    i->drive_mask = 4 | 8 | 16;
+    i->readonly_mask = 8;
+    i->volatile_mask = 4;
+    return sizeof(*i);
+}
+static struct dc_native_api fake_api = {.version = 1, .size = sizeof(fake_api), .system_info = fake_info};
 int main(void)
 {
+    /* High scores follow the SD card when one is mounted, else the RAM disk. */
+    assert(dc_storage_drive() == 'C');
+    dc_os = &fake_api;
+    assert(dc_storage_drive() == 'E' && dc_drive_state('C') == DC_DRIVE_VOLATILE && !dc_drive_state('D'));
+    assert(!strcmp(dc_drive_note('C'), " (lost at reset)") && !*dc_drive_note('E'));
+    {
+        char *path = get_hi_score_filepath(NULL);
+        assert(!strcmp(path, "E:\\WORM.HI"));
+        free(path);
+        load_scores(NULL);
+        add_high_score("SD!", 77777);
+        save_scores(NULL);
+        FILE *sd = fopen("E:\\WORM.HI", "r");
+        assert(sd);
+        fclose(sd);
+        remove("E:\\WORM.HI");
+    }
+    dc_os = NULL;
     WPLAYER *p = init_player();
     field_init();
     assert(update_field(p) == ALIVE);

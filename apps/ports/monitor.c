@@ -1,11 +1,13 @@
 /* Live, measured system snapshots. GPL-2.0-or-later. */
+#define MON_DRIVES 3
 #include "accessory.h"
 #include "dreamcast/system_info.h"
 #include <stdio.h>
 #include <string.h>
 static Accessory monitor;
 static struct dc_system_info info;
-static uint32_t history[60], disk_free[2],disk_total[2];
+static uint32_t history[60], disk_free[MON_DRIVES],disk_total[MON_DRIVES];
+static int disk_shown,disk_letter[MON_DRIVES],disk_kind[MON_DRIVES],disk_extra;
 static int samples, next_sample, paused, ready, device_offset;
 static const char *kind(uint32_t f)
 {
@@ -22,12 +24,20 @@ static int refresh(void)
     if(info.device_count>DC_SYSTEM_INFO_DEVICES)info.device_count=DC_SYSTEM_INFO_DEVICES;
     history[next_sample]=info.gem_free_bytes;
     next_sample=(next_sample+1)%60;if(samples<60)samples++;
-    for(int i=0;i<2;i++) {
-        uint32_t d[4]={0};disk_free[i]=disk_total[i]=0;
-        if((info.drive_mask&(1u<<(i+2))) && dc_os->gemdos(0x36,d,i+3)==0) {
-            disk_free[i]=d[0]*d[2]*d[3];disk_total[i]=d[1]*d[2]*d[3];
+    /* Mounted drives in letter order; those beyond the display space are counted. */
+    int shown=0;disk_extra=0;
+    for(int drive=0;drive<26;drive++) {
+        if(!(info.drive_mask&(1u<<drive)))continue;
+        if(shown==MON_DRIVES){disk_extra++;continue;}
+        uint32_t d[4]={0};disk_free[shown]=disk_total[shown]=0;
+        disk_letter[shown]='A'+drive;
+        disk_kind[shown]=(info.volatile_mask&(1u<<drive))?0:(info.readonly_mask&(1u<<drive))?1:2;
+        if(dc_os->gemdos(0x36,d,drive+1)==0) {
+            disk_free[shown]=d[0]*d[2]*d[3];disk_total[shown]=d[1]*d[2]*d[3];
         }
+        shown++;
     }
+    disk_shown=shown;
     if(device_offset>=(int)info.device_count)device_offset=0;
     return 1;
 }
@@ -68,10 +78,13 @@ static void draw(void)
     accessory_text(&monitor,12,80,line,1);bar(88,info.gem_free_bytes,info.gem_pool_bytes);
     snprintf(line,sizeof(line),"KOS heap used: %lu KiB",(unsigned long)(info.heap_used_bytes/1024));
     accessory_text(&monitor,12,116,line,1);
-    for(int i=0;i<2;i++) {
-        if(disk_total[i])snprintf(line,sizeof(line),"%c: free %lu / %lu KiB  %s",'C'+i,(unsigned long)(disk_free[i]/1024),(unsigned long)(disk_total[i]/1024),i ? "read-only" : "RAM disk");
-        else snprintf(line,sizeof(line),"%c: unavailable",'C'+i);
-        accessory_text(&monitor,12,140+i*20,line,1);
+    for(int i=0;i<disk_shown;i++) {
+        static const char *dkind[]={"RAM disk","read-only","SD card"};
+        int n;
+        if(disk_total[i])n=snprintf(line,sizeof(line),"%c: free %lu / %lu KiB  %s",disk_letter[i],(unsigned long)(disk_free[i]/1024),(unsigned long)(disk_total[i]/1024),dkind[disk_kind[i]]);
+        else n=snprintf(line,sizeof(line),"%c: unavailable",disk_letter[i]);
+        if(i==disk_shown-1&&disk_extra&&n>0&&n<(int)sizeof(line))snprintf(line+n,sizeof(line)-n,"  +%d more",disk_extra);
+        accessory_text(&monitor,12,136+i*16,line,1);
     }
     accessory_text(&monitor,12,185,"GEM free memory - last 60 visible samples",9);
     accessory_box(&monitor,14,194,440,50,8);

@@ -1,6 +1,7 @@
 /* Native GEM frontend for Simon Tatham's MIT-licensed puzzle engines.
  * Frontend GPL-2.0-or-later. Keyboard and Maple mouse supported. */
 #include "app.h"
+#include "drives.h"
 #include "puzzles.h"
 #include <stdarg.h>
 #include <stdlib.h>
@@ -252,21 +253,28 @@ int app_main(int argc, char **argv)
             code = UI_REDO;
         else if (a == 's' || a == 'S' || a == 'l' || a == 'L') {
             char path[64];
-            snprintf(path, sizeof(path), "C:\\%s.SAV", thegame.name);
+            char drive = dc_storage_drive();
+            snprintf(path, sizeof(path), "%c:\\%s.SAV", drive, thegame.name);
             if (a == 's' || a == 'S') {
                 struct stream s = {fopen(path, "wb"), 0};
                 if (!s.file)
-                    app_alert("Cannot create save file on C:");
+                    app_alert("Cannot create the save file");
                 else {
                     midend_serialise(fe.me, save_cb, &s);
                     if (fclose(s.file))
                         s.failed = 1;
-                    app_alert(s.failed ? "Save failed" : "Saved on C: (lost at reset)");
+                    char done[48];
+                    snprintf(done, sizeof(done), "Saved on %c:%s", drive, dc_drive_note(drive));
+                    app_alert(s.failed ? "Save failed" : done);
                 }
             } else {
                 FILE *f = fopen(path, "rb");
+                if (!f && drive != 'C') { /* saved earlier on the RAM disk */
+                    path[0] = 'C';
+                    f = fopen(path, "rb");
+                }
                 if (!f)
-                    app_alert("No saved game on C:");
+                    app_alert("No saved game found");
                 else {
                     const char *e = midend_deserialise(fe.me, load_cb, f);
                     fclose(f);
@@ -278,7 +286,7 @@ int app_main(int argc, char **argv)
         } else if (a == 'h' || a == 'H') {
             app_alert(!strcmp(thegame.name, "Mines")
                           ? "Reveal safe squares. F flags a mine.|Arrows move the cursor; Space "
-                            "reveals.|S/L save and load on the RAM disk."
+                            "reveals.|S/L save and load (SD card if present)."
                       : !strcmp(thegame.name, "Net")
                           ? "Connect all wires to the centre.|Space rotates. F locks a "
                             "tile.|Arrows move; U undoes a move."

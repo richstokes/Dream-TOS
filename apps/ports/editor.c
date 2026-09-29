@@ -1,6 +1,6 @@
 /* Native GEM frontend to Kilo (BSD-2-Clause engine). GPL-2.0-or-later frontend. */
 #include "app.h"
-#include "dreamcast/system_info.h"
+#include "drives.h"
 #define DC_NATIVE
 #ifndef APP_HOST_TEST
 #define getline __getline
@@ -84,22 +84,7 @@ void editorRefreshScreen(void)
     app_text(8, 426, E.statusmsg, 1);
     app_status("^O:open ^N:new ^S:save ^A:save as ^F:find ^Q:quit");
 }
-static struct dc_system_info drive_info;
-/* Drive state from the OS: 0 = not writable, 1 = writable, 2 = writable but
- * RAM-backed. Without the info call only the RAM disk is assumed writable. */
-static int drive_state(int letter)
-{
-    unsigned d = (unsigned)(toupper((unsigned char)letter) - 'A');
-    if (d >= 26)
-        return 0;
-    if (!dc_os || dc_os->size < offsetof(struct dc_native_api, system_info) + sizeof(dc_os->system_info) ||
-        !dc_os->system_info || dc_os->system_info(&drive_info, sizeof(drive_info)) != (long)sizeof(drive_info) ||
-        drive_info.version != DC_SYSTEM_INFO_VERSION)
-        return d == 2 ? 2 : 0;
-    if (!(drive_info.drive_mask & (1u << d)) || (drive_info.readonly_mask & (1u << d)))
-        return 0;
-    return drive_info.volatile_mask & (1u << d) ? 2 : 1;
-}
+#define drive_state dc_drive_state
 static int has_drive(const char *path)
 {
     return isalpha((unsigned char)path[0]) && path[1] == ':';
@@ -146,7 +131,7 @@ static int save_as(int force)
         E.filename = strdup(path);
         has_path = 1;
         E.dirty = 0;
-        if (drive_state(path[0]) == 2)
+        if (drive_state(path[0]) == DC_DRIVE_VOLATILE)
             editorSetStatusMessage("Saved %d bytes on %c: (lost at reset)", len, toupper((unsigned char)path[0]));
         else
             editorSetStatusMessage("Saved %d bytes on %c:", len, toupper((unsigned char)path[0]));

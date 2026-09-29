@@ -1,6 +1,7 @@
 /* Dreamcast GEM frontend for Jeffrey Armstrong's GEM Worm. GPL-3.0-or-later.
  * Retains the upstream movement, field renderer, food and score engines. */
 #include "app.h"
+#include "drives.h"
 #include "field.h"
 #include "player.h"
 #include "scores.h"
@@ -23,7 +24,10 @@ static void redraw(void)
 static void scores(void)
 {
     app_clear(0);
-    app_text(32, 62, "GEM Worm high scores (C:\\WORM.HI, lost at reset)", 1);
+    char title[64];
+    char drive = dc_storage_drive();
+    snprintf(title, sizeof(title), "GEM Worm high scores (%c:\\WORM.HI%s)", drive, dc_drive_note(drive));
+    app_text(32, 62, title, 1);
     for (int i = 0; i < 10; i++) {
         int n;
         const char *initials = get_score_at(i, &n);
