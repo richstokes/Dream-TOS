@@ -27,16 +27,19 @@ accessories wait for messages without running their periodic updates.
 also accept mouse clicks. Changes apply immediately; **S / Save** stores them
 on the selected VMU and **L / Load** restores that card's saved settings.
 Select **Settings VMU** with Tab and use Left/Right, or click its arrow buttons,
-to choose a connected card. Saving writes only `EMUTOS.CFG`, a one-block
-(512-byte) EmuTOS save. Keep the card inserted until the result appears.
+to choose a connected card. Saving writes only `EMUTOS.CFG`, a two-block
+(1024-byte) EmuTOS save with a 32×32 colour settings icon. Keep the card inserted
+until the result appears. Original one-block saves still load and gain the icon
+on the next Save, requiring one extra free block.
 Defaults changes the session; press Save to make those defaults persistent.
 
 At boot, `CONTROL.ACC` reads connected cards in port/unit order and applies
 the first valid save, including the desktop colour. Missing or invalid saves
 leave the initial settings unchanged. Reopening the panel does not reload or
 discard unsaved changes. Cards inserted later can be selected and loaded manually.
-There are no automatic writes; repeated saves of identical data do not rewrite
-the card. Failed loads leave the current settings unchanged. Full, missing,
+There are no automatic writes; once the icon is present, repeated saves of
+identical data do not rewrite the card. Failed loads leave the current settings
+unchanged. Full, missing,
 unformatted or damaged cards display an error. Foreign, protected or malformed
 VMS files named `EMUTOS.CFG` are not overwritten. Save verifies the data before
 reporting success. VMU Toolbox remains read-only.
@@ -141,13 +144,16 @@ that `FLYCAST_VMU_DIR`. In DC Control, change all four settings, select **A2**
 and press **S**. Press **D**, then **L**, to verify restoration. Quit Flycast
 and launch again with the same directory: the preferences should restore
 before opening the panel. A1 must retain its original checksum; A2 is expected
-to change and contain a one-block `EMUTOS.CFG`.
+to change and contain a two-block `EMUTOS.CFG` with one icon frame.
 
 This save/defaults/load/cold-boot sequence passed in Flycast with mouse speed
 175%, repeat delay 600 ms, interval 80 ms and Slate. The saved VMS checksum,
 payload and zero padding were checked independently, and A1 was unchanged.
 Updating the existing save and loading the replacement also passed.
+Original iconless saves were loaded and upgraded without changing their settings;
+the icon palette, pixels and VMS checksum were checked in the resulting file.
 Sanitized host tests cover invalid settings, missing/full/damaged cards,
-foreign files, failed writes/readback, unchanged-save suppression, card
+foreign files, fragmented two-block saves, legacy migration with insufficient
+space, failed writes/readback, unchanged-save suppression, card
 selection, no periodic file I/O and compatibility with older API tables.
 Physical VMU write testing remains pending.

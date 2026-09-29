@@ -16,7 +16,7 @@ CONTROL.ACC - Dreamcast Control Panel, Desk > DC Control
 Mouse speed, key repeat delay/interval and desktop colour.
 Tab selects a row; Left/Right adjusts; D restores defaults.
 Live mouse, keyboard and controller diagnostics. Select a Settings VMU;
-S saves, L loads, D applies defaults (S saves them). Uses one VMU block.
+S saves, L loads, D applies defaults (S saves them). Uses two VMU blocks with an icon.
 The first valid settings save loads at boot. Unsaved changes last until reset.
 Mouse speed changes physical Maple mouse movement, not Alt+arrow movement.
 

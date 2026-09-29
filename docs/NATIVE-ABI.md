@@ -145,5 +145,9 @@ Control Panel loads the first valid VMU settings save during accessory
 initialization. Its timer only enumerates devices and samples cached input;
 file reads after initialization and all writes require explicit Load/Save.
 The settings service validates card metadata, VMS ownership/header/CRC and
-versioned values. A save uses one fully padded 512-byte block through KOS,
-then reads it back for verification. Writes are not power-loss atomic.
+versioned values. A save includes one 32×32 4-bit icon with an ARGB4444 palette
+and uses two fully padded 512-byte blocks through KOS, then reads it back for
+verification. FAT chains are followed even when the blocks are nonadjacent.
+The original iconless one-block format still loads; an explicit Save upgrades
+it to the icon format even when the settings are unchanged. Writes are not
+power-loss atomic.

@@ -38,7 +38,7 @@ static void store_error(long error)
     if(error==DC_SETTINGS_ABSENT)message="Selected VMU is not connected.";
     else if(error==DC_SETTINGS_MISSING)message="No saved settings on this VMU. S saves them.";
     else if(error==DC_SETTINGS_INVALID)message="Invalid card or settings. Nothing loaded/saved.";
-    else if(error==DC_SETTINGS_FULL)message="VMU is full. Settings need one free block.";
+    else if(error==DC_SETTINGS_FULL)message="VMU is full. Settings with an icon need 2 blocks.";
     else if(error==DC_SETTINGS_CONFLICT)message="EMUTOS.CFG is incompatible; it was not changed.";
     strcpy(status,message);
 }
