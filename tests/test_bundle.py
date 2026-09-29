@@ -35,6 +35,9 @@ class BundleTests(unittest.TestCase):
     def test_image_decode_quantize_transform_bmp_roundtrip(self):
         self.build_run('viewer','tests/viewer_host.c',args=[ROOT/'disc/SONIC.PNG',ROOT/'disc/SPACE.PNG'])
 
+    def test_paint_shapes_fill_undo_and_bmp(self):
+        self.build_run('paint','tests/paint_host.c')
+
     def test_puzzle_engines_and_save_roundtrips(self):
         common=[f'apps/vendor/puzzles/{s}.c' for s in PUZZLE_COMMON]
         for game in ['fifteen','mines','net']:

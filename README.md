@@ -59,7 +59,7 @@ operations.
 - 68000 binary compatibility is absent.
 
 The CDI includes a [native application bundle](docs/BUNDLE.md): Kilo text editor,
-an image viewer with two sample pictures and BMP export, a scientific
+an image viewer with two sample pictures and BMP export, a 16-colour paint program with undo and BMP save/open, a scientific
 calculator in a movable, resizable GEM window, a [native benchmark](docs/BENCHMARK.md),
 GEM Worm, and Simon Tatham's Fifteen, Mines and Net. Sources and licenses are
 stored in `apps/`; all programs

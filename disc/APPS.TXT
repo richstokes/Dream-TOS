@@ -45,6 +45,13 @@ N next sample; O open; G greyscale; M mirror; S export BMP; Esc exit.
 Bundled samples: SONIC.PNG (generated fan art) and SPACE.PNG.
 Maximum image: 640x480; encoded file: 1 MiB. Display/export: 16 colours.
 
+PAINT.PRG - 16-colour paint program
+Mouse or keyboard. P pen B brush X eraser L line R rect F filled rect
+E ellipse K filled ellipse G fill I picker H pan; 0-9 !@#$%^ colours; U undo
+Y redo C clear; + - size; Tab swap colours; arrows + Space/Return draw.
+Ctrl+N new, Ctrl+O open, Ctrl+S save, Ctrl+A save as (BMP; SD drive if
+present, else C:). Opens IMAGES exports. ? shows help; Esc quits.
+
 CALC.PRG - windowed scientific calculator using tinyexpr
 Click the keypad or type expressions. Return or = evaluates; Esc exits.
 Tab selects keypad; arrows move; Space presses a button. Typing edits.
