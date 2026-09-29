@@ -52,7 +52,7 @@ LOCAL LONG vdo_value;
  */
 PRIVATE void change_res(WORD res);
 PRIVATE void close_redir(void);
-PRIVATE void create_redir(const char *name);
+PRIVATE LONG create_redir(const char *name);
 PRIVATE WORD execute(WORD argc,char **argv,char *redir);
 PRIVATE WORD get_nflops(void);
 PRIVATE void strip_quotes(int argc,char **argv);
@@ -76,6 +76,9 @@ WORD argc, rc;
     original_res = (vdo_value < _VDO_VIDEL) ? Getrez() : -1;
 #else
     original_res = (vdo_value < _VDO_TT) ? Getrez() : -1;
+#endif
+#ifdef MACHINE_DREAMCAST
+    original_res = -1;           /* fixed 640x480 native framebuffer */
 #endif
     current_res = original_res;
     original_color3 = Setcolor(3,-1);
@@ -163,7 +166,12 @@ LONG rc;
     if (func == LOOKUP_ARGS)
         rc = WRONG_NUM_ARGS;
     else if (func) {
-        create_redir(redir);
+        rc = create_redir(redir);
+        if (rc < 0) {
+            close_redir();
+            errmsg(rc);
+            return 0;
+        }
         strip_quotes(argc,argv);
         rc = func(argc,argv);
         close_redir();
@@ -177,19 +185,20 @@ LONG rc;
     return 0;
 }
 
-PRIVATE void create_redir(const char *name)
+PRIVATE LONG create_redir(const char *name)
 {
 LONG rc;
 
     redir_handle = -1L;     /* no redirection */
 
     if (!*name)
-        return;
+        return 0;
 
     rc = Fcreate(name,0);
     if (rc < 0)
-        errmsg(rc);
-    else redir_handle = rc;
+        return rc;
+    redir_handle = rc;
+    return 0;
 }
 
 PRIVATE void close_redir(void)
@@ -304,6 +313,9 @@ PRIVATE void change_res(WORD res)
  */
 int valid_res(WORD res)
 {
+#ifdef MACHINE_DREAMCAST
+    return FALSE;
+#else
     if (vdo_value == _VDO_VIDEL)    /* can't change Falcon resolutions */
         return FALSE;
 
@@ -328,9 +340,14 @@ int valid_res(WORD res)
     }
 
     return FALSE;
+#endif
 }
 
 PRIVATE WORD get_nflops(void)
 {
+#ifdef MACHINE_DREAMCAST
+    return 0;
+#else
     return *(WORD *)0x4a6;          /* number of floppy drives */
+#endif
 }

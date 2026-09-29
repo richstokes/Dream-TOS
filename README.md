@@ -54,9 +54,9 @@ operations.
 - Input: Maple keyboard and mouse; controller fallback when no mouse is attached.
 - C: 4 MiB FAT16 RAM disk. Contents disappear at reset.
 - D: read-only FAT16 volume embedded in the CD's ISO9660 filesystem.
-- Serial SD, persistent writable GEMDOS drives and 68000 binary compatibility are absent.
-
-Writable SD support is planned once I have a serial-to-SD adapter to test with.
+- Network: Broadband Adapter (DHCP, ping, DNS) via `ping`, `nslookup` and `ifconfig`; see [networking](docs/NETWORKING.md).
+- E:–H: writable FAT16 volumes from an SD card on the serial port (jj1odm/DreamShell-style adapter); see [SD card support](docs/SD.md). Untested on hardware.
+- 68000 binary compatibility is absent.
 
 The CDI includes a [native application bundle](docs/BUNDLE.md): Kilo text editor,
 an image viewer with two sample pictures and BMP export, a scientific
@@ -66,6 +66,12 @@ stored in `apps/`; all programs
 are rebuilt for SH-4. Open
 `APPS.TXT` on D: for controls. Documents, images and game saves go to C: and
 are lost at reset.
+
+The **EmuCON command prompt** is available through **File → Execute EmuCON**
+or **Ctrl+Z**; type `exit` to return to the desktop. It includes file commands,
+history, Tab completion and output redirection, plus twelve native text and
+system utilities and three network tools (`ping`, `nslookup`, `ifconfig`) on D:. See the [command-line guide](docs/COMMAND-LINE.md)
+or read `D:\CLI.TXT` for commands and examples.
 
 The menu bar shows a **24-hour clock** at the upper right, using the console's
 system time initialized from the Dreamcast RTC (or Flycast's emulated RTC).

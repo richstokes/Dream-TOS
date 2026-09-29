@@ -43,6 +43,12 @@ menu hide/show, crowded titles, font geometry and restoration of clipping.
 
 ## Real-console checklist
 
+SD card (serial adapter), not yet run on hardware: format a card with an MBR and
+one FAT16 partition, put a few files on it, boot with the adapter attached and
+confirm the log shows `E: SD FAT16`. Open E: in EmuDesk, copy a file to it, run
+`df`, reboot and confirm the file survives and reads back on a PC. Also boot with
+no adapter, and with a FAT32 card, and check the log messages in [SD.md](SD.md).
+
 The File → Boot GD-ROM… action has been checked in Flycast with its boot ROM:
 Return selects Cancel and leaves the desktop running; Boot restarts through
 the BIOS and reloads the inserted EmuTOS CDI. The HAL closes the D: image before
@@ -76,10 +82,10 @@ There is one fixed 640×480 mode. The native glyph renderer supports built-in
 fonts, scaling, bold/light/italic/outline and right-angle rotations. Exact pixel
 parity with every Atari font-effect combination is not claimed. GDOS font
 loading is disabled. No audio, printer,
-MIDI, serial SD, persistent writable GEMDOS drives, general TSRs, nested
+MIDI, general TSRs, nested
 Pexec or crash isolation are implemented. BIOS/XBIOS/GEMDOS expose the subset
 needed by EmuDesk and the sample application; unsupported calls must not be
-assumed to work. The EmuCON command shell is disabled.
+assumed to work. EmuCON is enabled; see [command-line support and limits](COMMAND-LINE.md).
 
 Native desk accessories are supported. Control Panel settings can be saved to
 a VMU and restored at boot; this does not persist C: files. Test VMU writes

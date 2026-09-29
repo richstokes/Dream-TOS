@@ -163,6 +163,16 @@ WORD i;
     return 0;
 }
 
+#ifdef MACHINE_DREAMCAST
+/* The embedded native shell returns normally instead of calling Pterm. */
+void exit_cmdedit(void)
+{
+    if (history_num >= 0)
+        Mfree(history_line[0]);
+    history_num = -1;
+}
+#endif
+
 /*
  *  save a line in the history
  *  skip whitespace at start, and empty or duplicate lines

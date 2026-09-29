@@ -66,6 +66,14 @@ static int test(void)
 }
 int app_main(int argc, char **argv)
 {
+    if (argc > 1 && !strcmp(argv[1], "STREAM")) {
+        char line[64];
+        if (isatty(0) || isatty(1) || isatty(2)) return 20;
+        if (!fgets(line, sizeof(line), stdin) || strcmp(line, "alpha beta\n")) return 21;
+        printf("OUT:%s", line);
+        fprintf(stderr, "ERR:separate\n");
+        return 0; /* runtime exit must flush the redirected stdio buffers */
+    }
     int r = test();
     if (argc > 1 && !strcmp(argv[1], "TEST"))
         return r;

@@ -10,6 +10,11 @@
 #ifndef _CLISTUB_H
 #define _CLISTUB_H
 
+#ifdef MACHINE_DREAMCAST
+/* The native shell returns directly to AES, without a Motorola Pterm trap. */
+void coma_start(void);
+#else
 void coma_start(void) NORETURN;  /* found in cmdasm.S */
+#endif
 
 #endif /* _CLISTUB_H */

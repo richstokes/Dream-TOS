@@ -1,5 +1,6 @@
 /* Native GEMDOS ABI and block devices. Retains upstream FAT/filesystem code.
  * C: 4 MiB volatile FAT16. D: read-only FAT volume in /cd/DISC.IMG.
+ * E:-H: writable FAT12/FAT16 volumes of an SD card on the serial port.
  * GPL-2.0-or-later. */
 #include "emutos.h"
 #include "string.h"
@@ -12,6 +13,7 @@
 #include "biosbind.h"
 #include "dreamcast/hal.h"
 #include "dreamcast/system_info.h"
+#include "dreamcast/sd.h"
 #include <stdarg.h>
 
 #define SECTORS 8192UL
@@ -22,6 +24,10 @@ static UBYTE *ramdisk;
 static BPB ram_bpb = {512, 1, 512, ROOTSECS, FATSECS, 1 + FATSECS, DATASEC, SECTORS - DATASEC,
                       B_16};
 static BPB disc_bpb;
+#define SD_FIRST_DRIVE 4
+static struct dc_sd_volume sd_vol[DC_SD_MAX_VOLUMES];
+static BPB sd_bpb[DC_SD_MAX_VOLUMES];
+static int sd_count;
 static PD basepage;
 PD *run = &basepage;
 static DTA dta;
@@ -53,6 +59,55 @@ void *xmgetblk(WORD kind)
 void xmfreblk(void *p)
 {
     dc_free(p);
+}
+static int sd_scan_read(void *context, uint32_t sector, uint32_t count, void *buffer)
+{
+    (void)context;
+    return dc_hal_sd_read(sector, count, buffer);
+}
+/* Probe the serial-port SD adapter once, at boot. The adapter has no card
+ * detect line, so cards cannot be swapped without a restart. */
+static void sd_mount(void)
+{
+    uint32_t sectors = 0, skipped = 0;
+    sd_count = 0;
+    if (dc_hal_sd_init(&sectors)) {
+        kprintf("GEMDOS: no SD card on the serial port\n");
+        return;
+    }
+    int n = dc_sd_scan(sd_scan_read, NULL, sectors, sd_vol, DC_SD_MAX_VOLUMES, &skipped);
+    for (int i = 0; i < n; i++) {
+        const struct dc_sd_volume *v = &sd_vol[i];
+        BPB *b = &sd_bpb[i];
+        b->recsiz = 512;
+        b->clsiz = v->clsiz;
+        b->clsizb = v->clsiz * 512;
+        b->rdlen = v->rdlen;
+        b->fsiz = v->fsiz;
+        b->fatrec = v->fatrec;
+        b->datrec = v->datrec;
+        b->numcl = v->numcl;
+        b->b_flags = (v->fat16 ? B_16 : 0) | (v->nfats == 1 ? B_1FAT : 0);
+        drvbits |= 1L << (SD_FIRST_DRIVE + i);
+        kprintf("GEMDOS: %c: SD FAT%d, %lu KiB\n", 'A' + SD_FIRST_DRIVE + i, v->fat16 ? 16 : 12,
+                (unsigned long)(v->numcl * v->clsiz / 2));
+    }
+    sd_count = n < 0 ? 0 : n;
+    if (skipped & DC_SD_SKIP_FAT32)
+        kprintf("GEMDOS: SD FAT32 volume ignored; TOS needs FAT16 (2 GiB or smaller)\n");
+    if (skipped & DC_SD_SKIP_OTHER)
+        kprintf("GEMDOS: SD volume with unsupported or damaged FAT ignored\n");
+    if (!sd_count)
+        kprintf("GEMDOS: SD card present but has no FAT12/FAT16 volume\n");
+}
+/* Volume for an SD drive number, or NULL. */
+static const struct dc_sd_volume *sd_volume(WORD drive)
+{
+    return drive >= SD_FIRST_DRIVE && drive < SD_FIRST_DRIVE + sd_count ? &sd_vol[drive - SD_FIRST_DRIVE] : NULL;
+}
+static int writable_drive(int d)
+{
+    return d == 2 || sd_volume(d);
 }
 void dc_storage_init(void)
 {
@@ -93,6 +148,7 @@ void dc_storage_init(void)
         disc_bpb = ram_bpb;
         drvbits |= 8;
     }
+    sd_mount();
     memset(&basepage, 0, sizeof(basepage));
     run->p_curdrv = 2;
     run->p_xdta = &dta;
@@ -105,11 +161,17 @@ void dc_storage_init(void)
 }
 LONG dc_rwabs(WORD rw, void *buf, WORD count, LONG sector, WORD drive)
 {
-    if (count < 0 || sector < 0 || (ULONG)sector > SECTORS ||
-        (ULONG)count > SECTORS - (ULONG)sector)
+    const struct dc_sd_volume *sd = sd_volume(drive);
+    ULONG limit = sd ? sd->sectors : SECTORS;
+    if (count < 0 || sector < 0 || (ULONG)sector > limit || (ULONG)count > limit - (ULONG)sector)
         return ESECNF;
     if (!count)
         return 0;
+    if (sd) {
+        int r = (rw & 1) ? dc_hal_sd_write(sd->start + sector, count, buf)
+                         : dc_hal_sd_read(sd->start + sector, count, buf);
+        return r ? ((rw & 1) ? EWRITF : EREADF) : 0;
+    }
     if (drive == 2) {
         if (rw & 1)
             memcpy(ramdisk + sector * 512, buf, count * 512);
@@ -126,6 +188,8 @@ LONG dc_rwabs(WORD rw, void *buf, WORD count, LONG sector, WORD drive)
 }
 BPB *dc_getbpb(WORD drive)
 {
+    if (sd_volume(drive))
+        return &sd_bpb[drive - SD_FIRST_DRIVE];
     return drive == 2 ? &ram_bpb : drive == 3 && (drvbits & 8) ? &disc_bpb : NULL;
 }
 static int readonly_path(const char *p)
@@ -133,12 +197,73 @@ static int readonly_path(const char *p)
     int d = run->p_curdrv;
     if (p && p[0] && p[1] == ':')
         d = toupper(p[0]) - 'A';
-    return d != 2;
+    return !writable_drive(d);
 }
 static int readonly_handle(int h)
 {
     OFD *o = getofd(h);
-    return o && (ULONG)o < (ULONG)-3 && o->o_dmd->m_drvnum != 2;
+    return o && (ULONG)o < (ULONG)-3 && !writable_drive(o->o_dmd->m_drvnum);
+}
+
+/* BIOS devices can be direct handles, standard streams, or Fdup results.
+ * SH-4 RAM addresses also have the high bit set: test only -1..-3. */
+static int console_handle(int h)
+{
+    if (h >= 0 && h < NUMSTD)
+        h = run->p_uft[h];
+    if (h >= NUMSTD && h < NUMHANDLES) {
+        OFD *ofd = getofd(h);
+        if ((ULONG)ofd >= (ULONG)-3L)
+            h = (LONG)ofd;
+    }
+    return h == -1;
+}
+
+static long stream_write(int h, long n, const UBYTE *buf)
+{
+    extern void dc_console_out(WORD);
+    extern int dc_console_break(void);
+    extern long dc_native_terminate(int);
+    if (n < 0)
+        return EINVFN;
+    if (!console_handle(h))
+        return readonly_handle(h) ? EWRPRO : xwrite(h, n, (void *)buf);
+    for (long i = 0; i < n; i++) {
+        /* Text files keep their original bytes; only the VT52 display needs CR. */
+        if (buf[i] == '\n')
+            dc_console_out('\r');
+        dc_console_out(buf[i]);
+        if (!(i & 255) && dc_console_break())
+            dc_native_terminate(130);
+    }
+    return n;
+}
+
+static long stream_read(int h, long n, UBYTE *buf)
+{
+    extern LONG dc_console_in(void);
+    extern void dc_console_out(WORD);
+    extern long dc_native_terminate(int);
+    if (n < 0)
+        return EINVFN;
+    if (!console_handle(h))
+        return xread(h, n, buf);
+    long i = 0;
+    while (i < n) {
+        UBYTE ch = dc_console_in();
+        if (!ch) continue;
+        if (ch == 3) { dc_native_terminate(130); break; }
+        if (ch == 4 || ch == 26) break; /* Ctrl+D / Ctrl+Z: end of input */
+        if (ch == 8 || ch == 127) {
+            if (i) { i--; dc_console_out(8); dc_console_out(' '); dc_console_out(8); }
+            continue;
+        }
+        buf[i++] = ch == '\r' ? '\n' : ch;
+        dc_console_out(ch);
+        if (ch == '\r') dc_console_out('\n');
+        if (ch == '\r') break;
+    }
+    return i;
 }
 
 void dc_storage_system_info(struct dc_system_info *info)
@@ -179,9 +304,10 @@ static long dispatch(int op, va_list ap)
     case 0x07:
     case 0x08:
         return dc_console_in();
-    case 0x02:
-        dc_console_out(va_arg(ap, int));
-        return 0;
+    case 0x02: {
+        UBYTE ch = va_arg(ap, int);
+        return stream_write(1, 1, &ch) < 0 ? EIHNDL : 0;
+    }
     case 0x06:
         a = va_arg(ap, int);
         if (a == 0xff)
@@ -190,9 +316,7 @@ static long dispatch(int op, va_list ap)
         return 0;
     case 0x09:
         p = va_arg(ap, char *);
-        while (*p)
-            dc_console_out(*p++);
-        return 0;
+        return stream_write(1, strlen(p), (UBYTE *)p);
     case 0x0b:
         return dc_console_status();
     case 0x0e:
@@ -236,12 +360,12 @@ static long dispatch(int op, va_list ap)
         h = va_arg(ap, int);
         n = va_arg(ap, long);
         buf = va_arg(ap, void *);
-        return n < 0 ? EINVFN : xread(h, n, buf);
+        return stream_read(h, n, buf);
     case 0x40:
         h = va_arg(ap, int);
         n = va_arg(ap, long);
         buf = va_arg(ap, void *);
-        return n < 0 ? EINVFN : readonly_handle(h) ? EWRPRO : xwrite(h, n, buf);
+        return stream_write(h, n, buf);
     case 0x41:
         p = va_arg(ap, char *);
         return readonly_path(p) ? EWRPRO : xunlink(p);
@@ -259,6 +383,12 @@ static long dispatch(int op, va_list ap)
         n = va_arg(ap, long);
         a = va_arg(ap, int);
         return (long)xmxalloc(n, a);
+    case 0x45:
+        return xdup(va_arg(ap, int));
+    case 0x46:
+        a = va_arg(ap, int);
+        h = va_arg(ap, int);
+        return xforce(a, h);
     case 0x47:
         p = va_arg(ap, char *);
         a = va_arg(ap, int);

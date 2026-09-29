@@ -25,7 +25,7 @@ extern void b_click(WORD),b_delay(WORD);
 extern WORD deskmain(void);
 extern void dc_storage_init(void),dc_storage_selftest(void),dc_poll(void);
 extern char *ad_envrn,*ad_stail;
-static char empty_env[2],tail[128];
+static char shell_env[] = "PATH=D:\\;C:\\\0",tail[128];
 static struct { jmp_buf env; PFVOID entry; int saved; } contexts[NUM_PDS];
 static int current;
 void just_rts(void) {}
@@ -83,7 +83,8 @@ void dc_core_main(void) {
  dc_storage_init(); dc_storage_selftest();
  extern void dc_bundle_selftest(void);dc_bundle_selftest();
  font_init();linea_init();extern void vt52_init(void);vt52_init();dc_context_init();
- ad_envrn=empty_env;ad_stail=tail;
+ ad_envrn=shell_env;ad_stail=tail;
+ extern void dc_cli_selftest(void);dc_cli_selftest();
  kprintf("EmuTOS: entering GEM desktop\n");
  gem_main();halt();
 }

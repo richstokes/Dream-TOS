@@ -5,6 +5,8 @@ import shutil
 from pathlib import Path
 
 APPS = ('HELLO', 'VDITEST', 'CALC', 'EDITOR', 'FIFTEEN', 'MINES', 'NET', 'WORM', 'IMAGES', 'RUNTIME', 'BENCH')
+CLI_TOOLS = ('GREP', 'WC', 'HEAD', 'TAIL', 'SORT', 'HEXDUMP', 'CKSUM', 'DATE', 'DF', 'FREE', 'UNAME', 'EXPR')
+NET_TOOLS = ('PING', 'NSLOOKUP', 'IFCONFIG')
 NOTICES = {
     'COPYING.TXT': 'COPYING',
     'WORMGPL.TXT': 'apps/vendor/gemworm/license.txt',
@@ -18,6 +20,8 @@ NOTICES = {
 def stage(root, dest):
     for accessory in ('CLOCK', 'CONTROL', 'MONITOR', 'VMUTOOL'):
         shutil.copy2(root/'build/apps'/f'{accessory}.ACC', dest)
+    for tool in CLI_TOOLS + NET_TOOLS:
+        shutil.copy2(root/'build/apps'/f'{tool}.TTP', dest)
     for app in APPS:
         shutil.copy2(root/'build/apps'/f'{app}.PRG',dest)
     # SYSINFO is maintained alongside the core port and may be built separately.

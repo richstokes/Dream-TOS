@@ -9,6 +9,7 @@
 #include "dreamcast/hal.h"
 #include "dreamcast/system_info.h"
 #include "dreamcast/control.h"
+#include "dreamcast/net.h"
 static unsigned mouse_percent=100;
 static int mouse_fraction_x, mouse_fraction_y;
 static struct dc_input_snapshot input_snapshot;
@@ -31,6 +32,7 @@ void dc_hal_init(void) {
  kbd_set_repeat_timing(300,40);
  kthread_attr_t input_attr={.stack_size=8192,.prio=PRIO_DEFAULT-1,.label="EmuTOS Maple"};
  if(!thd_create_ex(&input_attr,capture_mouse,NULL))arch_panic("Cannot start Maple input thread");
+ dc_hal_net_start(); /* background: DHCP may take a while or find nothing */
  disc=fs_open("/cd/DISC.IMG",O_RDONLY);
  printf("EmuTOS native SH-4: video 640x480; Maple ready; CD image %s\n",disc==FILEHND_INVALID?"absent":"open");
 }
