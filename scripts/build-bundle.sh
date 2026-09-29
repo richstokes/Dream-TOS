@@ -25,6 +25,7 @@ for game in fifteen mines net; do
  done
 appbuild EDITOR apps/ports/editor.c
 appbuild WORM apps/ports/worm.c apps/vendor/gemworm/{field,player,scores}.c -Iapps/vendor/gemworm
+appbuild BLOCKS apps/ports/blocks.c apps/ports/blocks_core.c
 appbuild IMAGES apps/ports/viewer.c -Iapps/vendor/stb
 appbuild RUNTIME apps/ports/runtime_test.c
 appbuild BENCH apps/ports/bench.c apps/ports/bench_core.c -ffp-contract=off

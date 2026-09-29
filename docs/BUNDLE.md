@@ -16,6 +16,7 @@ into the Dreamcast programs; they are not imitations of those programs.
 | `IMAGES.PRG` | [stb_image](https://github.com/nothings/stb), MIT/public domain | PNG/JPEG/BMP, 16-colour quantization, greyscale, mirror, BMP export |
 | `CALC.PRG` | [tinyexpr](https://github.com/codeplea/tinyexpr), zlib | Movable/resizable GEM window, graphical keypad, editable expression and result display, scientific functions and `ans` |
 | `WORM.PRG` | [GEM Worm](https://github.com/ArmstrongJ/gemworm), GPL-3.0-or-later | Original movement, field renderer, food and high-score code; new fullscreen GEM interface |
+| `BLOCKS.PRG` | This project, GPL-2.0-or-later | Original falling-block game: 10x20 well, SRS-style turns and kicks, 7-bag, hold, ghost piece, levels, top-5 scores |
 | `FIFTEEN.PRG` | [Simon Tatham's puzzles](https://www.chiark.greenend.org.uk/~sgtatham/puzzles/), MIT | Sliding tiles, undo/redo, new game, RAM-disk saves |
 | `MINES.PRG` | Same collection, MIT | Minesweeper, keyboard cursor/flags, undo/redo, saves |
 | `NET.PRG` | Same collection, MIT | Wire rotation, locking, keyboard/mouse controls, saves |
@@ -81,6 +82,10 @@ buttons and movement. Flycast verification primarily used the keyboard.
   a single foreground TOS application; the file manager resumes on exit.
 - Worm: P starts/pauses, arrows or WASD steer, N restarts, H shows scores,
   Esc exits. High scores go to `C:\WORM.HI`.
+- Blocks: arrows move, Up/X turn right, Z turn left, Down soft drop, Space
+  hard drop, C hold, P pause, Esc menu. Controller: D-pad move/soft drop, Up or Y
+  hard drop, A/B turn, X hold, Start pause. High scores (top 5) go to the
+  persistent drive (SD card if present, else `C:\BLOCKS.HI`).
 - Puzzles: arrows move, Space/Return select, F is the second action
   (Mines flag, Net lock). N new, U undo, R redo, S save, L load, H help,
   Esc exit. Files: `C:\FIFTEEN.SAV`, `C:\MINES.SAV`, `C:\NET.SAV`.

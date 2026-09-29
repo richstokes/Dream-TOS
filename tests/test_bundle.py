@@ -46,6 +46,9 @@ class BundleTests(unittest.TestCase):
             '-Iapps/vendor/gemworm','apps/vendor/gemworm/field.c',
             'apps/vendor/gemworm/player.c','apps/vendor/gemworm/scores.c'])
 
+    def test_blocks_rules_kicks_scoring_and_scores(self):
+        self.build_run('blocks','tests/blocks_host.c',['apps/ports/blocks_core.c'])
+
     def test_graphical_calculator_buttons_keyboard_and_errors(self):
         self.build_run('calc','tests/calc_host.c',[
             '-Iapps/vendor/tinyexpr','apps/vendor/tinyexpr/tinyexpr.c'])

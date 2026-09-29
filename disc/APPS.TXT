@@ -62,6 +62,11 @@ WORM.PRG - Jeffrey Armstrong's Atari GEM Worm
 P starts/pauses; arrows or WASD steer; N new; H scores; Esc exits.
 Eat green food, avoid walls and your tail. Scores: C:\WORM.HI.
 
+BLOCKS.PRG - falling-block game
+Arrows move; Up/X turn right; Z turn left; Down soft drop; Space hard drop;
+C hold; P pause; Esc menu. Pad: D-pad, A/B turn, X hold, Up/Y drop, Start pause.
+Top-5 scores: BLOCKS.HI on the SD card if present, else C:.
+
 FIFTEEN.PRG - Simon Tatham's sliding-tile puzzle
 Arrow keys slide tiles into the gap. Arrange numbers in order.
 
