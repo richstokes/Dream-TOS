@@ -37,8 +37,18 @@ Atari executables cannot run; applications must be rebuilt for this port's
       <strong>Dreamcast Control Panel</strong>
     </td>
     <td width="50%" align="center">
-      <a href="docs/screenshots/vmu-toolbox.jpg"><img src="docs/screenshots/vmu-toolbox.jpg" width="480" alt="Read-only VMU Toolbox displaying synthetic test files, free blocks, copy flags and a selected file timestamp"></a><br>
-      <strong>VMU Toolbox (read only)</strong>
+      <a href="docs/screenshots/vmu-editor.jpg"><img src="docs/screenshots/vmu-editor.jpg" width="480" alt="VMU editor's 32x32 save-icon editor showing a coloured icon pixel grid, palette and preview"></a><br>
+      <strong>VMU editor (save icon)</strong>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <a href="docs/screenshots/mp3-player.jpg"><img src="docs/screenshots/mp3-player.jpg" width="480" alt="MP3 player playing a WAV file from D: with a spectrum display, progress bar and track list"></a><br>
+      <strong>MP3 / WAV player</strong>
+    </td>
+    <td width="50%" align="center">
+      <a href="docs/screenshots/paint.jpg"><img src="docs/screenshots/paint.jpg" width="480" alt="Native paint program with a tool palette and a 16-colour painting of a house on a hill"></a><br>
+      <strong>Paint</strong>
     </td>
   </tr>
 </table>
