@@ -314,7 +314,13 @@ char c1, c2;
 
 PRIVATE LONG getjar(void)
 {
+#ifdef MACHINE_DREAMCAST
+    /* Native platform has no Atari low-memory cookie jar. */
+    static COOKIE jar[] = {{_IDT_COOKIE, 0x112f}, {0, 0}};
+    return (LONG)jar;
+#else
     return *(LONG *)0x5a0;
+#endif
 }
 
 /*

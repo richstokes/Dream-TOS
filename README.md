@@ -67,6 +67,12 @@ are rebuilt for SH-4. Open
 `APPS.TXT` on D: for controls. Documents, images and game saves go to C: and
 are lost at reset.
 
+The **EmuCON command prompt** is available through **File → Execute EmuCON**
+or **Ctrl+Z**; type `exit` to return to the desktop. It includes file commands,
+history, Tab completion and output redirection, plus twelve native text and
+system utilities on D:. See the [command-line guide](docs/COMMAND-LINE.md)
+or read `D:\CLI.TXT` for commands and examples.
+
 The menu bar shows a **24-hour clock** at the upper right, using the console's
 system time initialized from the Dreamcast RTC (or Flycast's emulated RTC).
 It updates automatically and leaves room for application menu titles.

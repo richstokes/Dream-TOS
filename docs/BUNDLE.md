@@ -175,3 +175,11 @@ for it. Physical Dreamcast testing remains pending.
 ## Clock desk accessory
 
 <img src="screenshots/clock.jpg" width="640" alt="Native Clock desk accessory running alongside EmuDesk and its disk window in Flycast">
+
+## Command-line tools
+
+The CDI also includes native `GREP`, `WC`, `HEAD`, `TAIL`, `SORT`, `HEXDUMP`,
+`CKSUM`, `DATE`, `DF`, `FREE`, `UNAME` and `EXPR` `.TTP` programs. Open EmuCON
+with Ctrl+Z and use their names without extensions. See [the command-line
+guide](COMMAND-LINE.md), or `D:\CLI.TXT`. These tools are GPL-2.0-or-later;
+EXPR uses the existing TinyExpr dependency and its bundled notice.

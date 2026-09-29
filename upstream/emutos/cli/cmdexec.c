@@ -12,7 +12,7 @@
 #include "cmd.h"
 #include "string.h"
 
-static UWORD old_stdout;
+static LONG old_stdout;
 
 /*
  *  function prototypes
@@ -49,7 +49,16 @@ LONG rc;
 
     if (is_graphical(path))
         (void)Cursconf(0,0);
+#ifdef MACHINE_DREAMCAST
+    {
+        extern LONG dc_cli_run_program(const char *, const char *, WORD);
+        rc = dc_cli_run_program(path, cmdline, is_graphical(path));
+        if (is_graphical(path))
+            clear_screen();
+    }
+#else
     rc = Pexec(0,path,cmdline,NULL);
+#endif
     (void)Cursconf(1,0);
 
     restore_stdout(redir);
@@ -86,8 +95,10 @@ PRIVATE WORD build_cmdline(char *cmdline,WORD argc,char **argv)
 char *p, *q;
 WORD i, len;
 
-    for (i = 1, argv++, p = cmdline+1, len = 0; (i < argc) && (len <= MAXCMDLINE); i++, argv++) {
-        for (q = *argv; *q && (len <= MAXCMDLINE); len++)
+    for (i = 1, argv++, p = cmdline+1, len = 0; i < argc; i++, argv++) {
+        if (strlen(*argv) + len + (i < argc-1 ? 1 : 0) > MAXCMDLINE)
+            return -1;
+        for (q = *argv; *q; len++)
             *p++ = *q++;
         if (i < argc-1) {
             *p++ = ' ';
@@ -211,6 +222,11 @@ LONG rc;
 
     redir_handle = rc;
     old_stdout = Fdup(1);           /* remember current stdout */
+    if (old_stdout < 0) {
+        Fclose((WORD)redir_handle);
+        redir_handle = -1;
+        return old_stdout;
+    }
     rc = Fforce(1,redir_handle);    /* redirect it */
     if (rc < 0L) {
         restore_stdout(redir);      /* undo the redirection */
@@ -225,7 +241,8 @@ PRIVATE void restore_stdout(char *redir)
     if (!redir[0])                  /* not redirected ... */
         return;
 
-    Fforce(1,old_stdout);           /* get old stdout back */
+    Fclose(1);                     /* release forced handle's reference */
+    Fforce(1,(WORD)old_stdout);     /* get old stdout back */
     Fclose(old_stdout);             /* release duplicate */
     Fclose(redir_handle);           /*  & original */
 

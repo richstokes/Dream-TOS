@@ -141,6 +141,73 @@ static int readonly_handle(int h)
     return o && (ULONG)o < (ULONG)-3 && o->o_dmd->m_drvnum != 2;
 }
 
+/* BIOS devices can be direct handles, standard streams, or Fdup results.
+ * SH-4 RAM addresses also have the high bit set: test only -1..-3. */
+static int device_handle(int h)
+{
+    if (h >= 0 && h < NUMSTD)
+        h = run->p_uft[h];
+    if (h >= NUMSTD && h < NUMHANDLES) {
+        OFD *ofd = getofd(h);
+        if ((ULONG)ofd >= (ULONG)-3L)
+            h = (LONG)ofd;
+    }
+    return h >= -3 && h <= -1 ? h : 0;
+}
+
+static long stream_write(int h, long n, const UBYTE *buf)
+{
+    extern void dc_console_out(WORD);
+    extern int dc_console_break(void);
+    extern long dc_native_terminate(int);
+    if (n < 0)
+        return EINVFN;
+    int device = device_handle(h);
+    if (!device)
+        return readonly_handle(h) ? EWRPRO : xwrite(h, n, (void *)buf);
+    if (device != -1)
+        return EUNDEV;
+    for (long i = 0; i < n; i++) {
+        /* Text files keep their original bytes; only the VT52 display needs CR. */
+        if (buf[i] == '\n')
+            dc_console_out('\r');
+        dc_console_out(buf[i]);
+        if (!(i & 255) && dc_console_break())
+            dc_native_terminate(130);
+    }
+    return n;
+}
+
+static long stream_read(int h, long n, UBYTE *buf)
+{
+    extern LONG dc_console_in(void);
+    extern void dc_console_out(WORD);
+    extern long dc_native_terminate(int);
+    if (n < 0)
+        return EINVFN;
+    int device = device_handle(h);
+    if (!device)
+        return xread(h, n, buf);
+    if (device != -1)
+        return EUNDEV;
+    long i = 0;
+    while (i < n) {
+        UBYTE ch = dc_console_in();
+        if (!ch) continue;
+        if (ch == 3) { dc_native_terminate(130); break; }
+        if (ch == 4 || ch == 26) break; /* Ctrl+D / Ctrl+Z: end of input */
+        if (ch == 8 || ch == 127) {
+            if (i) { i--; dc_console_out(8); dc_console_out(' '); dc_console_out(8); }
+            continue;
+        }
+        buf[i++] = ch == '\r' ? '\n' : ch;
+        dc_console_out(ch);
+        if (ch == '\r') dc_console_out('\n');
+        if (ch == '\r') break;
+    }
+    return i;
+}
+
 void dc_storage_system_info(struct dc_system_info *info)
 {
     info->drive_mask = drvbits;
@@ -179,9 +246,10 @@ static long dispatch(int op, va_list ap)
     case 0x07:
     case 0x08:
         return dc_console_in();
-    case 0x02:
-        dc_console_out(va_arg(ap, int));
-        return 0;
+    case 0x02: {
+        UBYTE ch = va_arg(ap, int);
+        return stream_write(1, 1, &ch) < 0 ? EIHNDL : 0;
+    }
     case 0x06:
         a = va_arg(ap, int);
         if (a == 0xff)
@@ -190,9 +258,7 @@ static long dispatch(int op, va_list ap)
         return 0;
     case 0x09:
         p = va_arg(ap, char *);
-        while (*p)
-            dc_console_out(*p++);
-        return 0;
+        return stream_write(1, strlen(p), (UBYTE *)p);
     case 0x0b:
         return dc_console_status();
     case 0x0e:
@@ -236,12 +302,12 @@ static long dispatch(int op, va_list ap)
         h = va_arg(ap, int);
         n = va_arg(ap, long);
         buf = va_arg(ap, void *);
-        return n < 0 ? EINVFN : xread(h, n, buf);
+        return stream_read(h, n, buf);
     case 0x40:
         h = va_arg(ap, int);
         n = va_arg(ap, long);
         buf = va_arg(ap, void *);
-        return n < 0 ? EINVFN : readonly_handle(h) ? EWRPRO : xwrite(h, n, buf);
+        return stream_write(h, n, buf);
     case 0x41:
         p = va_arg(ap, char *);
         return readonly_path(p) ? EWRPRO : xunlink(p);
@@ -249,7 +315,7 @@ static long dispatch(int op, va_list ap)
         n = va_arg(ap, long);
         h = va_arg(ap, int);
         a = va_arg(ap, int);
-        return xlseek(n, h, a);
+        return device_handle(h) ? EIHNDL : xlseek(n, h, a);
     case 0x43:
         p = va_arg(ap, char *);
         a = va_arg(ap, int);
@@ -259,6 +325,12 @@ static long dispatch(int op, va_list ap)
         n = va_arg(ap, long);
         a = va_arg(ap, int);
         return (long)xmxalloc(n, a);
+    case 0x45:
+        return xdup(va_arg(ap, int));
+    case 0x46:
+        a = va_arg(ap, int);
+        h = va_arg(ap, int);
+        return xforce(a, h);
     case 0x47:
         p = va_arg(ap, char *);
         a = va_arg(ap, int);

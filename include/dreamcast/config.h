@@ -1,5 +1,8 @@
 /* Dreamcast build configuration. GPL-2.0-or-later. */
 #pragma once
+#ifndef WITH_CLI
+#define WITH_CLI 1
+#endif
 #define CONF_ATARI_HARDWARE 0
 #define CONF_WITH_ST_MMU 0
 #define CONF_WITH_TT_MMU 0

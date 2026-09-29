@@ -5,7 +5,7 @@ Maple devices, timers, video mode setup and ISO9660 disc reads. The OS itself
 runs natively; Flycast emulates the Dreamcast only for development.
 
 The upstream AES, EmuDesk, VDI C primitives, FAT filesystem, resource builders,
-fonts and VT52 console are compiled for SH-4. Legacy assembly entry points are
+fonts, EmuCON2 shell and VT52 console are compiled for SH-4. Legacy assembly entry points are
 replaced with C adapters in `src/dreamcast`. Motorola assembly is not linked.
 AES processes use KOS thread stacks with semaphore gates: only one AES process
 executes GEM at a time, preserving the original cooperative scheduling model.
@@ -25,7 +25,9 @@ and region-specific characters. The physical keyboard/mouse can be on any
 Maple port; the first matching device is used.
 
 GEMDOS retains its FAT implementation. C: is a formatted 4 MiB allocation;
-D: exposes the same fixed geometry from `/cd/DISC.IMG`. Writes to D: are denied
+D: exposes the same fixed geometry from `/cd/DISC.IMG`. CD reads pass through
+a consistent 32-byte-aligned transfer buffer so KOS does not mix its streaming
+and cached paths when GEMDOS supplies differently aligned buffers. Writes to D: are denied
 both in the GEMDOS adapter and at the block-device layer. Writable storage
 can later be added behind this block interface, including a serial SD driver.
 GEMDOS has a separate 3 MiB allocation arena with ownership and Mshrink support;
@@ -45,3 +47,10 @@ The native ABI replaces stack decoding of 68000 traps with typed C dispatch.
 The ROM desktop returns directly to the AES shell when launching a program.
 Applications use relocatable SH-4 containers and an explicit OS function table.
 See NATIVE-ABI.md for the file format and limits.
+
+EmuCON enters through a native C wrapper with a private DTA and the AES PATH
+environment. Its native child programs use the existing foreground Pexec
+slot, so this does not add nested Pexec for applications. GEMDOS standard
+handles support Fdup/Fforce and console/file I/O. The newlib runtime preserves
+stdout/stderr redirection; EmuCON releases its history buffer on return.
+See [COMMAND-LINE.md](COMMAND-LINE.md) for the bundled utilities and limits.

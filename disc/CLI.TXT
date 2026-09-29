@@ -1,0 +1,46 @@
+EMUTOS DREAMCAST COMMAND LINE
+
+File -> Execute EmuCON, or Ctrl+Z. Type EXIT to return to the desktop.
+HELP lists built-ins; HELP COPY explains one. Up/Down recalls commands;
+Tab completes filenames. C: is temporary RAM; D: is read-only disc.
+
+Built-ins include DIR/LS, CD, PWD, COPY/CP, MOVE/MV, DEL/RM, REN,
+MD/MKDIR, RD/RMDIR, TYPE/CAT, MORE, ECHO, CLS/CLEAR, PATH and SHOW.
+Type C: or D: to change drive. Paths use backslashes and 8.3 filenames.
+
+Native tools on D: (type the name without .TTP):
+  GREP [-i] [-n] [-v] TEXT FILE...   Literal text search (no regex)
+  WC [-lwc] FILE...                 Line, word and byte counts
+  HEAD [-n N] FILE...               First N lines; default 10
+  TAIL [-n N] FILE...               Last N lines; default 10
+  SORT [-r] [-u] FILE...            Sort; reverse or unique lines
+  HEXDUMP FILE...                  Hexadecimal and ASCII bytes
+  CKSUM FILE...                    POSIX CRC and byte count
+  DATE                             Current local RTC date/time
+  DF [C: or D:]                    Capacity, free space, storage type
+  FREE                             Memory availability
+  UNAME [-a]                       OS and machine information
+  EXPR EXPRESSION                  Arithmetic, e.g. sqrt(144)+2^3
+Each accepts --help. File tools accept -- before filenames.
+
+Examples:
+  copy D:\README.TXT C:\NOTES.TXT
+  grep -in native C:\NOTES.TXT
+  wc C:\NOTES.TXT > C:\COUNT.TXT
+  type C:\COUNT.TXT
+  editor C:\NOTES.TXT
+  expr sqrt(144)+2^3
+
+The default PATH is D:\;C:\. Existing graphical apps can be launched by
+name; closing them restores the prompt. All programs are native SH-4.
+
+> replaces an output file. Errors stay on screen. There are no pipes,
+input/append redirection, shell scripts or Unix job control. Built-in
+file commands support wildcards; external tools need explicit filenames.
+Use - as a filename for keyboard input. Enter submits a line; Ctrl+D or
+Ctrl+Z on an empty line ends input. Ctrl+C cancels input/console output.
+
+Text filters normalize CRLF to LF; WC/CKSUM/HEXDUMP read original bytes.
+Text filters reject binary NULs and lines over 64 KiB. SORT is limited
+to 10,000 lines / 1 MiB; TAIL retains up to 1 MiB. HEAD/TAIL -n accepts
+0 through 10,000. No 68000 binaries or networking tools are included.

@@ -593,6 +593,37 @@ static void set_default_desktop(SHELL *psh)
     strcpy(psh->sh_cdir, D.s_cdir);
 }
 
+#ifdef MACHINE_DREAMCAST
+/* EmuCON is an embedded C entry, so native programs still use the ordinary
+ * foreground Pexec slot. GEM programs need the same display lifecycle as a
+ * desktop launch before returning to the character console. */
+LONG dc_cli_run_program(const char *path, const char *tail, WORD isgem)
+{
+    LONG result;
+    if (!isgem)
+        return dos_exec(PE_LOADGO, path, tail, NULL);
+
+    gl_shgem = TRUE;
+    sh_tographic();
+    wm_init();
+    sh_draw(path, TRUE);
+    rlr->p_flags = 0;
+    result = dos_exec(PE_LOADGO, path, tail, ad_envrn);
+    if (rlr->p_flags & AP_OPEN) {
+        mn_cleanup();
+        if (rlr->p_qindex)
+            ap_rdwr(MU_MESAG, rlr, rlr->p_qindex, (WORD *)D.g_valstr);
+        rlr->p_flags &= ~AP_OPEN;
+    }
+    if (wind_spb.sy_owner == rlr)
+        unsync(&wind_spb);
+    wm_new();
+    sh_toalpha();
+    gl_shgem = FALSE;
+    return result;
+}
+#endif
+
 
 static WORD sh_ldapp(SHELL *psh)
 {

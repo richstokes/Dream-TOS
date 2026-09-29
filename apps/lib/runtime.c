@@ -184,21 +184,17 @@ int _read(int fd, void *buf, size_t n)
 }
 int _write(int fd, const void *buf, size_t n)
 {
-    if (fd == 1 || fd == 2) {
-        for (size_t i = 0; i < n; i++)
-            dc_os->gemdos(2, ((const unsigned char *)buf)[i]);
-        return n;
-    }
     return error(dc_os->gemdos(0x40, fd, (long)n, buf));
 }
 off_t _lseek(int fd, off_t off, int whence)
 {
     return error(dc_os->gemdos(0x42, (long)off, fd, whence));
 }
+int _isatty(int fd);
 int _fstat(int fd, struct stat *st)
 {
     memset(st, 0, sizeof(*st));
-    if (fd < 3) {
+    if (_isatty(fd)) {
         st->st_mode = S_IFCHR;
         return 0;
     }
@@ -215,7 +211,8 @@ int _fstat(int fd, struct stat *st)
 }
 int _isatty(int fd)
 {
-    return fd < 3;
+    /* Seeking succeeds on redirected standard handles as well as files. */
+    return fd >= 0 && fd < 3 && dc_os->gemdos(0x42, 0L, fd, 1) < 0;
 }
 int _unlink(const char *p)
 {
@@ -262,7 +259,7 @@ long dc_app_main(const struct dc_native_api *os, const char *tail, const char *e
     if (os->version != DC_NATIVE_ABI)
         return -32;
     char argbuf[128];
-    char *argv[18] = {(char *)"NATIVE.PRG"};
+    char *argv[32] = {(char *)"NATIVE.PRG"};
     int argc = 1;
     unsigned int n = tail ? (unsigned char)tail[0] : 0;
     if (n > 126)
@@ -271,8 +268,8 @@ long dc_app_main(const struct dc_native_api *os, const char *tail, const char *e
         memcpy(argbuf, tail + 1, n);
     argbuf[n] = 0;
     char *p = argbuf;
-    while (*p && argc < 17) {
-        while (*p == ' ')
+    while (*p && argc < 31) {
+        while (*p == ' ' || *p == '\t')
             p++;
         if (!*p)
             break;
@@ -282,7 +279,7 @@ long dc_app_main(const struct dc_native_api *os, const char *tail, const char *e
                 p++;
         } else {
             argv[argc++] = p;
-            while (*p && *p != ' ')
+            while (*p && *p != ' ' && *p != '\t')
                 p++;
         }
         if (*p)

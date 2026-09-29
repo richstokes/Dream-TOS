@@ -135,9 +135,24 @@ void *dc_alloc(size_t n) { return calloc(1,n); }
 void dc_free(void *p) { free(p); }
 long dc_available(void) { struct mallinfo m=mallinfo(); return m.fordblks+0x8d000000UL- (uintptr_t)sbrk(0)-131072; }
 long dc_disc_read(void *buf,unsigned long pos,unsigned long n) {
+ /* GEMDOS buffers have two-byte alignment. KOS ISO9660 can switch between
+  * streaming and cached reads according to destination alignment; mixing
+  * those paths on consecutive reads can leave its stream position behind.
+  * Always read into the same DMA-aligned buffer, then copy to GEMDOS. */
+ static unsigned char sector_buffer[2048] __attribute__((aligned(32)));
  if(disc==FILEHND_INVALID) return -1;
  if(fs_seek(disc,pos,SEEK_SET)<0) return -1;
- return fs_read(disc,buf,n);
+ unsigned long done=0;
+ while(done<n) {
+  unsigned long count=n-done;
+  if(count>sizeof(sector_buffer))count=sizeof(sector_buffer);
+  long got=fs_read(disc,sector_buffer,count);
+  if(got<=0)return done ? (long)done : got;
+  memcpy((unsigned char *)buf+done,sector_buffer,got);
+  done+=got;
+  if((unsigned long)got<count)break;
+ }
+ return done;
 }
 int main(int argc,char **argv) { (void)argc;(void)argv; dc_hal_init();dc_core_main();return 0; }
 /* AES remains cooperative: only the process holding its gate runs GEM code.

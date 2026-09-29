@@ -34,7 +34,12 @@
 /*
  * system calls
  */
+#ifdef MACHINE_DREAMCAST
+extern LONG trap1(int, ...);
+#define jmp_gemdos trap1
+#else
 extern LONG jmp_gemdos(WORD, ...);
+#endif
 extern LONG jmp_bios(WORD, ...);
 extern LONG jmp_xbios(WORD, ...);
 

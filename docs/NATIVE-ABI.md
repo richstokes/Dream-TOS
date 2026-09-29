@@ -151,3 +151,14 @@ verification. FAT chains are followed even when the blocks are nonadjacent.
 The original iconless one-block format still loads; an explicit Save upgrades
 it to the icon format even when the settings are unchanged. Writes are not
 power-loss atomic.
+
+## Console programs
+
+Use the same `app_main(argc, argv)` runtime for native `.TOS`/`.TTP` tools.
+Standard streams inherit GEMDOS handles; `Fdup` (0x45) and `Fforce` (0x46)
+allow stdout and stderr to be redirected separately. Runtime stdio uses
+`Fread`/`Fwrite` even for standard descriptors. Only output to the console
+converts LF to CR/LF; redirected files retain the original bytes. Console
+input is line-oriented with echo, Backspace and Ctrl+D/Ctrl+Z EOF. Ctrl+C
+terminates the active foreground console application during input/output.
+Command tails support up to 30 arguments with quoted fields.

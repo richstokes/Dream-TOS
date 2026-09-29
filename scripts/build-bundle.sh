@@ -38,3 +38,10 @@ for accessory in CONTROL MONITOR VMUTOOL; do
  appbuild "$accessory" "apps/ports/$source_name.c"
  mv "build/apps/$accessory.PRG" "build/apps/$accessory.ACC"
 done
+
+# Console applications use TTP so EmuDesk supplies a command-tail dialog.
+for tool in grep wc head tail sort hexdump cksum date df free uname expr; do
+ name=$(printf '%s' "$tool" | tr '[:lower:]' '[:upper:]')
+ appbuild "$name" apps/ports/cli_tools.c apps/vendor/tinyexpr/tinyexpr.c -Iapps/vendor/tinyexpr "-DCLI_TOOL=\"$tool\""
+ mv "build/apps/$name.PRG" "build/apps/$name.TTP"
+done

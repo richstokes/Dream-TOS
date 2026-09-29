@@ -24,6 +24,7 @@ char *p, *temp, *redir_addr;
 WORD argc, n, rc;
 
     redir_addr = NULL;
+    redir_name[0] = '\0';
     n = get_redirect(line,&redir_addr);
     if (n > 1) {
         messagenl(_("more than one redirection"));
@@ -55,7 +56,13 @@ WORD argc, n, rc;
             if (redir_addr && (temp > redir_addr)) {
                 strcpy(redir_name,temp);
                 redir_addr = NULL;
-            } else argv[argc++] = temp;
+            } else {
+                if (argc == MAX_ARGS) {
+                    messagenl(_("too many arguments"));
+                    return -1;
+                }
+                argv[argc++] = temp;
+            }
             break;
         case NO_MORE_ARGS:
             if (redir_addr) {

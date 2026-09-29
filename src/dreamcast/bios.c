@@ -9,6 +9,7 @@
 #include "tosvars.h"
 #include "biosext.h"
 #include "dreamcast/hal.h"
+#include "dreamcast/control.h"
 #include "gemerror.h"
 #include "vt52.h"
 
@@ -109,6 +110,14 @@ LONG dc_console_in(void)
     ULONG k = key;
     key = 0;
     return k;
+}
+int dc_console_break(void)
+{
+    dc_poll();
+    if ((key & 0xff) != 3)
+        return 0;
+    key = 0;
+    return 1;
 }
 void (*con_state)(WORD);
 WORD save_row;
@@ -218,6 +227,15 @@ short xbios_w_ww(int op, short a, short b)
         return dc_setcolor(a, b);
     if (op == 21)
         return cursconf(a, b);
+    if (op == 35) {
+        struct dc_input_config config;
+        dc_input_config(0, &config, sizeof(config));
+        WORD old = (config.repeat_delay_ms / 20 << 8) | (config.repeat_interval_ms / 20);
+        if (a >= 0) config.repeat_delay_ms = a < 5 ? 100 : a > 50 ? 1000 : a * 20;
+        if (b >= 0) config.repeat_interval_ms = b < 1 ? 20 : b > 10 ? 200 : b * 20;
+        if (a >= 0 || b >= 0) dc_input_config(1, &config, sizeof(config));
+        return old;
+    }
     return 0;
 }
 long xbios_l_v(int op)
