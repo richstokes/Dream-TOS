@@ -10,13 +10,7 @@ code is compiled for the Dreamcast. **There is no 68000 emulator.** Existing
 Atari executables cannot run; applications must be rebuilt for this port's
 [native ABI](docs/NATIVE-ABI.md).
 
-**Tested on a real Dreamcast on 2026-09-30.** Direct boot of the corrected CDI
-from GDEMU has been confirmed on the console. During earlier dcload-ip testing,
-the console reached EmuDesk, passed all six startup self-tests and loaded the
-four bundled desk accessories. That test used GDEMU to launch dcload-ip, an ELF
-upload over the Broadband Adapter, and an HDMI adapter detected as VGA, with a
-controller and VMU attached. D: was served from the Mac over dcload. See
-[hardware validation and test automation](docs/TESTING.md).
+Tested on real Dreamcast hardware and seems to work.
 
 <table>
   <tr>
