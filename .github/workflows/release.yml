@@ -1,4 +1,4 @@
-name: Build Dreamcast release
+name: Build Dream TOS release
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
 
 # Do not interrupt a release while its downloadable assets are being updated.
 concurrency:
-  group: emutos-release-${{ github.ref }}
+  group: dream-tos-release-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -51,16 +51,16 @@ jobs:
             printf 'KallistiOS: %s\nToolchain image: %s\n' "$KOS_COMMIT" "$TOOLCHAIN_IMAGE"
             printf 'mkdcdisc: %s\n' "$(git -c safe.directory="$GITHUB_WORKSPACE/build/tools/mkdcdisc" -C build/tools/mkdcdisc rev-parse HEAD)"
           } > dist/BUILD-INFO.txt
-          (cd dist && sha256sum emutos-dreamcast.cdi emutos-dreamcast.elf BUILD-INFO.txt > SHA256SUMS)
+          (cd dist && sha256sum DreamTOS.cdi dream-tos.elf BUILD-INFO.txt > SHA256SUMS)
           (cd dist && sha256sum --check SHA256SUMS)
 
       - name: Keep tested build artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: emutos-dreamcast
+          name: dream-tos
           path: |
-            dist/emutos-dreamcast.cdi
-            dist/emutos-dreamcast.elf
+            dist/DreamTOS.cdi
+            dist/dream-tos.elf
             dist/BUILD-INFO.txt
             dist/SHA256SUMS
           if-no-files-found: error
@@ -82,7 +82,7 @@ jobs:
       - name: Download tested artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: emutos-dreamcast
+          name: dream-tos
           path: dist
 
       - name: Publish rolling release

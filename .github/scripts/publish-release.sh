@@ -6,7 +6,7 @@ set -euo pipefail
 : "${GH_TOKEN:?}"
 output=${1:-dist}
 output=$(cd -- "$output" && pwd)
-assets=(emutos-dreamcast.cdi emutos-dreamcast.elf BUILD-INFO.txt SHA256SUMS)
+assets=(DreamTOS.cdi dream-tos.elf BUILD-INFO.txt SHA256SUMS)
 for asset in "${assets[@]}"; do
     test -s "$output/$asset" || { echo "Missing release asset: $asset" >&2; exit 1; }
 done
@@ -15,10 +15,10 @@ done
 notes=$(mktemp)
 trap 'rm -f "$notes"' EXIT
 cat > "$notes" <<EOF
-Latest successful native SH-4 development build from main at [${GITHUB_SHA:0:7}](https://github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA).
+Latest successful Dream TOS native SH-4 development build from main at [${GITHUB_SHA:0:7}](https://github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA).
 
-- **emutos-dreamcast.cdi**: self-booting CD image for Flycast and Dreamcast/GDEMU testing.
-- **emutos-dreamcast.elf**: executable for direct loading and development.
+- **DreamTOS.cdi**: self-booting CD image for Flycast and Dreamcast/GDEMU testing.
+- **dream-tos.elf**: executable for direct loading and development.
 - **SHA256SUMS**: download checksums; **BUILD-INFO.txt** records source and toolchain revisions.
 
 C: is a temporary RAM disk; D: is read-only disc storage. Atari 68000 executables cannot run on this native port.
@@ -42,10 +42,10 @@ for asset in "${assets[@]}"; do paths+=("$output/$asset"); done
 if gh release view continuous --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
     gh release upload continuous "${paths[@]}" --clobber --repo "$GITHUB_REPOSITORY"
     gh release edit continuous --repo "$GITHUB_REPOSITORY" \
-        --title "Latest EmuTOS Dreamcast build (${GITHUB_SHA:0:7})" \
+        --title "Latest Dream TOS build (${GITHUB_SHA:0:7})" \
         --notes-file "$notes" --latest
 else
     gh release create continuous "${paths[@]}" --repo "$GITHUB_REPOSITORY" \
-        --verify-tag --title "Latest EmuTOS Dreamcast build (${GITHUB_SHA:0:7})" \
+        --verify-tag --title "Latest Dream TOS build (${GITHUB_SHA:0:7})" \
         --notes-file "$notes" --latest
 fi

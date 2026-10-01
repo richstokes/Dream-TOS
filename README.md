@@ -1,10 +1,10 @@
-# Native EmuTOS for Sega Dreamcast
+# Dream TOS
 
-[Download the latest CDI](https://github.com/richstokes/dreamcast-EmuTOS-port/releases/download/continuous/emutos-dreamcast.cdi)
-or browse [GitHub releases](https://github.com/richstokes/dreamcast-EmuTOS-port/releases/tag/continuous).
+[Download the latest CDI](https://github.com/richstokes/Dream-TOS/releases/download/continuous/DreamTOS.cdi)
+or browse [GitHub releases](https://github.com/richstokes/Dream-TOS/releases/tag/continuous).
 Successful CI builds from `main` update these downloads; see [CI details](docs/CI.md).
 
-A native SH-4 port of [EmuTOS](https://emutos.sourceforge.io/), using KallistiOS
+Dream TOS is a native SH-4 port of [EmuTOS](https://emutos.sourceforge.io/), using KallistiOS
 for Dreamcast hardware. The actual EmuDesk, AES, VDI and GEMDOS filesystem C
 code is compiled for the Dreamcast. **There is no 68000 emulator.** Existing
 Atari executables cannot run; applications must be rebuilt for this port's
@@ -117,9 +117,9 @@ On macOS the latter dependencies can be installed with
 ./scripts/run-flycast.sh
 ```
 
-Output: `dist/emutos-dreamcast.cdi`, `dist/emutos-dreamcast.elf` and SHA256SUMS.
+Output: `dist/DreamTOS.cdi`, `dist/dream-tos.elf` and SHA256SUMS.
 `MKDCDISC` can select an existing mkdcdisc executable. `FLYCAST_BIN` can select
-Flycast. With no arguments, the launcher boots `dist/emutos-dreamcast.cdi`
+Flycast. With no arguments, the launcher boots `dist/DreamTOS.cdi`
 and builds it if missing. Rebuild with `./scripts/build-cdi.sh` after source
 changes. Pass an image path to boot another image. `./scripts/build.sh`
 builds only the ELF; booting it directly in Flycast has no disc, D: drive or
@@ -135,7 +135,7 @@ for setup, overrides and logs.
 For keyboard-only Flycast testing, detach the host mouse route:
 
 ```sh
-FLYCAST_HOST_MOUSE_PORT=-1 ./scripts/run-flycast.sh "$PWD/dist/emutos-dreamcast.cdi"
+FLYCAST_HOST_MOUSE_PORT=-1 ./scripts/run-flycast.sh "$PWD/dist/DreamTOS.cdi"
 ```
 
 Alt+C / Alt+D opens a drive. Alt+arrow moves the GEM pointer (Shift adds fine

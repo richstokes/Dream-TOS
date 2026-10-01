@@ -3,6 +3,7 @@
 #define DC_SETTINGS_H
 #include "dreamcast/control.h"
 #define DC_SETTINGS_VERSION 1
+/* Keep the filename and app ID stable so existing VMU saves still load. */
 #define DC_SETTINGS_FILE "EMUTOS.CFG"
 #define DC_SETTINGS_APP "EmuTOS DC"
 #define DC_SETTINGS_DATA_BYTES 32

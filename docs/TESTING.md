@@ -145,11 +145,11 @@ at `~/Dropbox/Games/ROMs/DREAMCAST/dcload-ip/dc-tool-ip`. The plug identity is
 checked before switching power; addresses, identity, ELF and tool paths can be
 overridden with the options shown by `--help`.
 
-Logs are saved to `build/console-*.log`. `EmuTOS: desktop ready` marks entry to
+Logs are saved to `build/console-*.log`. `Dream TOS: desktop ready` marks entry to
 the desktop event loop; exceptions and test failures remain in the same log.
 The complete automated cycle was verified on 2026-09-30: dcload replied 53
 seconds after power-on, the ELF uploaded, all six startup self-tests passed,
-and `EmuTOS: desktop ready` appeared with all four accessories loaded.
+and `Dream TOS: desktop ready` appeared with all four accessories loaded.
 Ctrl+C stops the host console/fileserver and leaves power on. Keep it running
 while using D: from the console. Stop the previous uploader before the next run.
 `--no-power-cycle` uploads to an already running loader; `--power-only` restarts

@@ -59,7 +59,7 @@ void dc_hal_init(void) {
  dc_boot_status("01 Video ready");
  irq_set_handler(EXC_UNHANDLED_EXC,boot_exception,NULL);
  kbd_set_repeat_timing(300,40);
- kthread_attr_t input_attr={.stack_size=8192,.prio=PRIO_DEFAULT-1,.label="EmuTOS Maple"};
+ kthread_attr_t input_attr={.stack_size=8192,.prio=PRIO_DEFAULT-1,.label="Dream TOS Maple"};
  if(!thd_create_ex(&input_attr,capture_mouse,NULL)) {
   dc_boot_failure("Cannot start Maple input thread");
   arch_panic("Cannot start Maple input thread");
@@ -73,13 +73,13 @@ void dc_hal_init(void) {
   dc_boot_status("02 Opening host application volume");
   disc=fs_open("/pc/DISC.IMG",O_RDONLY);
  }
- printf("EmuTOS native SH-4: video 640x480; Maple ready; CD image %s\n",disc==FILEHND_INVALID?"absent":"open");
+ printf("Dream TOS native SH-4: video 640x480; Maple ready; CD image %s\n",disc==FILEHND_INVALID?"absent":"open");
 }
 unsigned long dc_millis(void) { return (unsigned long)timer_ms_gettime64(); }
 /* Shut KOS down before entering the boot ROM. The BIOS chooses how to boot
  * the currently inserted disc, including returning here for our own CDI. */
 void dc_boot_disc(void) {
- printf("EmuTOS: rebooting to boot the inserted disc\n");
+ printf("Dream TOS: rebooting to boot the inserted disc\n");
  /* KOS tears ISO9660 down before its final file-table cleanup. Close our
   * long-lived D: handle while the driver's mutexes are still alive. */
  if(disc!=FILEHND_INVALID){fs_close(disc);disc=FILEHND_INVALID;}
@@ -204,7 +204,7 @@ static void (*entries[8])(void);
 static void *aes_process(void *arg) {int id=(int)(intptr_t)arg;sem_wait(&gates[id]);entries[id]();return NULL;}
 void dc_context_init(void) {for(int i=0;i<8;i++)sem_init(&gates[i],0);}
 int dc_context_create(int id,void (*entry)(void)) {
- kthread_attr_t attr={.stack_size=65536,.prio=PRIO_DEFAULT,.label="EmuTOS AES"};entries[id]=entry;
+ kthread_attr_t attr={.stack_size=65536,.prio=PRIO_DEFAULT,.label="Dream TOS AES"};entries[id]=entry;
  return thd_create_ex(&attr,aes_process,(void *)(intptr_t)id)?0:-1;
 }
 void dc_context_switch(int old_id,int new_id) {

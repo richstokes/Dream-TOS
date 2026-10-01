@@ -19,7 +19,7 @@ Open it from EmuDesk. All controls work with the keyboard:
 
 | Information | Source |
 | --- | --- |
-| EmuTOS and KOS versions | Running OS build string and linked KOS runtime version |
+| Dream TOS and KOS versions | Running OS build string and linked KOS runtime version |
 | Machine type | KOS `hardware_sys_mode()` |
 | Installed system RAM | KOS `HW_MEMSIZE`, based on startup RAM mirror detection |
 | KOS heap allocation | `mallinfo().uordblks` |

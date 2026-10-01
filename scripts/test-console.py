@@ -185,7 +185,7 @@ def parse_args(argv=None):
                         help="maximum loader boot wait (default: 60 seconds)")
     parser.add_argument("--no-power-cycle", action="store_true", help="use an already booted loader")
     parser.add_argument("--power-only", action="store_true", help="wait for loader, then exit without uploading")
-    parser.add_argument("--elf", type=Path, default=ROOT / "build/emutos-dreamcast.elf")
+    parser.add_argument("--elf", type=Path, default=ROOT / "build/dream-tos.elf")
     parser.add_argument("--dc-tool", type=Path, default=Path(
         "~/Dropbox/Games/ROMs/DREAMCAST/dcload-ip/dc-tool-ip"))
     parser.add_argument("--map", type=Path, default=ROOT / "build/disc",

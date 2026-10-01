@@ -86,7 +86,7 @@ LONG dos_exec(WORD mode,const char *path,const char *tail,const char *env) {
  return trap1_pexec(mode,path,tail,env);
 }
 void dc_core_main(void) {
- kprintf("EmuTOS: native CPU ABI, upstream AES/VDI/GEMDOS\n");
+ kprintf("Dream TOS: native CPU ABI, upstream AES/VDI/GEMDOS\n");
  dc_storage_init();
  dc_boot_status("06 Checking RAM disk and native loader");
  dc_storage_selftest();
@@ -98,6 +98,6 @@ void dc_core_main(void) {
  dc_boot_status("09 Checking command-line runtime");
  extern void dc_cli_selftest(void);dc_cli_selftest();
  dc_boot_status("10 Starting GEM desktop");
- kprintf("EmuTOS: entering GEM desktop\n");
+ kprintf("Dream TOS: entering GEM desktop\n");
  gem_main();halt();
 }

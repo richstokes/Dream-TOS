@@ -1892,6 +1892,14 @@ static void add_dreamcast_credit(void)
     for (i = 1; i <= DEOK; i++)
         about[i].ob_x += offset;
 
+    /* The unnamed title string follows DEICON in the upstream resource. */
+    about[DEICON+1].ob_spec = (LONG)DC_PROJECT_NAME;
+    about[DEICON+1].ob_width = strlen(DC_PROJECT_NAME)*gl_wchar;
+    about[DEICON+1].ob_x = (width-about[DEICON+1].ob_width)/2;
+    /* The full native ABI version string overflows the original version row. */
+    about[DEVERSN].ob_spec = (LONG)VERSION_STRING;
+    about[DEVERSN].ob_width = strlen(VERSION_STRING)*gl_wchar;
+
     for (i = 0; i < 2; i++)
     {
         OBJECT *obj = &about[DEOK+1+i];
@@ -2148,7 +2156,7 @@ BOOL deskmain(void)
 
 #ifdef MACHINE_DREAMCAST
     /* A stable milestone for network-upload hardware tests. */
-    kprintf("EmuTOS: desktop ready\n");
+    kprintf("Dream TOS: desktop ready\n");
 #endif
 
     /* loop handling user input until done */

@@ -2,6 +2,7 @@
  * Built as separate .TTP programs; host tests use exactly the same code.
  * Text filters normalize CRLF; wc, cksum and hexdump inspect original bytes. */
 #include "app.h"
+#include "dc_version.h"
 #include "dreamcast/system_info.h"
 #include "tinyexpr.h"
 #include <ctype.h>
@@ -292,7 +293,7 @@ static int system_main(int argc, char **argv)
                (d >> 5) & 15, d & 31, t >> 11, (t >> 5) & 63, (t & 31) * 2);
     } else if (IS_TOOL("uname")) {
         if (argc > 2 || (argc == 2 && strcmp(argv[1], "-a"))) { usage(); return 2; }
-        printf("EmuTOS %s Sega Dreamcast SH-4\n", info.os_version);
+        printf(DC_PROJECT_NAME " %s Sega Dreamcast SH-4\n", info.os_version);
         if (argc == 2) printf("KallistiOS %s; uptime %lu seconds; %lux%lu\n", info.kos_version,
             (unsigned long)info.uptime_seconds, (unsigned long)info.video_width, (unsigned long)info.video_height);
     } else if (IS_TOOL("free")) {

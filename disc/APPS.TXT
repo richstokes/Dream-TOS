@@ -119,6 +119,6 @@ VDITEST.PRG checks graphics. HELLO.PRG is the minimal ABI example.
 SYSINFO.PRG (when included) reports live Dreamcast/OS/device information.
 
 Sources, pinned revisions and port notes are in apps/ and docs/BUNDLE.md:
-https://github.com/richstokes/dreamcast-EmuTOS-port
+https://github.com/richstokes/Dream-TOS
 Licenses: COPYING.TXT, WORMGPL.TXT, KILOLIC.TXT, PUZZLIC.TXT,
 STBLIC.TXT, TINYLIC.TXT, MP3LIC.TXT and NEWLIB.TXT. See ARTWORK.TXT for samples.

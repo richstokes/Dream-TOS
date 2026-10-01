@@ -2,13 +2,13 @@
 
 The **Build Dreamcast release** GitHub Action builds every push to `main`,
 pull requests targeting `main`, and manual runs. Successful main builds update
-the rolling [`continuous` release](https://github.com/richstokes/dreamcast-EmuTOS-port/releases/tag/continuous).
+the rolling [`continuous` release](https://github.com/richstokes/Dream-TOS/releases/tag/continuous).
 Pull requests build and test but never publish.
 
-- [Download the latest CDI](https://github.com/richstokes/dreamcast-EmuTOS-port/releases/download/continuous/emutos-dreamcast.cdi)
-- [Download the ELF](https://github.com/richstokes/dreamcast-EmuTOS-port/releases/download/continuous/emutos-dreamcast.elf)
-- [Checksums](https://github.com/richstokes/dreamcast-EmuTOS-port/releases/download/continuous/SHA256SUMS)
-- [Build provenance](https://github.com/richstokes/dreamcast-EmuTOS-port/releases/download/continuous/BUILD-INFO.txt)
+- [Download the latest CDI](https://github.com/richstokes/Dream-TOS/releases/download/continuous/DreamTOS.cdi)
+- [Download the ELF](https://github.com/richstokes/Dream-TOS/releases/download/continuous/dream-tos.elf)
+- [Checksums](https://github.com/richstokes/Dream-TOS/releases/download/continuous/SHA256SUMS)
+- [Build provenance](https://github.com/richstokes/Dream-TOS/releases/download/continuous/BUILD-INFO.txt)
 
 These URLs become available after the first successful main workflow run.
 The release uses a fixed tag so download links continue working as the build

@@ -40,15 +40,15 @@ bash scripts/build-cdi.sh
 python3 -m unittest discover -s tests -v
 
 # A successful compiler invocation must actually have produced native SH-4 code.
-"$KOS_CC_BASE/bin/$KOS_CC_PREFIX-readelf" -h dist/emutos-dreamcast.elf
+"$KOS_CC_BASE/bin/$KOS_CC_PREFIX-readelf" -h dist/dream-tos.elf
 python3 - <<'PY'
 import struct
 from pathlib import Path
 
-raw = Path('dist/emutos-dreamcast.elf').read_bytes()
+raw = Path('dist/dream-tos.elf').read_bytes()
 if raw[:7] != b'\x7fELF\x01\x01\x01' or struct.unpack_from('<HH', raw, 16) != (2, 42):
     raise SystemExit('Expected a little-endian ELF32 SuperH executable')
-if Path('dist/emutos-dreamcast.cdi').stat().st_size < 1024 * 1024:
+if Path('dist/DreamTOS.cdi').stat().st_size < 1024 * 1024:
     raise SystemExit('CDI output is missing or unexpectedly small')
 PY
 (cd dist && shasum -a 256 --check SHA256SUMS)

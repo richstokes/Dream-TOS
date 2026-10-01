@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSETS = ('emutos-dreamcast.cdi', 'emutos-dreamcast.elf', 'BUILD-INFO.txt')
+ASSETS = ('DreamTOS.cdi', 'dream-tos.elf', 'BUILD-INFO.txt')
 
 
 class ReleasePublication(unittest.TestCase):

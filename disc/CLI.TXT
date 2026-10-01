@@ -1,4 +1,4 @@
-EMUTOS DREAMCAST COMMAND LINE
+Dream TOS COMMAND LINE
 
 File -> Execute EmuCON, or Ctrl+Z. Type EXIT to return to the desktop.
 HELP lists built-ins; HELP COPY explains one. Up/Down recalls commands;

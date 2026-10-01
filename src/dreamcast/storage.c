@@ -133,7 +133,7 @@ void dc_storage_init(void)
     put16(ramdisk + 24, 32);
     put16(ramdisk + 26, 64);
     ramdisk[38] = 0x29;
-    memcpy(ramdisk + 43, "EMUTOS RAM ", 11);
+    memcpy(ramdisk + 43, "DREAM TOS  ", 11);
     memcpy(ramdisk + 54, "FAT16   ", 8);
     ramdisk[510] = 0x55;
     ramdisk[511] = 0xaa;
@@ -446,7 +446,7 @@ long trap1(int op, ...)
 }
 void dc_storage_selftest(void)
 {
-    static const char hello[] = "Native EmuTOS on Dreamcast\r\nC: is a volatile RAM disk.\r\n";
+    static const char hello[] = "Dream TOS on Sega Dreamcast\r\nC: is a volatile RAM disk.\r\n";
     char buf[sizeof(hello)];
     long h = trap1(0x3c, "C:\\WELCOME.TXT", 0), r;
     if (h < 0)

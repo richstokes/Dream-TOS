@@ -23,9 +23,9 @@ export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1790553600}
 # GDEMU and Flycast need no full-disc filler. Enable it for a padded CD-R image.
 padding=(--disable-data-track-padding)
 if [ "${CD_PADDING:-0}" = 1 ]; then padding=(); fi
-"$mkdcdisc" --allow-overwrite "${padding[@]}" --main-elf "$root/build/emutos-dreamcast.elf" \
- --directory-contents "$root/build/disc" --title 'EMUTOS DREAMCAST' \
- --author 'EMUTOS DC PORT' --release 20260928 --output "$root/dist/emutos-dreamcast.cdi"
-cp "$root/build/emutos-dreamcast.elf" "$root/dist/emutos-dreamcast.elf"
-(cd "$root/dist" && shasum -a 256 emutos-dreamcast.elf emutos-dreamcast.cdi > SHA256SUMS)
-echo "Built $root/dist/emutos-dreamcast.cdi"
+"$mkdcdisc" --allow-overwrite "${padding[@]}" --main-elf "$root/build/dream-tos.elf" \
+ --directory-contents "$root/build/disc" --title 'Dream TOS' \
+ --author 'richstokes' --release 20260928 --output "$root/dist/DreamTOS.cdi"
+cp "$root/build/dream-tos.elf" "$root/dist/dream-tos.elf"
+(cd "$root/dist" && shasum -a 256 dream-tos.elf DreamTOS.cdi > SHA256SUMS)
+echo "Built $root/dist/DreamTOS.cdi"

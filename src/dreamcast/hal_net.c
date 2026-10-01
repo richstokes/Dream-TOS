@@ -28,11 +28,11 @@ static void *net_thread(void *arg)
     net_finished = 1;
     netif_t *n = net_default_dev;
     if (n)
-        printf("EmuTOS net: %s %d.%d.%d.%d gw %d.%d.%d.%d dns %d.%d.%d.%d\n", n->name, n->ip_addr[0], n->ip_addr[1],
+        printf("Dream TOS net: %s %d.%d.%d.%d gw %d.%d.%d.%d dns %d.%d.%d.%d\n", n->name, n->ip_addr[0], n->ip_addr[1],
                n->ip_addr[2], n->ip_addr[3], n->gateway[0], n->gateway[1], n->gateway[2], n->gateway[3], n->dns[0],
                n->dns[1], n->dns[2], n->dns[3]);
     else
-        printf("EmuTOS net: no network adapter\n");
+        printf("Dream TOS net: no network adapter\n");
     return NULL;
 }
 void dc_hal_net_start(void)
@@ -45,13 +45,13 @@ void dc_hal_net_start(void)
      * it with the loader for network boots; disc boots use the KOS stack. */
     if (dcload_type == DCLOAD_TYPE_IP) {
         net_finished = 1;
-        printf("EmuTOS net: Ethernet reserved for dcload-ip console and files\n");
+        printf("Dream TOS net: Ethernet reserved for dcload-ip console and files\n");
         return;
     }
-    kthread_attr_t attr = {.stack_size = 16384, .prio = PRIO_DEFAULT - 1, .label = "EmuTOS net", .create_detached = 1};
+    kthread_attr_t attr = {.stack_size = 16384, .prio = PRIO_DEFAULT - 1, .label = "Dream TOS net", .create_detached = 1};
     if (!thd_create_ex(&attr, net_thread, NULL)) {
         net_finished = 1;
-        printf("EmuTOS: cannot start network thread\n");
+        printf("Dream TOS: cannot start network thread\n");
     }
 }
 void dc_hal_net_info(struct dc_net_info *info)
@@ -207,7 +207,7 @@ int dc_hal_resolve_start(const char *host)
         return DC_NET_ERR_ARGS;
     strcpy(dns_name, host);
     dns_state = 1;
-    kthread_attr_t attr = {.stack_size = 16384, .prio = PRIO_DEFAULT, .label = "EmuTOS DNS", .create_detached = 1};
+    kthread_attr_t attr = {.stack_size = 16384, .prio = PRIO_DEFAULT, .label = "Dream TOS DNS", .create_detached = 1};
     if (!thd_create_ex(&attr, dns_thread, NULL)) {
         dns_state = 0;
         return DC_NET_ERR_BUSY;

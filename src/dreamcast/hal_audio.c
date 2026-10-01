@@ -81,7 +81,7 @@ long dc_hal_audio_open(uint32_t rate, uint32_t channels)
     }
     snd_stream_volume(A.hnd, A.volume);
     snd_stream_start(A.hnd, rate, channels == 2);
-    kthread_attr_t attr = {.stack_size = 16384, .prio = PRIO_DEFAULT - 1, .label = "EmuTOS audio"};
+    kthread_attr_t attr = {.stack_size = 16384, .prio = PRIO_DEFAULT - 1, .label = "Dream TOS audio"};
     A.thread = thd_create_ex(&attr, audio_thread, NULL);
     if (!A.thread) {
         snd_stream_destroy(A.hnd);

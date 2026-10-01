@@ -3,6 +3,7 @@
  * standalone app deliberately needs no C runtime or shared application library.
  */
 #include <stddef.h>
+#include "dc_version.h"
 #include "dreamcast/native.h"
 #include "dreamcast/system_info.h"
 
@@ -180,7 +181,7 @@ static void report(void)
 {
     line_count = 0;
     snapshot_valid = 0;
-    line("Native EmuTOS system information");
+    line(DC_PROJECT_NAME " system information");
     if (api->size < offsetof(struct dc_native_api, system_info) + sizeof(api->system_info) ||
         !api->system_info) {
         line("This OS does not provide the system-information query.");
@@ -194,7 +195,7 @@ static void report(void)
         return;
     }
     snapshot_valid = 1;
-    line("EmuTOS: ");
+    line(DC_PROJECT_NAME ": ");
     add(info.os_version);
     add("   KallistiOS: ");
     add(info.kos_version);

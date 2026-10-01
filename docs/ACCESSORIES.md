@@ -182,7 +182,7 @@ Toolbox test, A1 here is expected to change:
 ```sh
 python3 tools/vmu_fixture.py --editor build/vmu-edit-test
 FLYCAST_VMU_DIR="$PWD/build/vmu-edit-test" FLYCAST_HOST_MOUSE_PORT=-1 \
-  ./scripts/run-flycast.sh "$PWD/dist/emutos-dreamcast.cdi"
+  ./scripts/run-flycast.sh "$PWD/dist/DreamTOS.cdi"
 ```
 
 A1 then holds two VMS saves with icons (`ICONTEST`, three-frame `ANIMATED.001`), a
@@ -210,7 +210,7 @@ test fixtures, not playable game saves.
 ```sh
 python3 tools/vmu_fixture.py build/vmu-test
 FLYCAST_VMU_DIR="$PWD/build/vmu-test" FLYCAST_HOST_MOUSE_PORT=-1 \
-  ./scripts/run-flycast.sh "$PWD/dist/emutos-dreamcast.cdi"
+  ./scripts/run-flycast.sh "$PWD/dist/DreamTOS.cdi"
 ```
 
 The launch override is transient. A1 contains 12 entries using 24 blocks

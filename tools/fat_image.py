@@ -15,7 +15,7 @@ def build(source):
     struct.pack_into('<HBHBHHBHHHII',image,11,512,1,1,2,128,8192,0xf8,32,32,64,0,0)
     image[38]=0x29
     struct.pack_into('<I',image,39,0x44434554)
-    image[43:54]=b'EMUTOS DISC'
+    image[43:54]=b'DREAM TOS  '
     image[54:62]=b'FAT16   '
     image[510:512]=b'\x55\xaa'
     fat=bytearray(FAT_SECTORS*SECTOR)

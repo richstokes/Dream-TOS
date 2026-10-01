@@ -3,6 +3,7 @@
  * GPL-2.0-or-later. */
 #include "emutos.h"
 #include "fonthdr.h"
+#include "dc_version.h"
 #include "dreamcast/hal.h"
 
 extern const Fonthead fnt_st_8x16;
@@ -34,7 +35,7 @@ void dc_boot_draw(volatile unsigned short *pixels, const char *stage, const char
 {
     unsigned short background = failure ? 0x6000 : 0x0848;
     for (unsigned i = 0; i < 640 * 480; i++) pixels[i] = background;
-    text(pixels, 48, "EmuTOS for Dreamcast");
+    text(pixels, 48, DC_PROJECT_NAME);
     text(pixels, 96, failure ? "Startup/runtime failure" : "Starting up...");
     text(pixels, 144, stage);
     if (failure) text(pixels, 192, failure);

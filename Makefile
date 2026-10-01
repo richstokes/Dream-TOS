@@ -1,4 +1,4 @@
-TARGET = build/emutos-dreamcast.elf
+TARGET = build/dream-tos.elf
 KOS_BUILD_SUBARCHS = pristine
 all: $(TARGET)
 include $(KOS_BASE)/Makefile.rules
@@ -26,8 +26,8 @@ build/obj/src/dreamcast/hal.o build/obj/src/dreamcast/hal_vmu.o build/obj/src/dr
 	@mkdir -p $(dir $@)
 	$(KOS_CC) $(KOS_CFLAGS) -O2 -Iinclude -MMD -MP -c $< -o $@
 $(TARGET): $(OBJS)
-	kos-cc -o $@ $(OBJS) -Wl,-Map,build/emutos-dreamcast.map
+	kos-cc -o $@ $(OBJS) -Wl,-Map,build/dream-tos.map
 clean:
-	rm -rf build/obj build/generated build/emutos-dreamcast.elf build/emutos-dreamcast.map
+	rm -rf build/obj build/generated build/dream-tos.elf build/dream-tos.map
 -include $(OBJS:.o=.d)
 .PHONY: all clean

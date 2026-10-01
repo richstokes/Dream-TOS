@@ -1,4 +1,4 @@
-EmuTOS for Dreamcast - native SH-4 development build
+Dream TOS for Sega Dreamcast - native SH-4 development build
 
 C: is a 4 MiB RAM disk. All changes disappear on reset.
 D: is the read-only disc volume. Copy files to C: to edit them.
@@ -17,4 +17,4 @@ Programs must be recompiled for the native SH-4 API.
 Serial SD support is not yet implemented.
 
 Source and build instructions:
-https://github.com/richstokes/dreamcast-EmuTOS-port
+https://github.com/richstokes/Dream-TOS

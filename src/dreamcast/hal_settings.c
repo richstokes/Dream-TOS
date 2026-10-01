@@ -90,7 +90,7 @@ int dc_hal_settings_write(uint32_t port, uint32_t unit, const unsigned char *dat
     vmu_pkg_t pkg={0};
     uint8_t *built=NULL;
     int size=0;
-    strcpy(pkg.desc_short,"EmuTOS settings");
+    strcpy(pkg.desc_short,"Dream TOS config");
     strcpy(pkg.desc_long,"Dreamcast Control Panel");
     strcpy(pkg.app_id,DC_SETTINGS_APP);
     pkg.data_len=DC_SETTINGS_DATA_BYTES; pkg.data=data;
