@@ -10,12 +10,13 @@ code is compiled for the Dreamcast. **There is no 68000 emulator.** Existing
 Atari executables cannot run; applications must be rebuilt for this port's
 [native ABI](docs/NATIVE-ABI.md).
 
-**Tested on a real Dreamcast on 2026-09-30.** The console reached EmuDesk,
-passed all six startup self-tests and loaded the four bundled desk accessories.
-Testing used GDEMU to launch dcload-ip, an ELF upload over the Broadband Adapter,
-and an HDMI adapter detected as VGA, with a controller and VMU attached. D: was
-served from the Mac over dcload. Cold-boot testing of the corrected CDI is still
-pending; see [hardware validation and test automation](docs/TESTING.md).
+**Tested on a real Dreamcast on 2026-09-30.** Direct boot of the corrected CDI
+from GDEMU has been confirmed on the console. During earlier dcload-ip testing,
+the console reached EmuDesk, passed all six startup self-tests and loaded the
+four bundled desk accessories. That test used GDEMU to launch dcload-ip, an ELF
+upload over the Broadband Adapter, and an HDMI adapter detected as VGA, with a
+controller and VMU attached. D: was served from the Mac over dcload. See
+[hardware validation and test automation](docs/TESTING.md).
 
 <table>
   <tr>
@@ -62,10 +63,10 @@ pending; see [hardware validation and test automation](docs/TESTING.md).
 
 Captured from the native SH-4 build running in Flycast. Click an image for full size.
 
-The bootable CDI runs in Flycast. Verified operations include launching a
-separately compiled SH-4 GEM application and returning to the desktop, reading
-files from the disc, creating folders using the keyboard, and RAM-disk file
-operations.
+The bootable CDI runs on real Dreamcast hardware and in Flycast. In Flycast,
+verified operations include launching a separately compiled SH-4 GEM application
+and returning to the desktop, reading files from the disc, creating folders
+using the keyboard, and RAM-disk file operations.
 
 - Display: 640×480, 16-colour planar VDI converted to Dreamcast RGB565.
 - Input: Maple keyboard and mouse; controller fallback when no mouse is attached.

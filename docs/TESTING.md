@@ -78,8 +78,8 @@ All startup self-tests and the 83-test host suite pass.
 
 On 2026-09-30, a real Dreamcast with GDEMU, an HDMI adapter detected as VGA,
 Broadband Adapter, controller and VMU passed those startup checks and reached a
-visible desktop using a dcload-ip ELF upload. This verifies the running port;
-cold-booting the corrected CDI from GDEMU remains a separate check.
+visible desktop using a dcload-ip ELF upload. Direct boot of the corrected CDI
+from GDEMU was subsequently confirmed on real hardware.
 
 The image displays a blue startup screen as soon as the application has set
 the video mode. It names the current step: opening the CD, creating the RAM
@@ -109,7 +109,8 @@ still need console testing. C: files and unsaved settings are lost on Boot.
 
 The CDI is a development test image. Copy it to a GDEMU-compatible card using
 your usual image manager, or boot it with your usual Dreamcast disc workflow.
-CDI cold boot has not yet been verified. C: is temporary and resets on every boot.
+Direct CDI boot from GDEMU has been confirmed on a real Dreamcast.
+C: is temporary and resets on every boot.
 The default CDI omits full-disc filler for small Flycast/GDEMU images. Set
 `CD_PADDING=1 ./scripts/build-cdi.sh` if you want a padded CD-R image.
 
