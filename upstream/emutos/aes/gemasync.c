@@ -51,7 +51,7 @@ static void signal(EVB *e)
             {
                 p1->p_stat &= ~WAITIN;
 
-                *pp1 = p1->p_link;                /* remove from nrl      */
+                ULONG_AT(pp1) = (ULONG)p1->p_link; /* remove from nrl      */
 
                 p1->p_link = drl;                 /* onto the drl         */
                 drl = p1;
@@ -84,7 +84,7 @@ void evinsert(EVB *e, EVB **root)
 
     /* insert event block on list */
     q = FAKE_EVB(root);
-    p = *root;
+    p = (EVB *)ULONG_AT(root);
     e->e_pred = q;
     q->e_link = e;
     e->e_link = p;

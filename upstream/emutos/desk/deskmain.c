@@ -2146,6 +2146,11 @@ BOOL deskmain(void)
     /* enable graphical critical error handler */
     enable_ceh = TRUE;
 
+#ifdef MACHINE_DREAMCAST
+    /* A stable milestone for network-upload hardware tests. */
+    kprintf("EmuTOS: desktop ready\n");
+#endif
+
     /* loop handling user input until done */
     while(!done)
     {

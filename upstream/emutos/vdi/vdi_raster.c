@@ -275,8 +275,8 @@ void vdi_vr_trnfm(Vwk * vwk)
     LONG size, inner, outer, i, j;
 
     /* Get the pointers to the MFDBs */
-    src_mfdb = *(MFDB **)&CONTRL[7];
-    dst_mfdb = *(MFDB **)&CONTRL[9];
+    src_mfdb = (MFDB *)ULONG_AT(&CONTRL[7]);
+    dst_mfdb = (MFDB *)ULONG_AT(&CONTRL[9]);
 
 #if CONF_WITH_VDI_16BIT
     /*
@@ -912,8 +912,8 @@ setup_info (struct raster_t *raster, struct blit_frame * info)
     BOOL use_clip = FALSE;
 
     /* Get the pointers to the MFDBs */
-    src = *(MFDB **)&CONTRL[7]; /* a5, source MFDB */
-    dst = *(MFDB **)&CONTRL[9]; /* a4, destination MFDB */
+    src = (MFDB *)ULONG_AT(&CONTRL[7]); /* a5, source MFDB */
+    dst = (MFDB *)ULONG_AT(&CONTRL[9]); /* a4, destination MFDB */
 
     /* setup plane info for source MFDB */
     if ( src->fd_addr ) {

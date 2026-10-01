@@ -112,6 +112,7 @@ static int writable_drive(int d)
 void dc_storage_init(void)
 {
     extern void time_init(void);
+    dc_boot_status("03 Creating RAM disk");
     ramdisk = dc_alloc(SECTORS * 512);
     if (!ramdisk) {
         extern void panic(const char *, ...);
@@ -141,6 +142,7 @@ void dc_storage_init(void)
         put16(ramdisk + (1 + i * FATSECS) * 512 + 2, 0xffff);
     }
     UBYTE boot[512];
+    dc_boot_status("04 Reading CD filesystem");
     if (dc_disc_read(boot, 0, 512) == 512 && get16(boot + 11) == 512 && boot[13] == 1 &&
         boot[16] == 2 && get16(boot + 22) == 32 && get16(boot + 17) == 128 &&
         get16(boot + 19) == 8192 && get16(boot + 14) == 1 && boot[510] == 0x55 &&
@@ -148,6 +150,7 @@ void dc_storage_init(void)
         disc_bpb = ram_bpb;
         drvbits |= 8;
     }
+    dc_boot_status("05 Probing serial SD card");
     sd_mount();
     memset(&basepage, 0, sizeof(basepage));
     run->p_curdrv = 2;

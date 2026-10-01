@@ -39,10 +39,11 @@ it sees one.
 - Writes go straight through GEMDOS's sector buffers. Close files, and let a
   copy finish, before removing power or the card; there is no unmount call.
   GEMDOS flushes dirty sectors when a file is closed.
-- The serial port is the SPI bus while an SD card is mounted, so KOS's serial
-  debug console is switched off after a successful mount. The boot log is still
-  written to the serial console up to and including the mount lines. No card, no
-  adapter, or an unsupported card leaves the serial console untouched.
+- The SD probe temporarily suppresses debug output before taking over the
+  serial pins for SPI. If card initialization or the capacity read fails, it
+  restores the previous console. After successful card initialization, debug
+  output stays disabled while SPI owns the port, including if the card has an
+  unsupported filesystem. Mount messages therefore are not sent over serial.
 - A missing adapter is not an error: the probe fails and C:/D: work as before
   (no delay was observable in Flycast, which has no adapter).
 - Transfers are bit-banged SPI over the serial pins, so expect speeds well below

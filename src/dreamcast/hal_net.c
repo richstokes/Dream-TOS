@@ -3,6 +3,7 @@
  * the caller: the OS layer polls so the display and Ctrl+C stay responsive. */
 #include <kos.h>
 #include <kos/net.h>
+#include <dc/fs_dcload.h>
 #include <dc/net/broadband_adapter.h>
 #include <dc/net/lan_adapter.h>
 #include <arpa/inet.h>
@@ -39,6 +40,14 @@ void dc_hal_net_start(void)
     if (net_started)
         return;
     net_started = 1;
+    /* dcload-ip owns the Ethernet adapter and services the console and /pc.
+     * Reinitializing that adapter here would strand its native syscalls. Keep
+     * it with the loader for network boots; disc boots use the KOS stack. */
+    if (dcload_type == DCLOAD_TYPE_IP) {
+        net_finished = 1;
+        printf("EmuTOS net: Ethernet reserved for dcload-ip console and files\n");
+        return;
+    }
     kthread_attr_t attr = {.stack_size = 16384, .prio = PRIO_DEFAULT - 1, .label = "EmuTOS net", .create_detached = 1};
     if (!thd_create_ex(&attr, net_thread, NULL)) {
         net_finished = 1;

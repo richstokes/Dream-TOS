@@ -105,10 +105,10 @@ void aqueue(WORD isqwrite, EVB *e, LONG lm)
     {
         doq(isqwrite, p, m);
         azombie(e, 1);          /* ap_rdwr() will return 1 => OK */ 
-        if ((e = *ppe) != 0)    /* assignment ok */
+        if ((e = (EVB *)ULONG_AT(ppe)) != 0)    /* assignment ok */
         {
             e->e_flag |= NOCANCEL;
-            *ppe = e->e_link;
+            ULONG_AT(ppe) = (ULONG)e->e_link;
 
             if (e->e_link)
                 e->e_link->e_pred = e->e_pred;

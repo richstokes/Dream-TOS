@@ -5,6 +5,7 @@
 #include <dc/maple/controller.h>
 #include <malloc.h>
 #include <kos/version.h>
+#include <dc/fs_dcload.h>
 #include <time.h>
 #include "dreamcast/hal.h"
 #include "dreamcast/system_info.h"
@@ -16,6 +17,32 @@ static struct dc_input_snapshot input_snapshot;
 KOS_INIT_FLAGS(INIT_DEFAULT);
 static file_t disc = FILEHND_INVALID;
 static unsigned long last_present;
+static const char *boot_stage = "01 Video ready";
+static int boot_screen_visible;
+void dc_boot_status(const char *stage) {
+ boot_stage=stage;
+ dc_boot_draw(vram_s,boot_stage,NULL);
+ boot_screen_visible=1;
+ printf("BOOT: %s\n",stage);
+}
+void dc_boot_failure(const char *message) {
+ dc_boot_draw(vram_s,boot_stage,message);
+ boot_screen_visible=1;
+}
+/* KOS calls this only for exceptions with no registered handler. The renderer
+ * uses the built-in font and direct VRAM stores, so it also works in IRQ context.
+ * Halt here: KOS's default panic can reboot and erase the visible diagnosis. */
+static void boot_exception(irq_t event,irq_context_t *ctx,void *unused) {
+ char message[128];
+ (void)unused;
+ snprintf(message,sizeof(message),"SH-4 exception %04x\nPC %08lx  PR %08lx\nSP %08lx  SR %08lx",
+          (unsigned)event,(unsigned long)ctx->pc,(unsigned long)ctx->pr,
+          (unsigned long)ctx->r[15],(unsigned long)ctx->sr);
+ dc_boot_failure(message);
+ dbgio_printf("%s\n",message);
+ irq_disable();
+ for(;;) __asm__ volatile("nop");
+}
 static void *capture_mouse(void *);
 static const unsigned char scancode[256] = {
  [4]=0x1e,[5]=0x30,[6]=0x2e,[7]=0x20,[8]=0x12,[9]=0x21,[10]=0x22,[11]=0x23,
@@ -29,11 +56,23 @@ static const unsigned char scancode[256] = {
 };
 void dc_hal_init(void) {
  vid_set_mode(DM_640x480, PM_RGB565);
+ dc_boot_status("01 Video ready");
+ irq_set_handler(EXC_UNHANDLED_EXC,boot_exception,NULL);
  kbd_set_repeat_timing(300,40);
  kthread_attr_t input_attr={.stack_size=8192,.prio=PRIO_DEFAULT-1,.label="EmuTOS Maple"};
- if(!thd_create_ex(&input_attr,capture_mouse,NULL))arch_panic("Cannot start Maple input thread");
+ if(!thd_create_ex(&input_attr,capture_mouse,NULL)) {
+  dc_boot_failure("Cannot start Maple input thread");
+  arch_panic("Cannot start Maple input thread");
+ }
  dc_hal_net_start(); /* background: DHCP may take a while or find nothing */
+ dc_boot_status("02 Opening CD volume");
  disc=fs_open("/cd/DISC.IMG",O_RDONLY);
+ /* dc-tool -m maps the bundled FAT volume into /pc/. Keep the same D: image
+  * and boot checks when testing an ELF without replacing the GDEMU disc. */
+ if(disc==FILEHND_INVALID && dcload_type!=DCLOAD_TYPE_NONE) {
+  dc_boot_status("02 Opening host application volume");
+  disc=fs_open("/pc/DISC.IMG",O_RDONLY);
+ }
  printf("EmuTOS native SH-4: video 640x480; Maple ready; CD image %s\n",disc==FILEHND_INVALID?"absent":"open");
 }
 unsigned long dc_millis(void) { return (unsigned long)timer_ms_gettime64(); }
@@ -53,7 +92,7 @@ void dc_present(const unsigned short *p, const unsigned short *pal) {
  static uint16_t last_palette[16];
  static uint16_t rgb[640*480] __attribute__((aligned(32)));
  unsigned long now=dc_millis(); if(now-last_present<16) return; last_present=now;
- if(!memcmp(previous,p,sizeof(previous))&&!memcmp(last_palette,pal,sizeof(last_palette)))return;
+ if(!boot_screen_visible&&!memcmp(previous,p,sizeof(previous))&&!memcmp(last_palette,pal,sizeof(last_palette)))return;
  memcpy(previous,p,sizeof(previous));memcpy(last_palette,pal,sizeof(last_palette));
  uint16_t *dst=rgb;
  for(int y=0;y<480;y++) for(int w=0;w<40;w++) {
@@ -61,6 +100,7 @@ void dc_present(const unsigned short *p, const unsigned short *pal) {
   for(unsigned m=0x8000;m;m>>=1) *dst++=pal[(!!(a&m))|((!!(b&m))<<1)|((!!(c&m))<<2)|((!!(d&m))<<3)];
  }
  sq_cpy(vram_s,rgb,sizeof(rgb));
+ boot_screen_visible=0;
 }
 
 /* Consume each Maple relative delta once. Capture independently of GEM redraws

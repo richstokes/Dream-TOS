@@ -186,7 +186,7 @@ static void clc_arc(Vwk * vwk, int steps)
     for (i = 1; i < steps; i++) {
         angle = mul_div(del_ang, i, steps) + start;
         clc_pts(point, angle);
-        if (*(LONG *)point != *(LONG *)(point-1))   /* ignore duplicates */
+        if (point->x != (point-1)->x || point->y != (point-1)->y)   /* ignore duplicates */
             point++;
     }
     clc_pts(point++, end_ang);

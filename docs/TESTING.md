@@ -59,6 +59,42 @@ See [COMMAND-LINE.md](COMMAND-LINE.md) for usage and supported options.
 
 ## Real-console checklist
 
+### Diagnosing a black screen
+
+Boot-time alignment faults were reproduced on 2026-09-30 using an instrumented
+Flycast interpreter that checks SH-4 memory-access alignment. The packed OS
+could place its native API table at a two-byte boundary, while the application's
+runtime reads it with four-byte loads. The bundled runtime startup check then
+faulted before the desktop. Further checks caught unaligned bitmap-pointer and
+AES event-list reads during GEM startup. The table now requires four-byte
+alignment, and the affected GEM pointer accesses use packing-aware operations.
+Related window-pointer and graphics accesses were corrected as well. Ordinary
+Flycast runs had not exposed these faults.
+
+With alignment checks enabled, the corrected CDI reaches EmuDesk and opens D:
+in both 640x480 interlaced TV mode and 640x480 VGA mode. The VGA run also enters
+EmuCON and launches the graphical calculator without an alignment exception.
+All startup self-tests and the 83-test host suite pass.
+
+On 2026-09-30, a real Dreamcast with GDEMU, an HDMI adapter detected as VGA,
+Broadband Adapter, controller and VMU passed those startup checks and reached a
+visible desktop using a dcload-ip ELF upload. This verifies the running port;
+cold-booting the corrected CDI from GDEMU remains a separate check.
+
+The image displays a blue startup screen as soon as the application has set
+the video mode. It names the current step: opening the CD, creating the RAM
+disk, reading the filesystem, probing serial SD, running startup checks, or
+starting GEM. If startup stops, report the full stage text. A fatal EmuTOS
+error or unhandled SH-4 exception displays a red screen; report its message
+and the exception, PC and PR values. These screens use the built-in font and
+direct framebuffer writes, so they do not depend on GEM or a serial cable.
+
+If no EmuTOS screen appears at all, report whether the Dreamcast/SEGA logos
+appeared, the boot method (CD-R, GDEMU, etc.), console region and video cable,
+and the image SHA256. Failure before the application sets up video still
+requires checking the disc bootstrap or KOS initialization. Successful
+Flycast boot alone does not verify those paths on a console.
+
 SD card (serial adapter), not yet run on hardware: format a card with an MBR and
 one FAT16 partition, put a few files on it, boot with the adapter attached and
 confirm the log shows `E: SD FAT16`. Open E: in EmuDesk, copy a file to it, run
@@ -73,7 +109,7 @@ still need console testing. C: files and unsaved settings are lost on Boot.
 
 The CDI is a development test image. Copy it to a GDEMU-compatible card using
 your usual image manager, or boot it with your usual Dreamcast disc workflow.
-Hardware has not yet been verified. C: is temporary and resets on every boot.
+CDI cold boot has not yet been verified. C: is temporary and resets on every boot.
 The default CDI omits full-disc filler for small Flycast/GDEMU images. Set
 `CD_PADDING=1 ./scripts/build-cdi.sh` if you want a padded CD-R image.
 
@@ -89,6 +125,45 @@ The default CDI omits full-disc filler for small Flycast/GDEMU images. Set
    cable, image SHA256, failing action and any serial log.
 
 Audio: see the checklist in [AUDIO.md](AUDIO.md#real-hardware-checklist).
+
+## Network-upload hardware testing
+
+With dcload-ip configured to auto-start from openMenu, run:
+
+```sh
+./scripts/build.sh
+python3 scripts/test-console.py
+```
+
+The script uses the local Shelly RPC API to turn relay 0 off for one second
+and restore power, then polls the actual dcload-ip protocol for up to 60 seconds.
+It uploads the ELF as soon as the loader responds, maps `build/disc` to `/pc/`,
+and keeps dc-tool-ip attached to serve files and capture console output. The
+default setup is console `192.168.1.171`, plug `192.168.1.173`, and the uploader
+at `~/Dropbox/Games/ROMs/DREAMCAST/dcload-ip/dc-tool-ip`. The plug identity is
+checked before switching power; addresses, identity, ELF and tool paths can be
+overridden with the options shown by `--help`.
+
+Logs are saved to `build/console-*.log`. `EmuTOS: desktop ready` marks entry to
+the desktop event loop; exceptions and test failures remain in the same log.
+The complete automated cycle was verified on 2026-09-30: dcload replied 53
+seconds after power-on, the ELF uploaded, all six startup self-tests passed,
+and `EmuTOS: desktop ready` appeared with all four accessories loaded.
+Ctrl+C stops the host console/fileserver and leaves power on. Keep it running
+while using D: from the console. Stop the previous uploader before the next run.
+`--no-power-cycle` uploads to an already running loader; `--power-only` restarts
+and waits for the loader without uploading. Each invocation performs one run.
+
+If `build/disc/DISC.IMG` is missing or the app bundle needs rebuilding, run
+`./scripts/build-cdi.sh` first. The ELF tries `/cd/DISC.IMG`, then
+`/pc/DISC.IMG` when booted through dcload, so the same D: files and startup tests
+work without replacing the GDEMU image. Files are opened read-only. Under
+dcload-ip the Ethernet adapter stays with the loader, so native network utilities
+are unavailable; ordinary disc boots retain native networking. Reinitializing
+the adapter during a loader boot previously stalled its console/file syscalls.
+
+The power command uses Shelly's one-shot `toggle_after` restore timer and also
+explicitly confirms power on; see the [Switch API](https://shelly-api-docs.shelly.cloud/gen2/ComponentsAndServices/Switch/).
 
 ## Limits
 

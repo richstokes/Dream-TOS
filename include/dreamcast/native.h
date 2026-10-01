@@ -5,7 +5,10 @@
 #define EMUTOS_DC_NATIVE_H
 #include <stdint.h>
 #define DC_NATIVE_ABI 1
-struct dc_native_api {
+/* The OS is built with -fpack-struct=2, while native applications use the
+ * normal SH-4 ABI. Preserve four-byte alignment when exporting this table: an
+ * application reads its fields with 32-bit loads, which fault at 2 mod 4. */
+struct __attribute__((aligned(4))) dc_native_api {
     uint32_t version;
     uint32_t size;
     long (*gemdos)(int opcode, ...);

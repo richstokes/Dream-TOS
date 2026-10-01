@@ -19,6 +19,7 @@
 #include "dreamcast/hal.h"
 int vprintf(const char *, __builtin_va_list);
 #include <stdarg.h>
+int vsnprintf(char *,size_t,const char *,va_list);
 
 extern void disp(void),gem_main(void),run_accs_and_desktop(void),font_init(void),linea_init(void);
 extern void b_click(WORD),b_delay(WORD);
@@ -41,7 +42,13 @@ LONG protect_wlwwwl(LONG (*f)(void),WORD a,LONG b,WORD c,WORD d,WORD e,LONG g) {
 PRINT_FN(kprintf)
 PRINT_FN(kcprintf)
 PRINT_FN(cprintf)
-void panic(const char *f,...) { va_list a;va_start(a,f);vprintf(f,a);va_end(a);for(;;)dc_sleep(100); }
+void panic(const char *f,...) {
+ char message[256];va_list a;
+ va_start(a,f);vsnprintf(message,sizeof(message),f,a);va_end(a);
+ dc_boot_failure(message);
+ va_start(a,f);vprintf(f,a);va_end(a);
+ for(;;)dc_sleep(100);
+}
 void halt(void) { for(;;)dc_sleep(100); }
 /* Events are delivered on this cooperative thread only, never in a KOS IRQ. */
 void disable_interrupts(void) {}
@@ -80,11 +87,17 @@ LONG dos_exec(WORD mode,const char *path,const char *tail,const char *env) {
 }
 void dc_core_main(void) {
  kprintf("EmuTOS: native CPU ABI, upstream AES/VDI/GEMDOS\n");
- dc_storage_init(); dc_storage_selftest();
+ dc_storage_init();
+ dc_boot_status("06 Checking RAM disk and native loader");
+ dc_storage_selftest();
+ dc_boot_status("07 Checking bundled applications");
  extern void dc_bundle_selftest(void);dc_bundle_selftest();
+ dc_boot_status("08 Initializing GEM graphics");
  font_init();linea_init();extern void vt52_init(void);vt52_init();dc_context_init();
  ad_envrn=shell_env;ad_stail=tail;
+ dc_boot_status("09 Checking command-line runtime");
  extern void dc_cli_selftest(void);dc_cli_selftest();
+ dc_boot_status("10 Starting GEM desktop");
  kprintf("EmuTOS: entering GEM desktop\n");
  gem_main();halt();
 }

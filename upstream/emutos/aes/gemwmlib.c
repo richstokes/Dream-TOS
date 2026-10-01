@@ -1658,7 +1658,7 @@ BOOL wm_set(WORD w_handle, WORD w_field, WORD *pinwds)
     switch(w_field)
     {
     case WF_NAME:
-        gl_aname.te_ptext = pwin->w_pname = *(char **)pinwds;
+        gl_aname.te_ptext = pwin->w_pname = (char *)ULONG_AT(pinwds);
         if (pwin->w_flags & VF_ISOPEN)
         {
             gadget = W_NAME;
@@ -1666,7 +1666,7 @@ BOOL wm_set(WORD w_handle, WORD w_field, WORD *pinwds)
         }
         break;
     case WF_INFO:
-        gl_ainfo.te_ptext = pwin->w_pinfo = *(char **)pinwds;
+        gl_ainfo.te_ptext = pwin->w_pinfo = (char *)ULONG_AT(pinwds);
         if (pwin->w_flags & VF_ISOPEN)
         {
             gadget = W_INFO;
@@ -1684,7 +1684,7 @@ BOOL wm_set(WORD w_handle, WORD w_field, WORD *pinwds)
         break;
     case WF_NEWDESK:
         pwin->w_owner = rlr;
-        gl_newdesk = *(OBJECT **) pinwds;
+        gl_newdesk = (OBJECT *)ULONG_AT(pinwds);
         gl_newroot = pinwds[2];
         break;
     case WF_HSLSIZ:

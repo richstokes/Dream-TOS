@@ -10,6 +10,13 @@ code is compiled for the Dreamcast. **There is no 68000 emulator.** Existing
 Atari executables cannot run; applications must be rebuilt for this port's
 [native ABI](docs/NATIVE-ABI.md).
 
+**Tested on a real Dreamcast on 2026-09-30.** The console reached EmuDesk,
+passed all six startup self-tests and loaded the four bundled desk accessories.
+Testing used GDEMU to launch dcload-ip, an ELF upload over the Broadband Adapter,
+and an HDMI adapter detected as VGA, with a controller and VMU attached. D: was
+served from the Mac over dcload. Cold-boot testing of the corrected CDI is still
+pending; see [hardware validation and test automation](docs/TESTING.md).
+
 <table>
   <tr>
     <td width="50%" align="center">
@@ -120,9 +127,15 @@ Output: `dist/emutos-dreamcast.cdi`, `dist/emutos-dreamcast.elf` and SHA256SUMS.
 Flycast. With no arguments, the launcher boots `dist/emutos-dreamcast.cdi`
 and builds it if missing. Rebuild with `./scripts/build-cdi.sh` after source
 changes. Pass an image path to boot another image. `./scripts/build.sh`
-builds only the ELF; explicitly booting that ELF has no disc, D: drive or
-bundled applications/accessories.
+builds only the ELF; booting it directly in Flycast has no disc, D: drive or
+bundled applications/accessories. Network uploads can serve D: from the host
+through dcload, as described below.
 Add files with DOS 8.3 names to `disc/` and rebuild to include them on D:.
+
+For repeated real-console testing, `python3 scripts/test-console.py` can cycle
+the configured Shelly plug, wait for dcload-ip, upload the ELF and serve D: from
+the Mac. See [network-upload hardware testing](docs/TESTING.md#network-upload-hardware-testing)
+for setup, overrides and logs.
 
 For keyboard-only Flycast testing, detach the host mouse route:
 

@@ -124,8 +124,8 @@ void gsx_mfree(void)
 
 void gsx_mret(LONG *pmaddr, LONG *pmlen)
 {
-     *pmaddr = (LONG)gl_tmp.fd_addr;
-     *pmlen = gl_mlen;
+     ULONG_AT(pmaddr) = (ULONG)gl_tmp.fd_addr;
+     ULONG_AT(pmlen) = gl_mlen;
 }
 
 

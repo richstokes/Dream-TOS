@@ -31,6 +31,8 @@ static void native_aes(void *pb)
 {
     super(200, pb);
 }
+_Static_assert(__alignof__(struct dc_native_api) >= 4,
+               "The native API table must support aligned SH-4 32-bit loads");
 static const struct dc_native_api api = {DC_NATIVE_ABI, sizeof(api), trap1,
                                          native_aes,    dc_vdi,      dc_poll, dc_millis,
                                          dc_system_info, dc_input_config, dc_input_snapshot, dc_vmu_info,

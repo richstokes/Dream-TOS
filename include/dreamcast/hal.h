@@ -2,6 +2,9 @@
 #pragma once
 #include <stddef.h>
 void dc_hal_init(void);
+void dc_boot_status(const char *stage);
+void dc_boot_failure(const char *message);
+void dc_boot_draw(volatile unsigned short *pixels, const char *stage, const char *failure);
 void dc_boot_disc(void) __attribute__((noreturn));
 unsigned long dc_millis(void);
 void dc_sleep(unsigned int ms);

@@ -6,6 +6,11 @@ structures with two-byte packing. Minimal freestanding apps may use
 `-fpack-struct=2`; apps using newlib must instead pack only GEM structures
 with `#pragma pack(push,2)` / `#pragma pack(pop)`. Portable C and newlib
 structures use normal alignment; do not mix the two layouts.
+The exported `dc_native_api` table always has at least four-byte alignment,
+including when the OS or an application is built with `-fpack-struct=2`.
+Pointers embedded at GEM WORD offsets must be accessed with alignment-safe
+loads/stores; casting those positions to ordinary pointer pointers can fault
+on the console's SH-4.
 
 The entry point receives `const struct dc_native_api *`, a length-prefixed
 GEMDOS command tail and a double-NUL-terminated environment. It returns a
