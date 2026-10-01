@@ -87,19 +87,37 @@ void dc_boot_disc(void) {
  arch_exit();
 }
 void dc_sleep(unsigned int ms) { thd_sleep(ms); }
+/* Convert and upload only the scanlines that changed. A pointer move then costs
+ * a few rows rather than a whole frame, which keeps input polling responsive. */
 void dc_present(const unsigned short *p, const unsigned short *pal) {
  static uint16_t previous[480*160] __attribute__((aligned(32)));
  static uint16_t last_palette[16];
- static uint16_t rgb[640*480] __attribute__((aligned(32)));
+ static uint32_t rgb[320*480] __attribute__((aligned(32))); /* two RGB565 pixels each */
+ static uint32_t spread[256]; /* plane byte -> one bit in each of eight nibbles */
+ static uint32_t pair[256];   /* two colour indices -> two RGB565 pixels */
+ static int tables_ready;
  unsigned long now=dc_millis(); if(now-last_present<16) return; last_present=now;
- if(!boot_screen_visible&&!memcmp(previous,p,sizeof(previous))&&!memcmp(last_palette,pal,sizeof(last_palette)))return;
- memcpy(previous,p,sizeof(previous));memcpy(last_palette,pal,sizeof(last_palette));
- uint16_t *dst=rgb;
- for(int y=0;y<480;y++) for(int w=0;w<40;w++) {
-  unsigned a=*p++,b=*p++,c=*p++,d=*p++;
-  for(unsigned m=0x8000;m;m>>=1) *dst++=pal[(!!(a&m))|((!!(b&m))<<1)|((!!(c&m))<<2)|((!!(d&m))<<3)];
+ if(!tables_ready) for(int v=0;v<256;v++) for(int b=0;b<8;b++) if(v&(1<<b)) spread[v]|=1u<<(4*b);
+ int all=boot_screen_visible||!tables_ready||memcmp(last_palette,pal,sizeof(last_palette));
+ if(all) {
+  memcpy(last_palette,pal,sizeof(last_palette));
+  for(int v=0;v<256;v++) pair[v]=pal[v>>4]|((uint32_t)pal[v&15]<<16);
+  tables_ready=1;
  }
- sq_cpy(vram_s,rgb,sizeof(rgb));
+ for(int y=0;y<480;) {
+  if(!all&&!memcmp(previous+y*160,p+y*160,320)){y++;continue;}
+  int first=y;
+  for(;y<480&&(all||memcmp(previous+y*160,p+y*160,320));y++) {
+   const uint16_t *src=p+y*160;uint32_t *dst=rgb+y*320;
+   memcpy(previous+y*160,src,320);
+   for(int w=0;w<40;w++,src+=4) for(int shift=8;shift>=0;shift-=8) {
+    uint32_t n=spread[(src[0]>>shift)&255]|(spread[(src[1]>>shift)&255]<<1)|
+               (spread[(src[2]>>shift)&255]<<2)|(spread[(src[3]>>shift)&255]<<3);
+    *dst++=pair[n>>24];*dst++=pair[(n>>16)&255];*dst++=pair[(n>>8)&255];*dst++=pair[n&255];
+   }
+  }
+  sq_cpy(vram_s+first*640,rgb+first*320,(y-first)*1280);
+ }
  boot_screen_visible=0;
 }
 

@@ -47,6 +47,19 @@ static void ev_rets(WORD rets[])
         rets[1] = pr_yrat;
         rets[2] = pr_button;
     }
+#ifdef MACHINE_DREAMCAST
+    /*
+     * Maple motion arrives in coarse 60 Hz steps, so the pointer may be well
+     * away from a click by the time its recipient runs.  Report a single
+     * button change where it happened, not where the pointer is now.
+     */
+    else if (mtrans == 1)
+    {
+        rets[0] = pr_xrat;
+        rets[1] = pr_yrat;
+        rets[2] = button;
+    }
+#endif
     else
     {
         rets[0] = xrat;

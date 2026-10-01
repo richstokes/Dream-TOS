@@ -77,7 +77,16 @@ PFVOID drwaddr;
 void *tiksav;
 void tikcod(void) { if(CMP_TICK) {NUM_TICK++; if(!--CMP_TICK) if(forkq(tchange,NUM_TICK)<0) CMP_TICK++;} b_delay(1); }
 void far_bcha(void) { b_click(MOUSE_BT); }
-void far_mcha(void) { forkq(mchange,MAKE_ULONG(GCURX,GCURY)); }
+/* Maple motion arrives in coarse 60 Hz steps. When a move ends the double-click
+ * wait, queue the click ahead of that move so the AES acts on it where the
+ * button went down; otherwise a quick drag can step right off a small gadget. */
+void far_mcha(void) {
+ static WORD last_x,last_y;
+ WORD dx=GCURX-last_x,dy=GCURY-last_y;
+ if(gl_bdely && (dx>2||dx<-2||dy>2||dy<-2)) b_delay(gl_bdely);
+ last_x=GCURX;last_y=GCURY;
+ forkq(mchange,MAKE_ULONG(GCURX,GCURY));
+}
 void drawrat(WORD x,WORD y) { newx=x;newy=y;draw_flag=1; }
 void deskstart(void) { while(!deskmain()); }
 void accdesk_start(void) { run_accs_and_desktop(); }

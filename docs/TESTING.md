@@ -125,6 +125,16 @@ The default CDI omits full-disc filler for small Flycast/GDEMU images. Set
 8. Test the available video cable and keyboard region. Report exact hardware,
    cable, image SHA256, failing action and any serial log.
 
+Pointer response, 2026-10-01: a real console showed the pointer coasting after
+the mouse stopped, and a folder window's sizer ignoring quick drags. Each screen
+update converted the whole frame, and one Maple packet was consumed per poll, so
+packets queued up and the AES did not dispatch while the mouse kept moving. The
+HAL now uploads only changed scanlines, each poll drains the queue, and a click
+is reported where the button went down. Scripted packets in Flycast (a press on
+the sizer followed at once by 20-pixel steps every 16 ms) resize a D: window to
+the release point. On hardware, confirm the pointer stops with the mouse and
+that a quick drag of the sizer and of the title bar both follow the pointer.
+
 Audio: see the checklist in [AUDIO.md](AUDIO.md#real-hardware-checklist).
 
 ## Network-upload hardware testing

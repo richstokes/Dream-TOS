@@ -41,6 +41,14 @@ void mov_cur(void)
     draw_flag = 1;
 }
 void mouse_int(void) {}
+static void mouse_moved(void)
+{
+    cur_ms_stat |= 0x20;
+    if (user_mot)
+        user_mot();
+    if (user_cur)
+        user_cur();
+}
 void dc_poll(void)
 {
     static int busy;
@@ -57,8 +65,11 @@ void dc_poll(void)
         if (etv_timer)
             etv_timer(20);
     }
-    int dx, dy, buttons;
-    if (dc_poll_mouse(&dx, &dy, &buttons)) {
+    /* Drain every queued packet so the pointer cannot trail the mouse when a
+     * poll is late. Motion is merged; each button change is still delivered in
+     * order, at the position where it happened. */
+    int dx, dy, buttons, moved = 0;
+    while (dc_poll_mouse(&dx, &dy, &buttons)) {
         int x = GCURX + dx, y = GCURY + dy;
         if (x < 0)
             x = 0;
@@ -71,13 +82,12 @@ void dc_poll(void)
         if (x != GCURX || y != GCURY) {
             GCURX = x;
             GCURY = y;
-            cur_ms_stat |= 0x20;
-            if (user_mot)
-                user_mot();
-            if (user_cur)
-                user_cur();
+            moved = 1;
         }
         if (buttons != MOUSE_BT) {
+            if (moved)
+                mouse_moved();
+            moved = 0;
             cur_ms_stat |= (buttons ^ MOUSE_BT) << 6;
             MOUSE_BT = buttons;
             cur_ms_stat = (cur_ms_stat & ~3) | buttons;
@@ -85,6 +95,8 @@ void dc_poll(void)
                 user_but();
         }
     }
+    if (moved)
+        mouse_moved();
     if (!key)
         key = dc_poll_key();
     if (now - blank >= 16) {
