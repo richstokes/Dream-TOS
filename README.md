@@ -54,9 +54,13 @@ Tested on real Dreamcast hardware and seems to work.
     </td>
   </tr>
   <tr>
-    <td colspan="2" align="center">
+    <td width="50%" align="center">
       <a href="docs/screenshots/ftp-server.png"><img src="docs/screenshots/ftp-server.png" width="480" alt="Anonymous FTP server running on Dreamcast, sharing C: and listening on port 21"></a><br>
       <strong>FTP server</strong>
+    </td>
+    <td width="50%" align="center">
+      <a href="docs/screenshots/sd-card-formatter.png"><img src="docs/screenshots/sd-card-formatter.png" width="480" alt="FAT16 SD card formatter running in Flycast, showing C: and D: protection and no SD adapter detected"></a><br>
+      <strong>SD card formatter</strong>
     </td>
   </tr>
 </table>
@@ -73,7 +77,7 @@ using the keyboard, and RAM-disk file operations.
 - C: 4 MiB FAT16 RAM disk. Contents disappear at reset.
 - D: read-only FAT16 volume embedded in the CD's ISO9660 filesystem.
 - Network: Broadband Adapter (DHCP, ping, DNS), command-line tools, and a [graphical anonymous FTP server](docs/FTP.md) with SD/folder sharing; see [networking](docs/NETWORKING.md).
-- E:–H: writable FAT16 volumes from an SD card on the serial port (jj1odm/DreamShell-style adapter); see [SD card support](docs/SD.md). Untested on hardware.
+- E:–H: writable FAT16 volumes from an SD card on the serial port (jj1odm/DreamShell-style adapter). Use `D:\UTILS\SDFORMAT.PRG` for the graphical FAT16 formatter, with C:/D: protection and automatic remount or a reboot prompt; see [SD card support](docs/SD.md). SD transfers remain untested on hardware.
 - 68000 binary compatibility is absent.
 
 The CDI includes a [native application bundle](docs/BUNDLE.md): Kilo text editor,
@@ -91,7 +95,7 @@ Open D: in EmuDesk, then choose a folder:
 | --- | --- |
 | `APPS` | Editor, image viewer, paint and MP3/WAV player |
 | `GAMES` | Blocks, Fifteen, Mines, Net and Worm |
-| `UTILS` | FTP server, VMU editor, system information, benchmark, diagnostics and command-line tools |
+| `UTILS` | FTP server, VMU editor, FAT16 SD card formatter, system information, benchmark, diagnostics and command-line tools |
 
 Startup `.ACC` accessories, guides, sample pictures and license notices remain
 at the disc root. `UTILS` keeps the folder name within the DOS 8.3 limit.

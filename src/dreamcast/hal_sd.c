@@ -6,14 +6,17 @@
 #include "dreamcast/sd.h"
 
 static int ready;
+static uint32_t card_sectors;
 
 int dc_hal_sd_init(uint32_t *sectors)
 {
     sd_init_params_t params = {.interface = SD_IF_SCIF, .check_crc = true};
     const char *debug_device;
     uint64_t bytes;
-    if (ready)
+    if (ready) {
+        if (sectors) *sectors = card_sectors;
         return 0;
+    }
     /* The probe takes over SCIF before it knows whether a card is present.
      * Background KOS/network logging must not touch the serial FIFO while
      * SPI owns the pins, including during initialization and the CSD read.
@@ -33,8 +36,9 @@ int dc_hal_sd_init(uint32_t *sectors)
      * anything printed while a card is selected would corrupt the transfer. */
     dbgio_disable();
     ready = 1;
+    card_sectors = bytes / 512 > 0xffffffffULL ? 0xffffffffUL : (uint32_t)(bytes / 512);
     if (sectors)
-        *sectors = bytes / 512 > 0xffffffffULL ? 0xffffffffUL : (uint32_t)(bytes / 512);
+        *sectors = card_sectors;
     return 0;
 
 failed:

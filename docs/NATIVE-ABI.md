@@ -50,7 +50,7 @@ and GEM packing boundaries.
   `DC_SETTINGS_*` error. Failed loads leave the buffer untouched. This does not
   apply settings; the panel applies validated input and palette values itself.
   Apart from the VMU file service below there is no VMU write API, and nothing
-  can format a card.
+  can format a VMU.
 
 A null buffer with zero size queries the required structure size (input
 configuration and control-store queries use `write=0`). Successful calls return
@@ -257,6 +257,27 @@ verification. FAT chains are followed even when the blocks are nonadjacent.
 The original iconless one-block format still loads; an explicit Save upgrades
 it to the icon format even when the settings are unchanged. Writes are not
 power-loss atomic.
+
+## SD card formatter
+
+The appended `sd_card_info(buffer, bytes)` and `sd_card_format(target, action)`
+callbacks use `include/dreamcast/sd_format.h`. Check table size and both
+pointers. Info returns its structure size and a version-1 snapshot; an invalid
+buffer/size returns `DC_SD_INVALID`.
+
+The target must be `DC_SD_TARGET_SERIAL`, never a GEMDOS drive number or letter.
+After whole-card erase confirmation, call `DC_SD_FORMAT_START`, then call
+`DC_SD_FORMAT_STEP` between event-loop iterations while the result is
+`DC_SD_FORMATTING`. Each step writes and verifies at most eight sectors.
+Progress is exposed as `completed/total` in the snapshot. START refuses open
+SD file handles; C: and D: are never detached or passed to raw writes.
+
+`DC_SD_MOUNTED` means E: is ready. `DC_SD_REBOOT` means formatting succeeded but
+the user must reboot to use it. Cached GEMDOS SD references prevent remounting.
+A negative step result means formatting failed, with state `DC_SD_FAILED`;
+SD access stays disabled until reboot. The caller must continue the job after
+START and must not allow exit/cancellation partway through formatting. Other
+invalid arguments, absent/too-small media and busy files fail before writes.
 
 ## Console programs
 

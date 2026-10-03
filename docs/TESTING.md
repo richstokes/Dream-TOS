@@ -122,6 +122,16 @@ and the image SHA256. Failure before the application sets up video still
 requires checking the disc bootstrap or KOS initialization. Successful
 Flycast boot alone does not verify those paths on a console.
 
+The graphical SD formatter was launched from `D:\UTILS\SDFORMAT.PRG` in Flycast
+on 2026-10-03; its no-card state disables formatting and shows C:/D: protection.
+The README screenshot is cropped to the GEM window. Sanitized host tests cover
+format geometry, metadata read-back failures, open-file rejection, storage
+cache detachment, protected targets, confirmation, and remount/reboot outcomes.
+Generated volumes pass the host FAT checker. Real SD formatting remains
+unverified: use a spare card, check both a blank/FAT32 card (immediate E: mount)
+and an already-accessed FAT16 card (reboot prompt), then copy a file, reboot,
+and read it back on a PC.
+
 SD card (serial adapter), not yet run on hardware: format a card with an MBR and
 one FAT16 partition, put a few files on it, boot with the adapter attached and
 confirm the log shows `E: SD FAT16`. Open E: in EmuDesk, copy a file to it, run

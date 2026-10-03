@@ -115,5 +115,7 @@ int main(int argc, char **argv)
     assert(dc_hal_sd_write(0, 1, buffer) == 0);
     int calls = init_calls;
     assert(dc_hal_sd_init(NULL) == 0 && init_calls == calls);
+    sectors = 0;
+    assert(dc_hal_sd_init(&sectors) == 0 && sectors == 8192 && init_calls == calls);
     return 0;
 }

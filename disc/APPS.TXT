@@ -7,7 +7,8 @@ D: is read-only. Reset or power-off erases C:, including all saved work.
 PROGRAM FOLDERS ON D:
 APPS: EDITOR, IMAGES, PAINT, MP3
 GAMES: FIFTEEN, MINES, NET, WORM, BLOCKS
-UTILS: FTP, VMUEDIT, SYSINFO, BENCH, HELLO, VDITEST, RUNTIME, all .TTP tools
+UTILS: FTP, VMUEDIT, SDFORMAT, SYSINFO, BENCH, HELLO, VDITEST, RUNTIME,
+       all .TTP tools
 BENCH.DAT lives in UTILS beside BENCH.PRG. All program folders are on PATH.
 Startup .ACC files, guides, samples and licenses remain at the disc root.
 
@@ -50,6 +51,15 @@ cards, games and copy-protected files. Hardware-untested: see ACCESSORIES.md.
 All accessories: close box or Esc hides. Reopen from Desk.
 Ctrl+arrows moves; Ctrl+Shift+arrows resizes. Program transitions hide
 windows; the accessories remain resident. Do not double-click .ACC files.
+
+SDFORMAT.PRG - graphical FAT16 SD card formatter (in D:\UTILS)
+Insert the serial-port SD adapter and card before booting. F starts;
+confirm Erase SD to erase ALL files and partitions on that physical card.
+C: and D: are protected and cannot be formatted. Uses up to 2 GiB in one
+FAT16 partition (E:), leaving the rest unused. Minimum card size: 4 MiB.
+Close SD files first. Keep power on and the card inserted until finished.
+Remounts when safe; otherwise prompts for a reboot before using the card.
+Esc quits when idle. Quick format does not securely erase file contents.
 
 FTP.PRG - graphical anonymous FTP server
 Choose C: RAM, D: Disc, or a mounted E:-H: SD drive (SD preferred).

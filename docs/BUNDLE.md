@@ -29,6 +29,7 @@ into the Dreamcast programs; they are not imitations of those programs.
 | `VMUTOOL.ACC` | This project, GPL-2.0-or-later | Read-only card directory, space, file sizes, timestamps and copy flags |
 | `VMUEDIT.PRG` | This project, GPL-2.0-or-later | VMU file manager (import/export/rename/delete with confirmations), 48x32 LCD editor with live push and BMP/raw files, VMS save-icon editor; [details](ACCESSORIES.md#vmu-editor-vmuedit-prg) |
 | `FTP.PRG` | This project, GPL-2.0-or-later | [Anonymous FTP server](FTP.md): GEM drive/folder picker, SD support, passive uploads/downloads and file management |
+| `SDFORMAT.PRG` | This project, GPL-2.0-or-later | [SD card formatter](SD.md): graphical FAT16 quick format, C:/D: protection, metadata verification and remount or reboot prompt; in `D:\UTILS` |
 | `RUNTIME.PRG` | This project, GPL-2.0-or-later | Native libc, allocator, math and file-access diagnostic |
 
 `HELLO.PRG` and `VDITEST.PRG` remain the ABI example and graphics diagnostic.
@@ -47,7 +48,7 @@ The read-only disc groups programs into DOS 8.3 folders:
 | --- | --- |
 | `D:\APPS` | `EDITOR`, `IMAGES`, `PAINT`, `MP3` |
 | `D:\GAMES` | `FIFTEEN`, `MINES`, `NET`, `WORM`, `BLOCKS` |
-| `D:\UTILS` | `FTP`, `VMUEDIT`, `SYSINFO`, `BENCH`, `HELLO`, `VDITEST`, `RUNTIME`, all `.TTP` tools |
+| `D:\UTILS` | `FTP`, `VMUEDIT`, `SDFORMAT`, `SYSINFO`, `BENCH`, `HELLO`, `VDITEST`, `RUNTIME`, all `.TTP` tools |
 
 `BENCH.DAT` lives beside the benchmark in `UTILS`. Guides, sample pictures,
 license notices and the five startup `.ACC` files stay at the root. AES scans

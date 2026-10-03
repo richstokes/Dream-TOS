@@ -19,6 +19,7 @@
 #include "dreamcast/tcp.h"
 #include "dreamcast/audio.h"
 #include "dreamcast/vmu_file.h"
+#include "dreamcast/sd_format.h"
 #include "obdefs.h"
 #include "struct.h"
 #include "aesvars.h"
@@ -43,7 +44,8 @@ static const struct dc_native_api api = {DC_NATIVE_ABI, sizeof(api), trap1,
                                          /* VMU file service and LCD */
                                          dc_vmu_file_read, dc_vmu_file_write, dc_vmu_file_delete, dc_vmu_screen,
                                          dc_tcp_listen, dc_tcp_accept, dc_tcp_recv, dc_tcp_send,
-                                         dc_tcp_port, dc_tcp_close};
+                                         dc_tcp_port, dc_tcp_close,
+                                         dc_sd_card_info, dc_sd_card_format};
 static jmp_buf term_context;
 static int executing;
 static long exit_status;

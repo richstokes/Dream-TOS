@@ -7,6 +7,32 @@ programs use it like any other drive.
 
 ## Card preparation
 
+Open **D:\UTILS\SDFORMAT.PRG** to prepare a card on the console. Insert the
+serial-port adapter and SD card before booting. The graphical formatter also
+works with blank cards and cards whose current filesystem cannot be mounted.
+
+Press **F** or click **Format FAT16**, then choose **Erase SD**. The confirmation
+defaults to **Cancel**. This erases **all files and partitions on the physical
+SD card**, including any existing E:–H: volumes. **C: and D: cannot be selected
+or formatted**; the OS service accepts only its serial-SD device token.
+
+The quick format creates one MBR FAT16 partition labelled `DREAM SD`, with
+512-byte sectors, two FATs and clusters no larger than 32 KiB. It requires a
+card of at least 4 MiB and uses up to 2046 MiB, leaving any remaining space
+unused. It is not a secure erase. Keep the card inserted and power on until
+the progress indicator finishes. Open SD files prevent formatting. Metadata
+is read back after each write; the new MBR is published last.
+
+If no SD volume has been accessed since boot, the formatter rescans and mounts
+the new volume as **E:** immediately. Choose **Options → Install devices** if
+its desktop icon is missing. If GEMDOS already holds cached SD directory or
+drive references, the formatter disables SD access and prompts you to reboot
+before using the card. A failed rescan also prompts for a reboot; a write or
+verification failure reports failure and keeps SD access disabled. Save any
+needed C: files elsewhere before rebooting, since C: is volatile.
+
+For preparation on another computer:
+
 TOS understands FAT12 and FAT16 only, with 512-byte sectors and at most 65,524
 clusters per volume. FAT16 is therefore the format to use; **FAT32 is not
 supported** (upstream EmuTOS cannot read it either), and the boot log says so if
@@ -59,6 +85,9 @@ it sees one.
 |---|---|
 | MBR / FAT12-16 boot sector validation, BPB geometry | `src/dreamcast/sd_fat.c` (no KOS code, host-tested) |
 | Raw 512-byte block access through KOS `sd_*` | `src/dreamcast/hal_sd.c` |
+| FAT16 layout, bounded metadata writes and read-back verification | `src/dreamcast/sd_format.c` |
+| Protected physical-card API and format lifecycle | `src/dreamcast/sd_service.c` |
+| Graphical formatter | `apps/ports/sdformat.c` |
 | Drive letters, BPB, `Rwabs` routing, write policy | `src/dreamcast/storage.c` |
 
 GEMDOS's own FAT code does all file work; the port only supplies block reads and
@@ -66,6 +95,11 @@ writes plus the BPB. `tests/test_sd.py` builds synthetic cards (FAT12, FAT16,
 bare volumes, four partitions, FAT32, corrupt and truncated volumes, read
 failures) and cross-checks the geometry against the host's own formatter when
 `newfs_msdos` is present.
+
+`tests/test_sd_format.py` covers geometry from 4 MiB to large SDXC capacities,
+independent host FAT checks, mirrored tables, empty root directory, read/write
+and verification errors, protected targets, open files, cache detachment,
+remount/reboot outcomes, and graphical confirmation and disabled controls.
 
 Status: verified in Flycast that boot is unaffected when no adapter is present.
 **Real adapter and card transfers have not been tested on hardware.**

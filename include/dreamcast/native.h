@@ -50,6 +50,9 @@ struct __attribute__((aligned(4))) dc_native_api {
     long (*tcp_send)(int handle, const void *buffer, uint32_t bytes);
     long (*tcp_port)(int handle);
     long (*tcp_close)(int handle);
+    /* Optional serial SD card formatter; see sd_format.h. Check size/pointer. */
+    long (*sd_card_info)(void *buffer, uint32_t bytes);
+    long (*sd_card_format)(uint32_t target, uint32_t action);
 };
 /* Return a GEMDOS exit status. tail is the standard length-prefixed command
  * line; env is a double-NUL-terminated environment, owned by the caller. */

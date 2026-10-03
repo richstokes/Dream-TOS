@@ -61,7 +61,7 @@ class Formats(unittest.TestCase):
         expected = {
             'APPS': {'EDITOR', 'IMAGES', 'PAINT', 'MP3'},
             'GAMES': {'FIFTEEN', 'MINES', 'NET', 'WORM', 'BLOCKS'},
-            'UTILS': {'FTP', 'VMUEDIT', 'SYSINFO', 'BENCH', 'HELLO', 'VDITEST', 'RUNTIME'},
+            'UTILS': {'FTP', 'VMUEDIT', 'SDFORMAT', 'SYSINFO', 'BENCH', 'HELLO', 'VDITEST', 'RUNTIME'},
         }
         self.assertFalse(any(name.endswith(('.PRG', '.TTP')) for name in volume.entries()))
         for folder, names in expected.items():

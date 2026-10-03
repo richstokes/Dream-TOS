@@ -14,6 +14,7 @@
 #include "dreamcast/hal.h"
 #include "dreamcast/system_info.h"
 #include "dreamcast/sd.h"
+#include "dreamcast/sd_format.h"
 #include <stdarg.h>
 
 #define SECTORS 8192UL
@@ -28,6 +29,8 @@ static BPB disc_bpb;
 static struct dc_sd_volume sd_vol[DC_SD_MAX_VOLUMES];
 static BPB sd_bpb[DC_SD_MAX_VOLUMES];
 static int sd_count;
+static uint32_t sd_sectors;
+#define SD_DRIVE_MASK (0xfu << SD_FIRST_DRIVE)
 static PD basepage;
 PD *run = &basepage;
 static DTA dta;
@@ -75,6 +78,7 @@ static void sd_mount(void)
         kprintf("GEMDOS: no SD card on the serial port\n");
         return;
     }
+    sd_sectors = sectors;
     int n = dc_sd_scan(sd_scan_read, NULL, sectors, sd_vol, DC_SD_MAX_VOLUMES, &skipped);
     for (int i = 0; i < n; i++) {
         const struct dc_sd_volume *v = &sd_vol[i];
@@ -104,6 +108,46 @@ static void sd_mount(void)
 static const struct dc_sd_volume *sd_volume(WORD drive)
 {
     return drive >= SD_FIRST_DRIVE && drive < SD_FIRST_DRIVE + sd_count ? &sd_vol[drive - SD_FIRST_DRIVE] : NULL;
+}
+void dc_storage_sd_status(uint32_t *sectors, uint32_t *mask)
+{
+    *sectors = sd_sectors;
+    *mask = drvbits & SD_DRIVE_MASK;
+}
+int dc_storage_sd_prepare(void)
+{
+    /* Never format underneath open files, including redirected streams.
+     * SH-4 pointers have the high bit set; only -1..-3 are device handles. */
+    for (int i = 0; i < OPNFILES; i++) {
+        OFD *o = sft[i].f_ofd;
+        if (o && (ULONG)o < (ULONG)-3 && o->o_dmd &&
+            o->o_dmd->m_drvnum >= SD_FIRST_DRIVE &&
+            o->o_dmd->m_drvnum < SD_FIRST_DRIVE + DC_SD_MAX_VOLUMES)
+            return DC_SD_BUSY;
+    }
+    /* Discard SD sector buffers before the first raw write. Existing DMD/DND
+     * references remain alive until reboot, but can never reach the card. */
+    for (int i = 0; i < 2; i++)
+        for (BCB *b = bufl[i]; b; b = b->b_link)
+            if (b->b_bufdrv >= SD_FIRST_DRIVE &&
+                b->b_bufdrv < SD_FIRST_DRIVE + DC_SD_MAX_VOLUMES) {
+                b->b_dirty = 0;
+                b->b_bufdrv = -1;
+            }
+    sd_count = 0;
+    drvbits &= ~SD_DRIVE_MASK;
+    return (drvsel & SD_DRIVE_MASK) != 0;
+}
+int dc_storage_sd_remount(void)
+{
+    /* No safe general media-change teardown in the native GEMDOS dispatcher.
+     * Remount only when there can be no cached directory/drive references. */
+    if (drvsel & SD_DRIVE_MASK) return -1;
+    sd_mount();
+    if (sd_count == 1) return 0;
+    sd_count = 0;
+    drvbits &= ~SD_DRIVE_MASK;
+    return -1;
 }
 static int writable_drive(int d)
 {

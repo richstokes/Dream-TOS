@@ -7,7 +7,7 @@ from pathlib import Path
 APP_GROUPS = {
     'APPS': ('EDITOR', 'IMAGES', 'PAINT', 'MP3'),
     'GAMES': ('FIFTEEN', 'MINES', 'NET', 'WORM', 'BLOCKS'),
-    'UTILS': ('FTP', 'VMUEDIT', 'SYSINFO', 'BENCH', 'HELLO', 'VDITEST', 'RUNTIME'),
+    'UTILS': ('FTP', 'VMUEDIT', 'SDFORMAT', 'SYSINFO', 'BENCH', 'HELLO', 'VDITEST', 'RUNTIME'),
 }
 APPS = tuple(app for group in APP_GROUPS.values() for app in group)
 CLI_TOOLS = ('GREP', 'WC', 'HEAD', 'TAIL', 'SORT', 'HEXDUMP', 'CKSUM', 'DATE', 'DF', 'FREE', 'UNAME', 'EXPR')
