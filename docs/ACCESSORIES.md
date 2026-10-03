@@ -104,7 +104,7 @@ not decoded. Physical hardware validation remains pending.
 
 ## VMU Editor (VMUEDIT.PRG)
 
-`VMUEDIT.PRG` is a fullscreen program on D: (start it from EmuDesk, not the Desk
+`D:\UTILS\VMUEDIT.PRG` is a fullscreen program (start it from EmuDesk, not the Desk
 menu). It has three screens: a file manager, a 48x32 LCD editor and a VMS save-icon
 editor. It works on the same cards as the Toolbox and changes them only through
 the OS [VMU file service](NATIVE-ABI.md), which has the safety rules listed

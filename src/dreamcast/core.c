@@ -26,7 +26,7 @@ extern void b_click(WORD),b_delay(WORD);
 extern WORD deskmain(void);
 extern void dc_storage_init(void),dc_storage_selftest(void),dc_poll(void);
 extern char *ad_envrn,*ad_stail;
-static char shell_env[] = "PATH=D:\\;C:\\\0",tail[128];
+static char shell_env[] = "PATH=D:\\APPS;D:\\GAMES;D:\\UTILS;D:\\;C:\\\0",tail[128];
 static struct { jmp_buf env; PFVOID entry; int saved; } contexts[NUM_PDS];
 static int current;
 void just_rts(void) {}

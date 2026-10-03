@@ -4,11 +4,11 @@ Choose **File → Execute EmuCON** or press **Ctrl+Z** on the desktop. Type
 `exit` to return to EmuDesk. EmuCON uses the fixed 640×480 display (80 columns,
 30 rows), with Up/Down history, cursor-key editing and Tab filename completion.
 It starts in the top desktop window's directory, or the boot drive's root.
-The default search path is `D:\;C:\`, so bundled commands work from either drive
+The default search path is `D:\APPS;D:\GAMES;D:\UTILS;D:\;C:\`, so bundled commands work from either drive
 without specifying an extension. `path` displays or changes that search path.
 
 The shell is the upstream EmuCON2 C implementation, compiled into the OS for
-SH-4. It runs without a disc; the extra `.TTP` utilities are on D: in the CDI.
+SH-4. It runs without a disc; the extra `.TTP` utilities are in `D:\UTILS` in the CDI.
 All applications are native Dreamcast programs. Atari 68000 binaries still
 cannot run.
 

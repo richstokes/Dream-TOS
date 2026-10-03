@@ -53,6 +53,12 @@ Tested on real Dreamcast hardware and seems to work.
       <strong>Paint</strong>
     </td>
   </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <a href="docs/screenshots/ftp-server.png"><img src="docs/screenshots/ftp-server.png" width="480" alt="Anonymous FTP server running on Dreamcast, sharing C: and listening on port 21"></a><br>
+      <strong>FTP server</strong>
+    </td>
+  </tr>
 </table>
 
 Captured from the native SH-4 build running in Flycast. Click an image for full size.
@@ -66,7 +72,7 @@ using the keyboard, and RAM-disk file operations.
 - Input: Maple keyboard and mouse; controller fallback when no mouse is attached.
 - C: 4 MiB FAT16 RAM disk. Contents disappear at reset.
 - D: read-only FAT16 volume embedded in the CD's ISO9660 filesystem.
-- Network: Broadband Adapter (DHCP, ping, DNS) via `ping`, `nslookup` and `ifconfig`; see [networking](docs/NETWORKING.md).
+- Network: Broadband Adapter (DHCP, ping, DNS), command-line tools, and a [graphical anonymous FTP server](docs/FTP.md) with SD/folder sharing; see [networking](docs/NETWORKING.md).
 - E:–H: writable FAT16 volumes from an SD card on the serial port (jj1odm/DreamShell-style adapter); see [SD card support](docs/SD.md). Untested on hardware.
 - 68000 binary compatibility is absent.
 
@@ -78,6 +84,17 @@ stored in `apps/`; all programs
 are rebuilt for SH-4. Open
 `APPS.TXT` on D: for controls. Documents, images and game saves go to C: and
 are lost at reset.
+
+Open D: in EmuDesk, then choose a folder:
+
+| Folder | Contents |
+| --- | --- |
+| `APPS` | Calculator, editor, image viewer, paint and MP3/WAV player |
+| `GAMES` | Blocks, Fifteen, Mines, Net and Worm |
+| `UTILS` | FTP server, VMU editor, system information, benchmark, diagnostics and command-line tools |
+
+Startup `.ACC` accessories, guides, sample pictures and license notices remain
+at the disc root. `UTILS` keeps the folder name within the DOS 8.3 limit.
 
 The **EmuCON command prompt** is available through **File → Execute EmuCON**
 or **Ctrl+Z**; type `exit` to return to the desktop. It includes file commands,
@@ -125,7 +142,7 @@ changes. Pass an image path to boot another image. `./scripts/build.sh`
 builds only the ELF; booting it directly in Flycast has no disc, D: drive or
 bundled applications/accessories. Network uploads can serve D: from the host
 through dcload, as described below.
-Add files with DOS 8.3 names to `disc/` and rebuild to include them on D:.
+Add files or folders with DOS 8.3 names to `disc/` and rebuild to include them on D:.
 
 For repeated real-console testing, `python3 scripts/test-console.py` can cycle
 the configured Shelly plug, wait for dcload-ip, upload the ELF and serve D: from

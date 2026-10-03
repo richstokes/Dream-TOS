@@ -4,6 +4,13 @@ KallistiOS owns startup, SH-4 exceptions, IRQs, thread contexts, cache operation
 Maple devices, timers, video mode setup and ISO9660 disc reads. The OS itself
 runs natively; Flycast emulates the Dreamcast only for development.
 
+KallistiOS also owns the Ethernet adapters and the shared IP/TCP/UDP stack.
+Native programs use the size-checked `net_*` and `tcp_*` callbacks in the OS
+function table; normally aligned HAL code handles the KOS interface. The FTP
+server, ping, DNS and interface tools all use this foundation. Future network
+apps extend that interface; the [networking guide](NETWORKING.md#stack-choice-and-future-applications)
+records the stack choice, current limits and STinG compatibility approach.
+
 The upstream AES, EmuDesk, VDI C primitives, FAT filesystem, resource builders,
 fonts, EmuCON2 shell and VT52 console are compiled for SH-4. Legacy assembly entry points are
 replaced with C adapters in `src/dreamcast`. Motorola assembly is not linked.

@@ -4,7 +4,12 @@ import argparse
 import shutil
 from pathlib import Path
 
-APPS = ('HELLO', 'VDITEST', 'CALC', 'EDITOR', 'FIFTEEN', 'MINES', 'NET', 'WORM', 'BLOCKS', 'IMAGES', 'PAINT', 'MP3', 'VMUEDIT', 'RUNTIME', 'BENCH')
+APP_GROUPS = {
+    'APPS': ('CALC', 'EDITOR', 'IMAGES', 'PAINT', 'MP3'),
+    'GAMES': ('FIFTEEN', 'MINES', 'NET', 'WORM', 'BLOCKS'),
+    'UTILS': ('FTP', 'VMUEDIT', 'SYSINFO', 'BENCH', 'HELLO', 'VDITEST', 'RUNTIME'),
+}
+APPS = tuple(app for group in APP_GROUPS.values() for app in group)
 CLI_TOOLS = ('GREP', 'WC', 'HEAD', 'TAIL', 'SORT', 'HEXDUMP', 'CKSUM', 'DATE', 'DF', 'FREE', 'UNAME', 'EXPR')
 NET_TOOLS = ('PING', 'NSLOOKUP', 'IFCONFIG')
 NOTICES = {
@@ -19,17 +24,18 @@ NOTICES = {
 }
 
 def stage(root, dest):
+    for folder in APP_GROUPS:
+        (dest/folder).mkdir(parents=True, exist_ok=True)
+    # AES discovers startup accessories at the boot volume's root.
     for accessory in ('CLOCK', 'CONTROL', 'MONITOR', 'VMUTOOL'):
         shutil.copy2(root/'build/apps'/f'{accessory}.ACC', dest)
     for tool in CLI_TOOLS + NET_TOOLS:
-        shutil.copy2(root/'build/apps'/f'{tool}.TTP', dest)
-    for app in APPS:
-        shutil.copy2(root/'build/apps'/f'{app}.PRG',dest)
-    # SYSINFO is maintained alongside the core port and may be built separately.
-    if (root/'apps/sysinfo.c').is_file():
-        shutil.copy2(root/'build/apps/SYSINFO.PRG',dest)
+        shutil.copy2(root/'build/apps'/f'{tool}.TTP', dest/'UTILS')
+    for folder, apps in APP_GROUPS.items():
+        for app in apps:
+            shutil.copy2(root/'build/apps'/f'{app}.PRG', dest/folder)
     # Deterministic 256 KiB input for the read-only file throughput test.
-    (dest/'BENCH.DAT').write_bytes(bytes(range(256)) * 1024)
+    (dest/'UTILS/BENCH.DAT').write_bytes(bytes(range(256)) * 1024)
     for name, source in NOTICES.items():
         shutil.copy2(root/source,dest/name)
 

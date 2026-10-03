@@ -121,6 +121,22 @@ explicit user actions, not on a periodic timer.
   [networking](NETWORKING.md). Calls wait while servicing input; Ctrl+C returns
   `DC_NET_ERR_BREAK`.
 
+- `tcp_listen(port)`, `tcp_accept(handle, peer_ip)`, `tcp_recv(handle, buffer, bytes)`,
+  `tcp_send(handle, buffer, bytes)`, `tcp_port(handle)` and `tcp_close(handle)`:
+  non-blocking IPv4 TCP listeners for foreground programs, appended after the
+  VMU block. Check size and each pointer. See `include/dreamcast/tcp.h`.
+  Handles are positive service-owned tokens, not KOS or GEMDOS descriptors;
+  there are eight slots. Port 0 chooses an ephemeral port; `tcp_port` returns
+  the actual port in host byte order. Accept fills four network-order IPv4
+  bytes. Receive/send return a possibly partial byte count, `DC_TCP_AGAIN`
+  (-8) when retry is needed, `DC_TCP_IO` (-9) on failure or -64 for invalid
+  arguments. Receive returns zero at EOF; requests must be 1–65536 bytes.
+  Close handles explicitly; foreground process termination also closes all
+  remaining TCP handles. These handles are not for resident accessories.
+  KOS socket structures stay inside `hal_tcp.c`, compiled with normal SDK
+  alignment. The FTP app polls these calls from its AES loop and performs all
+  GEMDOS file work on that same thread.
+
 - `audio_open(rate, channels)`, `audio_close()`, `audio_write(pcm, frames)`,
   `audio_space()`, `audio_set(what, value)` and `audio_info(buffer, bytes)`:
   AICA sound output for signed 16-bit interleaved PCM, mono or stereo, 8000 to

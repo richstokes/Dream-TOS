@@ -31,7 +31,8 @@ it sees one.
 - Applications: the Kilo editor and the image viewer save to any writable drive
   (C: or E:-H:). Puzzle saves and Worm high scores go to the first mounted SD
   drive, falling back to C:; puzzle loads also look on C:. The MP3 player ([audio](AUDIO.md)) browses and plays `.MP3`/`.WAV` files from any mounted drive, defaulting to the SD card. The System Monitor
-  lists every mounted drive. Messages say "lost at reset" only for the RAM disk.
+  lists every mounted drive. The [FTP server](FTP.md) can share an SD drive or
+  a selected folder, with anonymous uploads and downloads. Messages say "lost at reset" only for the RAM disk.
   The shared logic is `apps/lib/drives.h`.
 - The card is probed **once at boot**. The adapter has no card-detect line, so
   insert or swap cards before powering on or resetting. File → Boot GD-ROM

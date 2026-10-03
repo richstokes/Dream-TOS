@@ -1,7 +1,7 @@
 # Native system information
 
 `SYSINFO.PRG` is a small GPL-2.0-or-later GEM utility written for this port.
-The normal application/CDI build includes it on D:. It is native SH-4 code
+The normal application/CDI build includes it at `D:\UTILS\SYSINFO.PRG`. It is native SH-4 code
 and needs neither an Atari executable nor a 68000 emulator.
 
 Open it from EmuDesk. All controls work with the keyboard:

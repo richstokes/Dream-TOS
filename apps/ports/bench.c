@@ -260,7 +260,7 @@ static void run_all(void)
         }
         if (i == 11) {
             close_file();
-            file_fd = open("D:\\BENCH.DAT", O_RDONLY);
+            file_fd = open("D:\\UTILS\\BENCH.DAT", O_RDONLY);
             if (file_fd < 0) {
                 t->state = SKIPPED; t->detail = "BENCH.DAT unavailable"; continue;
             }
@@ -301,7 +301,7 @@ static int save_report(const char *path)
         "VDI: toolkit attribute calls included; RGB565 presentation excluded.\n"
         "Lines span 608 pixels; fills 80x32; text 24 characters, transparent.\n"
         "Files: repeat 256 KiB, 16 KiB requests; seek included, open/close excluded.\n"
-        "C: RAM disk only. D: BENCH.DAT repeated reads may use filesystem/emulator\n"
+        "C: RAM disk only. D: UTILS/BENCH.DAT reads may use filesystem/emulator\n"
         "caches; this is not a raw GD-ROM speed measurement.\n"
         "Compare the same benchmark/build/settings. Flycast rates are not\n"
         "measurements of physical Dreamcast performance.\n\n", __VERSION__);

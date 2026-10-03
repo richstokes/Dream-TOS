@@ -12,7 +12,7 @@ fi
 mkdir -p "$root/build/disc" "$root/dist"
 # A fresh temporary staging directory prevents stale app files entering D:.
 stage=$(mktemp -d "$root/build/fat-stage.XXXXXX")
-cp "$root"/disc/* "$stage/"
+cp -R "$root"/disc/* "$stage/"
 python3 "$root/tools/stage_bundle.py" "$root" "$stage"
 python3 "$root/tools/fat_image.py" "$stage" "$root/build/disc/DISC.IMG"
 python3 - "$stage" <<'PY'

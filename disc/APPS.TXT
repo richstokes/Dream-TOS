@@ -4,6 +4,13 @@ All programs are native SH-4 code. Atari 68000 executables cannot run.
 Open a .PRG in EmuDesk to start it. Save on C:, the temporary RAM disk.
 D: is read-only. Reset or power-off erases C:, including all saved work.
 
+PROGRAM FOLDERS ON D:
+APPS: CALC, EDITOR, IMAGES, PAINT, MP3
+GAMES: FIFTEEN, MINES, NET, WORM, BLOCKS
+UTILS: FTP, VMUEDIT, SYSINFO, BENCH, HELLO, VDITEST, RUNTIME, all .TTP tools
+BENCH.DAT lives in UTILS beside BENCH.PRG. All program folders are on PATH.
+Startup .ACC files, guides, samples and licenses remain at the disc root.
+
 CLOCK.ACC - resident GEM clock desk accessory
 Loaded automatically at boot. Choose Desk > Clock to open or raise it.
 Analogue face, 24-hour digital time and date from the console clock.
@@ -43,6 +50,17 @@ cards, games and copy-protected files. Hardware-untested: see ACCESSORIES.md.
 All accessories: close box or Esc hides. Reopen from Desk.
 Ctrl+arrows moves; Ctrl+Shift+arrows resizes. Program transitions hide
 windows; the accessories remain resident. Do not double-click .ACC files.
+
+FTP.PRG - graphical anonymous FTP server
+Choose C: RAM, D: Disc, or a mounted E:-H: SD drive (SD preferred).
+Click a folder then Open, or use Up/Down and Return. U goes to parent;
+</> or PgUp/PgDn pages. S starts sharing the displayed folder on port 21.
+Connect to the shown address using plain FTP, anonymous, passive mode,
+binary transfers, one connection. No password is checked. C:/SD allow
+uploads, overwrite, delete and rename; D: is read-only. Use DOS 8.3 names.
+S stops; Esc or close quits. Keep this app open while transferring.
+Interrupted uploads may leave partial files. C: is erased at reset.
+Native networking requires disc/GDEMU boot, not dcload-ip.
 
 EDITOR.PRG - Kilo plain-text editor
 Ctrl+O open; Ctrl+N new; Ctrl+S save; Ctrl+A save as; Ctrl+F search;

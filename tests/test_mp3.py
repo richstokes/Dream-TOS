@@ -36,7 +36,8 @@ class Audio(unittest.TestCase):
         # Appended after the previous optional members, so their offsets are unchanged.
         self.assertGreater(header.index('audio_open'), header.index('net_resolve'))
         # The stream is stopped whenever a program returns or terminates.
-        self.assertRegex(native, r'dc_audio_close\(\);[^\n]*\n\s*dc_free_process_memory')
+        # Other foreground services may also be cleaned up before freeing RAM.
+        self.assertLess(native.index('dc_audio_close();'), native.index('dc_free_process_memory(&child);'))
 
 
 class Mp3Player(unittest.TestCase):

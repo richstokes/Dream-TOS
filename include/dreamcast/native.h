@@ -43,6 +43,13 @@ struct __attribute__((aligned(4))) dc_native_api {
     long (*vmu_file_delete)(uint32_t port, uint32_t unit, const char *name);
     long (*vmu_screen)(uint32_t port, uint32_t unit, const void *bitmap, uint32_t bytes);
     /* --- End of VMU file service. --- */
+    /* Optional foreground TCP sockets; see tcp.h. Check size and pointer. */
+    long (*tcp_listen)(uint32_t port);
+    long (*tcp_accept)(int handle, uint8_t peer[4]);
+    long (*tcp_recv)(int handle, void *buffer, uint32_t bytes);
+    long (*tcp_send)(int handle, const void *buffer, uint32_t bytes);
+    long (*tcp_port)(int handle);
+    long (*tcp_close)(int handle);
 };
 /* Return a GEMDOS exit status. tail is the standard length-prefixed command
  * line; env is a double-NUL-terminated environment, owned by the caller. */

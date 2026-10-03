@@ -29,5 +29,5 @@ class Benchmark(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             dest = Path(temp)
             stage.stage(ROOT, dest)
-            self.assertEqual((dest/'BENCH.PRG').read_bytes()[:8], b'DCNATIVE')
-            self.assertEqual((dest/'BENCH.DAT').read_bytes(), bytes(range(256))*1024)
+            self.assertEqual((dest/'UTILS/BENCH.PRG').read_bytes()[:8], b'DCNATIVE')
+            self.assertEqual((dest/'UTILS/BENCH.DAT').read_bytes(), bytes(range(256))*1024)

@@ -2,6 +2,17 @@
 
 ## Verified in Flycast
 
+2026-10-03, grouped application bundle: EmuDesk displays `APPS`, `GAMES` and
+`UTILS` on D:. Boot-time loader, runtime and EmuCON checks pass with the new
+paths, and all four root-level accessories still load. Bare-name `calc`,
+`mines`, `ftp` and `bench` launches succeed through PATH; FTP browses into
+`D:\APPS`. All twelve benchmark rows complete, including reads from
+`D:\UTILS\BENCH.DAT`. The host suite passes 113 tests, including nested and
+multi-cluster directories, parent entries, capacity checks and bundled payloads.
+
+The dated checks below used the former root-level program paths; current
+diagnostics live in `D:\UTILS`.
+
 2026-09-28, native SH-4 ELF and self-boot CDI, KOS 2.3.0 / GCC 15.2.0:
 
 - Boots into the real upstream EmuDesk with C: and D: icons.
@@ -117,9 +128,9 @@ The default CDI omits full-disc filler for small Flycast/GDEMU images. Set
 1. Attach a Dreamcast keyboard and mouse, boot, and confirm a stable desktop.
 2. Move and click the guest pointer; open C: and D:. Check capture separately
    in Flycast with Left Ctrl+Left Alt, if using the emulator.
-3. Launch D:\HELLO.PRG; acknowledge its alert and verify return to EmuDesk.
+3. Launch D:\UTILS\HELLO.PRG; acknowledge its alert and verify return to EmuDesk.
 4. Open C:\NATIVE.TXT using Show and confirm the native program's message.
-5. Run D:\VDITEST.PRG; confirm its graphics readback says PASS, then Return.
+5. Run D:\UTILS\VDITEST.PRG; confirm its graphics readback says PASS, then Return.
 6. Create a folder on C:, copy a document from D: into it, view then delete it.
 7. Try a D: write; it should fail as read-only. Reset and confirm C: resets.
 8. Test the available video cable and keyboard region. Report exact hardware,

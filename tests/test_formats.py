@@ -4,6 +4,8 @@ import struct
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+from fat_reader import FatVolume
 ROOT=Path(__file__).resolve().parents[1]
 def module(name):
     spec=importlib.util.spec_from_file_location(name,ROOT/'tools'/f'{name}.py')
@@ -28,6 +30,85 @@ class Formats(unittest.TestCase):
         size=struct.unpack_from('<I',e,28)[0]
         self.assertEqual(out[:size],payload)
         self.assertEqual(struct.unpack_from('<HI',root,26),(0,0))
+    def test_nested_directories_and_multicluster_directory(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root/'APPS/EMPTY').mkdir(parents=True)
+            (root/'APPS/SUB').mkdir()
+            payload = bytes(range(256)) * 9 + b'end'
+            (root/'APPS/SUB/DATA.BIN').write_bytes(payload)
+            for i in range(20):
+                (root/f'APPS/FILE{i:02}.TXT').write_text(str(i))
+            image = fat.build(root)
+            self.assertEqual(image, fat.build(root))
+        volume = FatVolume(image)
+        self.assertEqual(volume.read('APPS/SUB/DATA.BIN'), payload)
+        apps = volume.lookup('APPS')[1]
+        self.assertEqual(len(volume.chain(apps)), 1024)
+        entries = volume.entries(apps)
+        self.assertEqual(entries['.'], (0x10, apps, 0))
+        self.assertEqual(entries['..'], (0x10, 0, 0))
+        sub = volume.lookup('APPS/SUB')[1]
+        self.assertEqual(volume.entries(sub)['..'], (0x10, apps, 0))
+        empty = volume.lookup('APPS/EMPTY')[1]
+        self.assertEqual(set(volume.entries(empty)), {'.', '..'})
+        for i in range(20):
+            self.assertEqual(volume.read(f'APPS/FILE{i:02}.TXT'), str(i).encode())
+        self.assertEqual(image[512:33*512], image[33*512:65*512])
+
+    def test_grouped_programs_are_packaged(self):
+        volume = FatVolume((ROOT/'build/disc/DISC.IMG').read_bytes())
+        expected = {
+            'APPS': {'CALC', 'EDITOR', 'IMAGES', 'PAINT', 'MP3'},
+            'GAMES': {'FIFTEEN', 'MINES', 'NET', 'WORM', 'BLOCKS'},
+            'UTILS': {'FTP', 'VMUEDIT', 'SYSINFO', 'BENCH', 'HELLO', 'VDITEST', 'RUNTIME'},
+        }
+        self.assertFalse(any(name.endswith(('.PRG', '.TTP')) for name in volume.entries()))
+        for folder, names in expected.items():
+            attr, cluster, size = volume.lookup(folder)
+            self.assertEqual(attr, 0x10)
+            self.assertEqual(size, 0)
+            programs = {name[:-4] for name in volume.entries(cluster) if name.endswith('.PRG')}
+            self.assertLessEqual(names, programs)
+            for name in programs:
+                self.assertEqual(volume.read(f'{folder}/{name}.PRG'),
+                                 (ROOT/f'build/apps/{name}.PRG').read_bytes())
+        for name in ('PING', 'NSLOOKUP', 'IFCONFIG'):
+            self.assertEqual(volume.read(f'UTILS/{name}.TTP'),
+                             (ROOT/f'build/apps/{name}.TTP').read_bytes())
+        self.assertEqual(volume.read('UTILS/BENCH.DAT'), bytes(range(256)) * 1024)
+
+    def test_reject_nested_symlinks_and_invalid_names(self):
+        with tempfile.TemporaryDirectory() as temp:
+            folder = Path(temp)/'APPS'
+            folder.mkdir()
+            (folder/'BACK').symlink_to(temp, target_is_directory=True)
+            with self.assertRaises(ValueError):
+                fat.build(temp)
+            (folder/'BACK').unlink()
+            (folder/'LONG-FILENAME.PRG').touch()
+            with self.assertRaises(ValueError):
+                fat.build(temp)
+        with tempfile.TemporaryDirectory() as temp:
+            a, b = Path(temp)/'APP.PRG', Path(temp)/'app.prg'
+            a.touch(); b.touch()
+            with patch.object(Path, 'iterdir', return_value=iter([a, b])):
+                with self.assertRaises(ValueError):
+                    fat.build(temp)
+
+    def test_reject_full_root_and_volume(self):
+        with tempfile.TemporaryDirectory() as temp:
+            for i in range(129):
+                (Path(temp)/f'{i}.TXT').touch()
+            with self.assertRaisesRegex(ValueError, 'root entries'):
+                fat.build(temp)
+        with tempfile.TemporaryDirectory() as temp:
+            (Path(temp)/'APPS').mkdir()
+            # The file fits by itself, but its parent directory needs a cluster too.
+            (Path(temp)/'APPS/FULL.DAT').write_bytes(bytes((8192 - 73) * 512))
+            with self.assertRaisesRegex(ValueError, 'volume full'):
+                fat.build(temp)
+
     def test_native_accessories_are_packaged(self):
         image=(ROOT/'build/disc/DISC.IMG').read_bytes()
         entries=[image[i:i+32] for i in range(65*512,73*512,32)]

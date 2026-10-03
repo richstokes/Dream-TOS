@@ -108,7 +108,7 @@ static void check_file(const char *path, const char *expected)
 }
 void dc_cli_selftest(void)
 {
-    LONG h = trap1(0x3d, "D:\\WC.TTP", 0);
+    LONG h = trap1(0x3d, "D:\\UTILS\\WC.TTP", 0);
     if (h < 0) return; /* direct ELF boot has no optional utility bundle */
     trap1(0x3e, (int)h);
     const char *script =

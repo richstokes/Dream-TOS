@@ -499,10 +499,10 @@ void dc_storage_selftest(void)
         extern long trap1_pexec(short, const char *, const char *, const char *);
         static const char test_tail[] = {4, 'T', 'E', 'S', 'T', 0};
         void *largest = xmalloc(-1);
-        if (trap1_pexec(0, "D:\\HELLO.PRG", test_tail, NULL) != 42 || xmalloc(-1) != largest)
+        if (trap1_pexec(0, "D:\\UTILS\\HELLO.PRG", test_tail, NULL) != 42 || xmalloc(-1) != largest)
             goto fail;
         static const char pterm_tail[] = {4, 'P', 'T', 'E', 'R', 0};
-        if (trap1_pexec(0, "D:\\HELLO.PRG", pterm_tail, NULL) != 43 || xmalloc(-1) != largest)
+        if (trap1_pexec(0, "D:\\UTILS\\HELLO.PRG", pterm_tail, NULL) != 43 || xmalloc(-1) != largest)
             goto fail;
         kprintf("SELFTEST: native SH-4 relocation/BSS/GEMDOS/return/Pterm/cleanup PASS\n");
     }

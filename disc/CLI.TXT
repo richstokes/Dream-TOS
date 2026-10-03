@@ -8,7 +8,7 @@ Built-ins include DIR/LS, CD, PWD, COPY/CP, MOVE/MV, DEL/RM, REN,
 MD/MKDIR, RD/RMDIR, TYPE/CAT, MORE, ECHO, CLS/CLEAR, PATH and SHOW.
 Type C: or D: to change drive. Paths use backslashes and 8.3 filenames.
 
-Native tools on D: (type the name without .TTP):
+Native tools in D:\UTILS (type the name without .TTP):
   GREP [-i] [-n] [-v] TEXT FILE...   Literal text search (no regex)
   WC [-lwc] FILE...                 Line, word and byte counts
   HEAD [-n N] FILE...               First N lines; default 10
@@ -34,8 +34,9 @@ Examples:
   editor C:\NOTES.TXT
   expr sqrt(144)+2^3
 
-The default PATH is D:\;C:\. Existing graphical apps can be launched by
-name; closing them restores the prompt. All programs are native SH-4.
+The default PATH is D:\APPS;D:\GAMES;D:\UTILS;D:\;C:\.
+Graphical apps and games can be launched by name; closing them restores
+the prompt. All programs are native SH-4.
 
 > replaces an output file. Errors stay on screen. There are no pipes,
 input/append redirection, shell scripts or Unix job control. Built-in

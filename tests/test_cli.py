@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
 from stage_bundle import CLI_TOOLS
 import native_app
+from fat_reader import FatVolume
 
 class ConsoleTools(unittest.TestCase):
     @classmethod
@@ -116,25 +117,11 @@ class ConsoleTools(unittest.TestCase):
             self.run_tool(name, code=2)
 
     def test_native_tools_are_packaged(self):
-        image = (ROOT/'build/disc/DISC.IMG').read_bytes()
-        entries = [image[i:i+32] for i in range(65*512, 73*512, 32)]
-        import struct
+        volume = FatVolume((ROOT/'build/disc/DISC.IMG').read_bytes())
         for name in CLI_TOOLS:
             expected = native_app.convert((ROOT/f'build/apps/{name}.elf').read_bytes())
             self.assertEqual((ROOT/f'build/apps/{name}.TTP').read_bytes(), expected)
-            entry = next(e for e in entries if e[:11] == f'{name:<8}TTP'.encode())
-            cluster = struct.unpack_from('<H', entry, 26)[0]
-            size = struct.unpack_from('<I', entry, 28)[0]
-            payload = bytearray()
-            seen = set()
-            while cluster < 0xfff8:
-                self.assertGreaterEqual(cluster, 2)
-                self.assertNotIn(cluster, seen)
-                seen.add(cluster)
-                pos = (73 + cluster - 2)*512
-                payload += image[pos:pos+512]
-                cluster = struct.unpack_from('<H', image, 512 + cluster*2)[0]
-            self.assertEqual(payload[:size], expected)
+            self.assertEqual(volume.read(f'UTILS/{name}.TTP'), expected)
 
 class ConsoleParser(unittest.TestCase):
     def test_parser_and_command_tail_bounds(self):

@@ -1,10 +1,11 @@
 # Native Dreamcast benchmark
 
 `BENCH.PRG` is an original GPL-2.0-or-later SH-4 application. It is included
-in the normal CDI alongside a generated 256 KiB `BENCH.DAT` read-test file.
+in `D:\UTILS` on the normal CDI alongside a generated 256 KiB `BENCH.DAT`
+read-test file.
 It contains no zBench code and does not reproduce zBench's Atari scores.
 
-Open `D:\BENCH.PRG` from EmuDesk. **R** or **Return** runs all twelve tests.
+Open `D:\UTILS\BENCH.PRG` from EmuDesk. **R** or **Return** runs all twelve tests.
 **Escape** during a run cancels it, retaining completed results; Escape when
 idle exits. **S** saves the results and methodology to `C:\BENCH.TXT`, replacing
 an earlier report. **E** cycles the report's environment label through
