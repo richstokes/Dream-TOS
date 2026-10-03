@@ -71,10 +71,7 @@ Tested on real Dreamcast hardware and seems to work.
   </tr>
 </table>
 
-The bootable CDI runs on real Dreamcast hardware and in Flycast. In Flycast,
-verified operations include launching a separately compiled SH-4 GEM application
-and returning to the desktop, reading files from the disc, creating folders
-using the keyboard, and RAM-disk file operations.
+The bootable CDI runs on real Dreamcast hardware and in Flycast.
 
 - Display: 640×480, 16-colour planar VDI converted to Dreamcast RGB565.
 - Input: Maple keyboard and mouse; controller fallback when no mouse is attached.
