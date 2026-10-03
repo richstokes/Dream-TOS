@@ -12,7 +12,7 @@ into the Dreamcast programs; they are not imitations of those programs.
 
 | Program | Upstream and license | Native features |
 |---|---|---|
-| `EDITOR.PRG` | [Kilo](https://github.com/antirez/kilo), BSD-2-Clause | Plain-text editing, open/save/save-as, search, C syntax colours, CRLF input |
+| `EDITOR.PRG` | Native Kilo frontend and checked editor model, GPL-2.0-or-later; original [Kilo](https://github.com/antirez/kilo) source retained under BSD-2-Clause | GEM windows/menus, undo/redo, selection/clipboard, search/replace, wrapping, C colours, byte-preserving saves |
 | `IMAGES.PRG` | [stb_image](https://github.com/nothings/stb), MIT/public domain | PNG/JPEG/BMP, 16-colour quantization, greyscale, mirror, BMP export |
 | `PAINT.PRG` | This project, GPL-2.0-or-later | 16-colour paint: pencil, brush, shapes, fill, picker, multi-level undo, BMP open/save |
 | `CALC.ACC` | [tinyexpr](https://github.com/codeplea/tinyexpr), zlib | Resident **Desk → Calculator** window, graphical keypad, scientific functions and `ans`; expression and answer survive closing and foreground program switches |
@@ -71,10 +71,31 @@ buttons and movement. Flycast verification primarily used the keyboard.
   (the emulated RTC in Flycast), in 24-hour format with GEMDOS two-second
   precision. Starting or exiting a foreground program hides its window; the
   accessory remains resident and can be reopened from the desktop.
-- Editor: Ctrl+O open, Ctrl+N new, Ctrl+S save, Ctrl+A save-as, Ctrl+F find,
-  Ctrl+Q quit. Unsaved changes require repeated Ctrl+Q or confirmation
-  before opening/creating another file. This is a plain-text editor, not
-  a rich-text word processor; Kilo has no undo. Limit: 64 KiB / 1023 lines.
+- Editor: a resizable GEM window with File/Edit/Search/View menus, mouse selection,
+  scrollbars and native file selectors. Ctrl+N/O/S create/open/save; Ctrl+Shift+S
+  saves as; Ctrl+Q closes. Unsaved work gets Save/Discard/Cancel on new/open/close.
+  Ctrl+Z/Y undo/redo (Ctrl+Shift+Z also redoes); Ctrl+X/C/V cut/copy/paste;
+  Ctrl+A selects all. Shift extends arrow/Home/End/Page selections, Ctrl+arrows
+  move by word, Ctrl+Home/End jump to the document ends. Drag outside the text
+  area to scroll while selecting. The GEM clipboard uses `SCRAP.TXT` in the AES
+  scrap directory, with an internal fallback if it cannot be written.
+  Ctrl+F finds, F3/Shift+F3 find the next/previous occurrence (including matches
+  on the same line); Ctrl+H replaces one, Ctrl+Shift+H replaces all as one undo
+  action; Ctrl+G goes to a line. Search is literal, wraps, and has a Match case
+  menu option. Ctrl+W toggles word wrap; Ctrl+L toggles line numbers. View also
+  controls auto-indent, tab width (1–8), and inserting spaces. Tab/Shift+Tab
+  indent/outdent selected lines. Line/column and modified state are always visible.
+  New files default to the first writable SD drive, falling back to C: RAM.
+  Saves preserve LF/CRLF (including mixed input) and the final-newline state;
+  Enter/paste use the first line ending's convention. Saving writes and verifies
+  a same-directory `EDnnnnnn.TMP`, moves the old file to `EDnnnnnn.BAK`, then
+  installs the new file. Failed replacement restores the original when possible
+  and reports retained recovery paths. This is recovery protection, not a
+  power-loss-atomic filesystem transaction. Use DOS 8.3 filenames.
+  Limit: 1 MiB / 32,768 logical lines, subject to available memory; 128 undo
+  actions with about 2 MiB of changed text. Consecutive typing is grouped until
+  a pause or another command. Undo/clipboard are session state. The editor uses
+  the system's single-byte font encoding, not Unicode or rich text.
 - Viewer: O open, N cycle the two samples, G greyscale, M mirror, S export
   BMP, Esc exit. Input is limited to 640×480 and 1 MiB encoded files.
   Display/export uses 16 colours; larger-than-384-pixel-tall images fit the
@@ -145,9 +166,15 @@ sources use the compiler's normal alignment; GEM structs explicitly use
 no-ops. Memory is owned by the native process and reclaimed on termination.
 The native ABI's optional `millis` callback supplies monotonic game timing.
 
-Kilo's terminal backend is replaced by GEM VDI text and AES keys. Its row
-buffer, editing, search and syntax logic are retained. The Dreamcast save
-path uses stdio in place of POSIX ftruncate; CRLF loading is corrected.
+Kilo now uses a checked, byte-preserving document model in `editor_core.c`,
+separate staged file I/O, and a GEM frontend; the original vendored Kilo source
+is retained unmodified. Undo records store changed spans, allocation failures
+leave edits unapplied, and file loads stage the new document before replacing
+the old one. C/C++ highlighting tracks multiline comments and colours keywords,
+types, strings, numbers and preprocessor directives. Visible rows are compared
+before drawing; VDI text is batched by colour/selection and damage is clipped
+through the shared GEM window API. Word-wrap positions use document byte offsets,
+so resizing and tab expansion do not change the selection or saved text.
 Worm's DOS/Atari resource menus are replaced by the keyboard-oriented GEM
 frontend, avoiding an endian-dependent `.RSC`. Its field initialization,
 restart growth and high-score loading/allocation bugs are corrected.
@@ -177,7 +204,8 @@ Flycast, using the native CDI and keyboard input:
   Window move/resize and full-size/restore retain the result. Native GEM
   full-size and close gadgets work with the keyboard-controlled pointer.
   Closing the window restores EmuDesk with unchanged desktop colours.
-- Editor: two-line input, save to C:, new buffer, reopen, search, exit.
+- Editor: selection/copy/paste, undo/redo, search/replace, wrap/resize/scroll,
+  save to C:/SD, reopen, and cancel/save/discard on close.
 - Viewer: both PNG samples; mirror/greyscale; BMP export to C: and reopen.
 - Fifteen: tile movement, save, new game, restore saved board.
 - Mines: reveal, flag, contrasting keyboard cursor and help/status redraw.
@@ -185,7 +213,9 @@ Flycast, using the native CDI and keyboard input:
 - Worm: drawing, movement, wall collision, restart, pause and score table.
 - Programs return to EmuDesk; palette state is restored.
 
-Host ASan/UBSan tests cover Kilo editing/CRLF/save round trips, image
+Host ASan/UBSan tests cover editor selection, undo/redo, CRLF/final-newline
+preservation, search/replace, wrap, allocation failures, size limits, randomized
+edits and staged-save recovery, image
 quantization and exact exported BMP pixel recovery, puzzle state save/load,
 Worm movement/restart/scores, and calculator keypad/keyboard input, cancelled
 clicks, expression editing, result chaining, bounded input and error recovery.

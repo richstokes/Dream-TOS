@@ -1,6 +1,9 @@
 /* Same-directory staged saves for GEMDOS, which cannot rename over a file.
  * Keep the original backup until the verified new file has its final name.
  * GPL-2.0-or-later. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
 #include "app.h"
 #include "editor_core.h"
 #include "editor_file.h"
@@ -8,6 +11,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #ifndef ED_RENAME
 static int editor_rename(const char *from, const char *to)
@@ -53,6 +57,17 @@ static int unused(const char *path)
 }
 int editor_write_file(const char *path, const char *text, size_t length, char *message, size_t cap)
 {
+    int exists = 0;
+    FILE *original = fopen(path, "rb");
+    if (original) {
+        struct stat st;
+        int regular = !fstat(fileno(original), &st) && S_ISREG(st.st_mode);
+        fclose(original);
+        if (!regular) { snprintf(message, cap, "Target is not a regular text file"); return 0; }
+        exists = 1;
+    } else if (errno != ENOENT) {
+        snprintf(message, cap, "Cannot access original: %s", strerror(errno)); return 0;
+    }
     char temp[128], backup[128];
     const char *base = strrchr(path, '\\');
     if (!base) base = strrchr(path, '/');
@@ -88,13 +103,13 @@ int editor_write_file(const char *path, const char *text, size_t length, char *m
     }
     if (f) { if (ferror(f)) ok = 0; if (fclose(f)) ok = 0; }
     if (!ok) { remove(temp); snprintf(message, cap, "Verification failed; original kept"); return 0; }
-    int exists = !unused(path);
     if (exists && ED_RENAME(path, backup)) {
         snprintf(message, cap, "Original kept. New copy: %s", temp); return 0;
     }
     if (ED_RENAME(temp, path)) {
         if (exists && ED_RENAME(backup, path))
-            snprintf(message, cap, "Recovery files: %s | %s", backup, temp);
+            snprintf(message, cap, "Recovery files in %.*s: %s and %s", (int)prefix,
+                     path, backup + prefix, temp + prefix);
         else snprintf(message, cap, "Original kept. New copy: %s", temp);
         return 0;
     }

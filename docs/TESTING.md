@@ -2,6 +2,23 @@
 
 ## Verified in Flycast
 
+2026-10-03, text editor upgrade: the SH-4 editor opens C source with legible
+comment/keyword/type/string/number colours and CRLF status in a real GEM window.
+Flycast checks cover native Find/Open/Save As/Go to line dialogs, stepping through
+multiple search matches on one line, menu actions, word wrapping, pointer cursor
+placement through the system's keyboard mouse controls, clipboard copy/paste,
+undo/redo and restoring the unmodified state. The GEM scrap file survives closing
+and reopening the editor. Initial saves and replacement saves on C: were read
+back independently through EmuCON. The shared window frame and scrollbars render
+correctly. Physical mouse dragging/resizing and SD-card failure recovery still
+need hardware validation; host event tests cover drag selection and resizing.
+The 126-test host suite passes. Editor-specific ASan/UBSan cases include 2,500
+random edit/undo/redo sequences, allocation failure before commit, 1 MiB and
+32,768-line boundaries, CRLF/final-newline preservation, multiline indentation,
+search/replace, wrap hit testing, inaccessible/directory targets and staged-save
+write/rename/rollback failures. GEM tests verify clipped redraw, no text drawing
+when idle, batching after a keystroke, and slider arithmetic on a 1 MiB tabbed line.
+
 Calculator is now accessory-only. Earlier checks below involving the `calc`
 command used the former standalone program; open the current calculator from
 **Desk → Calculator**.

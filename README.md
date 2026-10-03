@@ -25,7 +25,7 @@ Tested on real Dreamcast hardware and seems to work.
   </tr>
   <tr>
     <td width="50%" align="center">
-      <a href="docs/screenshots/text-editor.jpg"><img src="docs/screenshots/text-editor.jpg" width="480" alt="Kilo text editor displaying the bundled application guide from D: APPS.TXT"></a><br>
+      <a href="docs/screenshots/text-editor-window.png"><img src="docs/screenshots/text-editor-window.png" width="480" alt="Windowed Kilo editor with native menus, line numbers, scrollbars and word wrapping"></a><br>
       <strong>Kilo text editor</strong>
     </td>
     <td width="50%" align="center">

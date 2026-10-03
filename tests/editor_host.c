@@ -127,6 +127,12 @@ static void test_view(void)
         assert(position_at(v, x) == p);
     }
     ed_select(&doc, doc.len, 0); reveal(); refresh(1); assert(top <= max_top());
+    char exact[128]; memset(exact, 'x', cols); exact[cols] = '\n'; exact[cols + 1] = 0;
+    load(exact);
+    for (size_t p = 0; p <= doc.len; ++p) {
+        ed_select(&doc, p, 0); cursor_visual(&v, &x);
+        assert(x >= 0 && x < cols && position_at(v, x) == p);
+    }
     wrap = 0; window.work.w = 640; layout();
     /* Dragging selects and release preserves the selection. */
     load("abcdef\nxyz"); AppEvent ev = {.x = text_x + 8, .y = text_y + 2, .buttons = 1};
@@ -185,6 +191,10 @@ static void test_random_edits(void)
 }
 static void test_files(void)
 {
+    char error[256];
+    assert(!mkdir("FOLDER", 0700));
+    assert(!editor_write_file("FOLDER", "text", 4, error, sizeof(error)));
+    assert(!rmdir("FOLDER"));
     dc_os = &api; char path[128]; default_path(path, sizeof(path)); assert(!strcmp(path, "E:\\NOTES.TXT"));
     disk("E:\\SOURCE.TXT", "one\r\ntwo"); assert(load_document("E:\\SOURCE.TXT")); content("one\r\ntwo");
     assert(save_document(0)); disk_content("E:\\SOURCE.TXT", "one\r\ntwo");

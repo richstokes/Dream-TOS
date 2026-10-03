@@ -28,6 +28,7 @@ static char filename[128], status[256], title[180], last_title[180];
 static char query[64], replacement[64];
 static char *clipboard;
 static size_t clipboard_len;
+static int clipboard_local;
 static int wrap, numbers = 1, syntax, match_case = 1;
 static int rows, cols, gutter, text_x, text_y, top, left, total, widest;
 static int buttons, dragging, done, force_redraw = 1, preferred_col = -1;
@@ -44,6 +45,8 @@ typedef struct {
     int caret;
 } ScreenRow;
 static ScreenRow screen[MAX_ROWS], previous[MAX_ROWS];
+static struct { size_t line, start, end, column; } visible_segments[MAX_ROWS];
+static int caret_row, caret_column;
 static char status_line[160], old_status[160];
 static unsigned redraw_rows;
 static int redraw_status;
@@ -103,7 +106,7 @@ static int prompt(const char *label, char *buffer, size_t cap)
 }
 static int choose_file(const char *label, char *path, size_t cap)
 {
-    char directory[128], name[16];
+    char directory[256], name[16];
     const char *base = strrchr(path, '\\');
     if (base) {
         size_t prefix = (size_t)(base - path + 1);
@@ -125,7 +128,12 @@ static int choose_file(const char *label, char *path, size_t cap)
 static int save_document(int save_as)
 {
     char path[128]; snprintf(path, sizeof(path), "%s", filename);
-    if (!has_drive(path) || !dc_drive_state(path[0])) { default_path(path, sizeof(path)); save_as = 1; }
+    if (!has_drive(path) || !dc_drive_state(path[0])) {
+        const char *base = strrchr(filename, '\\');
+        if (base && base[1]) snprintf(path, sizeof(path), "%c:\\%s", dc_storage_drive(), base + 1);
+        else default_path(path, sizeof(path));
+        save_as = 1;
+    }
     if (!filename[0]) save_as = 1;
     if (save_as) {
         if (!choose_file("Save text file", path, sizeof(path))) return 0;
@@ -134,11 +142,19 @@ static int save_document(int save_as)
         if (f) { fclose(f); if (confirm("[2][Replace the selected file?][Replace|Cancel]", 2) != 1) return 0; }
     }
     if (!editor_write_file(path, doc.text, doc.len, status, sizeof(status))) {
-        /* Long recovery paths must remain reviewable beyond the narrow status bar. */
-        app_alert(status); force_redraw = 1; return 0;
+        /* Wrap recovery paths so the alert fits the 640-pixel screen. */
+        char alert[320] = "[1]["; size_t used = 4, n = strlen(status);
+        for (size_t i = 0; i < n && i < 240; ++i) {
+            if (i && i % 48 == 0) alert[used++] = '|';
+            alert[used++] = status[i];
+        }
+        strcpy(alert + used, "][OK]"); confirm(alert, 1); return 0;
     }
     snprintf(filename, sizeof(filename), "%s", path); set_syntax(); ed_mark_saved(&doc);
-    if (dc_drive_state(path[0]) == DC_DRIVE_VOLATILE) message("Saved on C: (lost at reset)");
+    if (dc_drive_state(path[0]) == DC_DRIVE_VOLATILE) {
+        size_t n = strlen(status);
+        snprintf(status + n, sizeof(status) - n, " (C: lost at reset)");
+    }
     return 1;
 }
 static int may_discard(void)
@@ -164,10 +180,12 @@ static int scrap_path(char *path, size_t cap)
     if (!directory[0]) {
         /* A private directory avoids colliding with unrelated C: files. */
         if (!dc_os || !dc_os->gemdos) return 0;
-        dc_os->gemdos(0x39, "C:\\CLIPBRD");
         strcpy(directory, "C:\\CLIPBRD\\");
         aa[0] = (intptr_t)directory; aes_call(81, 0, 1, 1);
     }
+    /* AES can advertise its default scrap directory before it exists. */
+    if (dc_os && dc_os->gemdos && (!strcmp(directory, "C:\\CLIPBRD\\") || !strcmp(directory, "C:\\CLIPBRD")))
+        dc_os->gemdos(0x39, "C:\\CLIPBRD");
     size_t n = strlen(directory);
     if (n + 11 >= cap) return 0;
     snprintf(path, cap, "%s%sSCRAP.TXT", directory, n && directory[n - 1] == '\\' ? "" : "\\");
@@ -183,6 +201,7 @@ static int copy_selection(int cut)
     free(clipboard); clipboard = s; clipboard_len = b - a;
     char path[144], info[256]; int shared = scrap_path(path, sizeof(path)) &&
         editor_write_file(path, s, clipboard_len, info, sizeof(info));
+    clipboard_local = !shared;
     if (cut && !ed_delete(&doc, 0)) { message("%s", doc.error); return 0; }
     message("%s %lu bytes%s", cut ? "Cut" : "Copied", (unsigned long)clipboard_len, shared ? "" : " (editor clipboard)");
     return 1;
@@ -190,7 +209,7 @@ static int copy_selection(int cut)
 static void paste(void)
 {
     char path[144], info[128], *s = NULL; size_t n = 0;
-    if (scrap_path(path, sizeof(path)) && editor_read_file(path, &s, &n, info, sizeof(info))) {
+    if (!clipboard_local && scrap_path(path, sizeof(path)) && editor_read_file(path, &s, &n, info, sizeof(info))) {
         if (memchr(s, 0, n)) { free(s); message("Clipboard contains binary data"); return; }
         free(clipboard); clipboard = s; clipboard_len = n;
     }
@@ -217,7 +236,8 @@ static size_t segment_end(size_t p, size_t end, size_t column, size_t *next_colu
     size_t start = p, startcol = column, space = p, spacecol = column;
     while (p < end) {
         size_t next = column + (doc.text[p] == '\t' ? doc.tabstop - column % doc.tabstop : 1);
-        if (next - startcol > (size_t)cols && p > start) break;
+        /* Keep one cell for the caret at an exact-fit end of line. */
+        if (next - startcol > (size_t)(cols > 1 ? cols - 1 : 1) && p > start) break;
         column = next; ++p;
         if (doc.text[p - 1] == ' ' || doc.text[p - 1] == '\t') { space = p; spacecol = column; }
     }
@@ -314,7 +334,7 @@ static void set_field(int field, int value)
 static void sliders(void)
 {
     static int values[4] = {-1, -1, -1, -1};
-    int next[4] = {max_left() ? left * 1000 / max_left() : 0,
+    int next[4] = {max_left() ? (uint64_t)left * 1000 / max_left() : 0,
         max_top() ? top * 1000 / max_top() : 0,
         wrap || widest < cols ? 1000 : cols * 1000 / (widest + 1),
         total <= rows ? 1000 : rows * 1000 / total};
@@ -327,7 +347,8 @@ static void build_row(int y)
     memset(r->text, ' ', cols); memset(r->colour, 1, cols);
     int v = top + y;
     if (v >= total) return;
-    size_t line, start, end, column; segment(v, &line, &start, &end, &column);
+    size_t line = visible_segments[y].line, start = visible_segments[y].start,
+        end = visible_segments[y].end, column = visible_segments[y].column;
     if (v == (int)visual[line]) snprintf(r->number, sizeof(r->number), "%5lu", (unsigned long)line + 1);
     size_t first = start, firstcol = column;
     size_t fromcol = wrap ? column : (size_t)left, tocol = fromcol + cols;
@@ -341,7 +362,8 @@ static void build_row(int y)
     unsigned char colours[MAX_COLS + 1] = {0};
     int state = states[line];
     if (syntax && stop > first) ed_highlight_range(&doc, line, &state, colours, first, stop);
-    static const unsigned char palette[] = {1, 9, 4, 5, 3, 2, 7};
+    /* GEM's green/cyan are very light on white; use legible default colours. */
+    static const unsigned char palette[] = {1, 9, 4, 4, 2, 7, 4};
     size_t a, b; ed_selection(&doc, &a, &b);
     for (size_t p = first, col = firstcol; p < stop; ++p) {
         size_t next = col + (doc.text[p] == '\t' ? doc.tabstop - col % doc.tabstop : 1);
@@ -355,8 +377,7 @@ static void build_row(int y)
     /* Make a selected newline visible, including empty selected lines. */
     if (end == ed_end(&doc, line) && end >= a && end < b && widths[line] >= fromcol && widths[line] < tocol)
         r->selected[widths[line] - fromcol] = 1;
-    int cv, cx; cursor_visual(&cv, &cx);
-    if (cv == v && cx >= 0 && cx < cols) r->caret = cx;
+    if (caret_row == v && caret_column >= 0 && caret_column < cols) r->caret = caret_column;
 }
 static void draw(void)
 {
@@ -397,10 +418,23 @@ static void refresh(int all)
     if (cache_top != top || cache_left != left || cache_cols != cols || cache_rows != rows) all = 1;
     cache_top = top; cache_left = left; cache_cols = cols; cache_rows = rows;
     redraw_rows = 0;
+    cursor_visual(&caret_row, &caret_column);
+    size_t line, start, end, column;
+    segment(top, &line, &start, &end, &column);
     for (int y = 0; y < rows; ++y) {
+        visible_segments[y].line = line; visible_segments[y].start = start;
+        visible_segments[y].end = end; visible_segments[y].column = column;
         build_row(y);
         if (all || memcmp(&screen[y], &previous[y], sizeof(screen[y]))) redraw_rows |= 1u << y;
         previous[y] = screen[y];
+        if (wrap && end < ed_end(&doc, line)) {
+            segment_end(start, ed_end(&doc, line), column, &column);
+            start = end; size_t next_column;
+            end = segment_end(start, ed_end(&doc, line), column, &next_column);
+        } else if (line + 1 < doc.nlines) {
+            ++line; start = doc.lines[line]; end = ed_end(&doc, line); column = 0;
+            if (wrap) { size_t next_column; end = segment_end(start, end, column, &next_column); }
+        }
     }
     size_t a, b; ed_selection(&doc, &a, &b);
     snprintf(status_line, sizeof(status_line), "Ln %lu/%lu Col %lu  %s  %s:%d%s%s%s",
@@ -678,8 +712,8 @@ static void window_message(const int16_t *m)
         case 4: left -= cols; break; case 5: left += cols; break; case 6: --left; break; case 7: ++left; break;
         }
         clamp_view();
-    } else if (m[0] == 25) { left = (long)max_left() * m[4] / 1000; clamp_view(); }
-    else if (m[0] == 26) { top = (long)max_top() * m[4] / 1000; clamp_view(); }
+    } else if (m[0] == 25) { left = (int64_t)max_left() * m[4] / 1000; clamp_view(); }
+    else if (m[0] == 26) { top = (int64_t)max_top() * m[4] / 1000; clamp_view(); }
     else {
         int result = app_window_message(&window, m);
         if (result == WINDOW_CLOSE) command(C_QUIT);

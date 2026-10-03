@@ -23,6 +23,10 @@ class NativeWindows(unittest.TestCase):
     def test_geometry_clipped_redraw_events_and_lifecycle(self):
         self.build_run("tests/window_host.c")
 
+    def test_editor_menus_scrollbars_and_incremental_redraw(self):
+        self.build_run("tests/editor_gem_host.c", [
+            "-DAPP_HOST_TEST", "apps/ports/editor_core.c", "apps/ports/editor_file.c"])
+
     def test_clock_accessory_lifecycle_and_midnight(self):
         self.build_run("tests/clock_host.c")
 

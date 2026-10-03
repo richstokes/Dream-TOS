@@ -72,10 +72,18 @@ S stops; Esc or close quits. Keep this app open while transferring.
 Interrupted uploads may leave partial files. C: is erased at reset.
 Native networking requires disc/GDEMU boot, not dcload-ip.
 
-EDITOR.PRG - Kilo plain-text editor
-Ctrl+O open; Ctrl+N new; Ctrl+S save; Ctrl+A save as; Ctrl+F search;
-Ctrl+Q quit. Arrow/Home/End keys move. Limit: 64 KiB / 1023 lines.
-Use DOS 8.3 filenames, for example C:\NOTES.TXT. No rich text or undo.
+EDITOR.PRG - Kilo GEM text editor
+Resizable window, menus, file picker, mouse selection and scrollbars.
+Ctrl+N/O/S new/open/save; Ctrl+Shift+S save as; Ctrl+Q quit.
+Ctrl+Z/Y undo/redo; Ctrl+X/C/V cut/copy/paste; Ctrl+A select all.
+Shift+arrows selects; Ctrl+arrows moves by word; Ctrl+Home/End jumps.
+Ctrl+F find; F3/Shift+F3 next/previous; Ctrl+H replace;
+Ctrl+Shift+H replace all; Ctrl+G go to line. Search menu: Match case.
+Ctrl+W word wrap; Ctrl+L line numbers. View: tab width and auto-indent.
+Tab/Shift+Tab indents/outdents selected lines. Limit: 1 MiB / 32768 lines.
+Saves preserve line endings and use verified temporary/backup files.
+SD is the default save drive when present; C: is lost at reset.
+Use DOS 8.3 names. Plain single-byte text; no Unicode or rich text.
 
 IMAGES.PRG - PNG, JPEG and BMP viewer using stb_image
 N next sample; O open; G greyscale; M mirror; S export BMP; Esc exit.
