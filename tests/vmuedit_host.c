@@ -10,6 +10,7 @@ static unsigned long fake_time = 1000;
 #include "../apps/ports/vmuedit.c"
 #include <assert.h>
 #include <dirent.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <dc/maple.h>
 #include <dc/maple/vmu.h>
@@ -20,8 +21,8 @@ unsigned long test_millis(void) { return fake_time; }
 /* ---- in-memory card ---- */
 static unsigned char image[256][512];
 static maple_device_t device = {{MAPLE_FUNC_MEMCARD | MAPLE_FUNC_LCD}, 0, 0};
-static int block_writes, allow_writes = 1;
-int vmu_block_read(maple_device_t *d, uint16_t block, uint8_t *out) { (void)d; if (block > 255) return -1; memcpy(out, image[block], 512); return 0; }
+static int block_reads, block_writes, allow_writes = 1, card_connected = 1;
+int vmu_block_read(maple_device_t *d, uint16_t block, uint8_t *out) { (void)d; block_reads++; if (block > 255) return -1; memcpy(out, image[block], 512); return 0; }
 int vmu_block_write(maple_device_t *d, uint16_t block, const uint8_t *in)
 {
     (void)d;
@@ -66,19 +67,21 @@ static long fake_info(uint32_t port, uint32_t unit, void *buffer, uint32_t bytes
     if (out->status) out->file_count = out->free_blocks = out->total_blocks = 0;
     return bytes;
 }
-static long fake_file_read(uint32_t p, uint32_t u, const char *n, void *b, uint32_t sz) { assert(!p && !u); return dc_vmuf_read(&backend, &device, n, b, sz); }
+static int file_read_error;
+static long fake_file_read(uint32_t p, uint32_t u, const char *n, void *b, uint32_t sz) { assert(!p && !u); return file_read_error ? file_read_error : dc_vmuf_read(&backend, &device, n, b, sz); }
 static long fake_file_write(uint32_t p, uint32_t u, const char *n, const void *d, uint32_t sz, uint32_t f) { assert(!p && !u); return dc_vmuf_write(&backend, &device, n, d, sz, f); }
 static long fake_file_delete(uint32_t p, uint32_t u, const char *n) { assert(!p && !u); return dc_vmuf_delete(&backend, &device, n); }
+static unsigned mounted_drives = 0x1c, readonly_drives = 0x08, volatile_drives = 0x04;
 static long fake_system_info(void *buffer, uint32_t bytes)
 {
     struct dc_system_info *info = buffer;
     assert(bytes == sizeof(*info));
     memset(info, 0, bytes);
     info->version = DC_SYSTEM_INFO_VERSION; info->bytes = bytes;
-    info->drive_mask = 0x1c;    /* C: D: E: */
-    info->readonly_mask = 0x08; /* D: */
-    info->volatile_mask = 0x04; /* C: */
-    info->device_count = 2;
+    info->drive_mask = mounted_drives;
+    info->readonly_mask = readonly_drives;
+    info->volatile_mask = volatile_drives;
+    info->device_count = card_connected ? 2 : 0;
     info->devices[0] = (struct dc_device_info){0, 0, 0x02000000 | 0x04000000, "Visual Memory"};
     info->devices[1] = (struct dc_device_info){0, 5, 0x01000000, "Not a card"};
     return bytes;
@@ -143,8 +146,24 @@ extern const struct dc_native_api *dc_os;
 /* ---- scripted dialogs ---- */
 static char scripted_path[100], scripted_name[64], last_confirm[300];
 static int confirm_answer, confirm_calls, alert_calls, choose_ok = 1, prompt_ok = 1;
-static int t_confirm(const char *text, const char *yes) { snprintf(last_confirm, sizeof(last_confirm), "%s [%s]", text, yes); confirm_calls++; return confirm_answer; }
-static int t_choose(const char *title, int dir, char *out, size_t cap) { (void)title; (void)dir; if (!choose_ok) return 0; snprintf(out, cap, "%s", scripted_path); return 1; }
+static int lose_sd_on_confirm, protect_sd_on_confirm, choose_calls, last_choose_sd;
+static unsigned last_choose_mask;
+static char last_choose_start[80];
+static int t_confirm(const char *text, const char *yes)
+{
+    snprintf(last_confirm, sizeof(last_confirm), "%s [%s]", text, yes); confirm_calls++;
+    if (confirm_answer && lose_sd_on_confirm) mounted_drives &= ~0xf0u;
+    if (confirm_answer && protect_sd_on_confirm) readonly_drives |= 0xf0u;
+    return confirm_answer;
+}
+static int t_choose(const char *title, int dir, char *out, size_t cap)
+{
+    (void)title; (void)dir;
+    choose_calls++; last_choose_sd = choose_sd_only; last_choose_mask = chooser_drive_mask();
+    snprintf(last_choose_start, sizeof(last_choose_start), "%s", choose_dir);
+    if (!choose_ok) return 0;
+    snprintf(out, cap, "%s", scripted_path); return 1;
+}
 static int t_prompt(const char *label, char *buf, size_t cap) { (void)label; if (!prompt_ok) return 0; if (scripted_name[0]) snprintf(buf, cap, "%s", scripted_name); return 1; }
 static void t_alert(const char *text) { (void)text; alert_calls++; }
 
@@ -180,6 +199,257 @@ static void add_card_file(const char *name, const void *data, size_t n, int prot
                 if (type) entry[0] = type;
             }
     }
+}
+
+static void test_hex(void)
+{
+    static uint8_t raw[MAX_FILE], saved[MAX_FILE];
+    format_card();
+    fill(raw, sizeof(raw), 11);
+    /* All former browser metadata and scrolling live in the Files hub. */
+    for (int i = 0; i < 13; i++) {
+        char name[13]; snprintf(name, sizeof(name), "FILE%02d", i);
+        add_card_file(name, raw, 512, 0, 0);
+    }
+    reload(); view = VIEW_FILES;
+    assert(card.file_count == 13 && card.free_blocks == 187);
+    key(KEY_END); assert(selected == 12 && top == 13 - LIST_ROWS);
+    key(KEY_HOME); assert(selected == 0 && top == 0);
+    key(0x5100); assert(selected == LIST_ROWS && top == 1);
+    key(0x4900); assert(selected == 0 && top == 0);
+    int reads = block_reads, idle_writes = block_writes;
+    fake_time += 2000; step(0, 0, 0, 0);
+    assert(block_reads == reads && block_writes == idle_writes);
+    card_connected = 0; fake_time += 2000; step(0, 0, 0, 0);
+    assert(!card_count && card.status == DC_VMU_ABSENT && block_reads == reads);
+    assert(button_enabled(C_REFRESH) && button_enabled(C_LCD));
+    card_connected = 1; fake_time += 2000; step(0, 0, 0, 0);
+    assert(card_count == 1 && card.status == DC_VMU_NOT_READ && block_reads == reads);
+    click_id(C_REFRESH); assert(card.status == DC_VMU_OK && card.file_count == 13);
+    format_card();
+    add_card_file("RAWSAVE", raw, 1024, 0, 0);
+    reload();
+    view = VIEW_FILES;
+    select_named("RAWSAVE");
+    memcpy(snapshot, image, sizeof(image));
+    int writes = block_writes;
+    key('h');
+    assert(view == VIEW_HEX && hex_bytes == 1024 && !hex_edit && !hex_changes);
+    assert(!button_enabled(C_H_SAVE));
+    key('f'); key('0'); key('s');
+    assert(!memcmp(file_buffer, raw, 1024) && block_writes == writes);
+    /* Boundaries, paging, jump-to and selection in either pane. */
+    key(KEY_LEFT); key(KEY_UP); assert(hex_pos == 0);
+    key(0x5100); assert(hex_pos == 256 && hex_top == 16);
+    key(KEY_END); assert(hex_pos == 1023 && hex_top == 768);
+    key(KEY_RIGHT); key(KEY_DOWN); assert(hex_pos == 1023);
+    key(KEY_HOME); assert(!hex_pos && !hex_top);
+    snprintf(scripted_name, sizeof(scripted_name), "200");
+    click_id(C_H_GOTO); assert(hex_pos == 512);
+    const char *invalid[] = {"400", "-1", "GG", "FFFFF", "100000000", "0x", " 2"};
+    for (unsigned i = 0; i < sizeof(invalid)/sizeof(invalid[0]); i++) {
+        snprintf(scripted_name, sizeof(scripted_name), "%s", invalid[i]);
+        key(0x3d00); assert(hex_pos == 512 && message_colour == RED);
+    }
+    key(KEY_HOME);
+    tap(ASCII_X + 7 * 8 + 2, HEX_Y + 2 * 16 + 2, 1);
+    assert(hex_pos == 39 && hex_ascii);
+    tap(HEX_X + 5 * 24 + 2, HEX_Y + 3 * 16 + 2, 1);
+    assert(hex_pos == 53 && !hex_ascii);
+    tap(HEX_X + 5 * 24 + 20, HEX_Y + 3 * 16 + 2, 1); /* gap */
+    assert(hex_pos == 53);
+    key(KEY_HOME);
+    click_id(C_H_EDIT); assert(hex_edit);
+    key('A'); assert(file_buffer[0] == 0xab && hex_pos == 0 && hex_nibble == 1);
+    key('5'); assert(file_buffer[0] == 0xa5 && hex_pos == 1 && hex_changes == 1);
+    click_id(C_H_UNDO); assert(file_buffer[0] == raw[0] && !hex_changes);
+    key(0x3e00); assert(file_buffer[0] == 0xa5 && hex_changes == 1);
+    key(KEY_RIGHT); key(9); assert(hex_ascii);
+    /* Printable command letters must be data while the ASCII pane is active. */
+    key('S'); key('h'); key('z'); key(' ');
+    assert(!memcmp(file_buffer + 1, "Shz ", 4) && hex_pos == 5);
+    assert(block_writes == writes && !memcmp(snapshot, image, sizeof(image)));
+    confirm_answer = 0; confirm_calls = 0;
+    click_id(C_H_SAVE);
+    assert(confirm_calls == 1 && strstr(last_confirm, "Overwrite ORIGINAL RAWSAVE") && strstr(last_confirm, "checksums are NOT fixed"));
+    assert(hex_changes && block_writes == writes && !memcmp(snapshot, image, sizeof(image)));
+    key(27); assert(view == VIEW_HEX && confirm_calls == 2); /* cancel discard */
+    confirm_answer = 1;
+    file_read_error = DC_VMUF_ABSENT;
+    click_id(C_H_SAVE);
+    assert(hex_changes && block_writes == writes && strstr(message, "removed"));
+    file_read_error = 0;
+    /* A changed source (including a replacement card in the same slot) is refused. */
+    saved[0] = raw[0] ^ 1;
+    memcpy(saved + 1, raw + 1, 1023);
+    assert(fake_file_write(0, 0, "RAWSAVE", saved, 1024, DC_VMUF_OVERWRITE) == 1024);
+    writes = block_writes;
+    click_id(C_H_SAVE);
+    assert(strstr(message, "original file changed") && hex_changes && block_writes == writes);
+    assert(fake_file_write(0, 0, "RAWSAVE", raw, 1024, DC_VMUF_OVERWRITE) == 1024);
+    allow_writes = 0;
+    click_id(C_H_SAVE);
+    assert(hex_changes && message_colour == RED);
+    allow_writes = 1;
+    click_id(C_H_SAVE);
+    assert(!hex_changes && !hex_have_undo && strstr(message, "verified"));
+    assert(fake_file_read(0, 0, "RAWSAVE", saved, MAX_FILE) == 1024);
+    assert(!memcmp(saved, file_buffer, 1024) && !memcmp(saved + 5, raw + 5, 1019));
+    writes = block_writes; confirm_calls = 0;
+    key(0x3f00); assert(!confirm_calls && writes == block_writes);
+    /* Exact dirty tracking: typing a byte then its original clears the marker. */
+    key(KEY_END); key(9); assert(!hex_ascii);
+    key('0'); key('0'); assert(hex_changes == 1 && hex_pos == 1023);
+    char byte[3]; snprintf(byte, sizeof(byte), "%02X", raw[1023]);
+    key(byte[0]); key(byte[1]); assert(!hex_changes);
+    click_id(C_H_BACK); assert(view == VIEW_FILES && !confirm_calls);
+    /* Real GEM confirmation defaults to Cancel, even when Enter is pressed. */
+    real_confirm("Overwrite original?", "Overwrite"); assert(ai[0] == 2);
+    /* Games and odd headers can be inspected but never edited. Protected
+     * files cannot be read through the OS service at all. */
+    add_card_file("GAME", raw, 512, 0, 0xcc);
+    add_card_file("LOCKED", raw, 512, 1, 0);
+    reload(); select_named("GAME"); key('h');
+    assert(view == VIEW_HEX && !hex_writable && !button_enabled(C_H_EDIT));
+    key(0x3c00); key('f'); key(0x3f00);
+    assert(!hex_changes && !hex_edit);
+    key(27); select_named("LOCKED"); key('h'); assert(view == VIEW_FILES);
+    assert(!button_enabled(C_HEX));
+    select_named("RAWSAVE");
+    card.files[selected].header_block = 1;
+    key('h'); assert(view == VIEW_HEX && !hex_writable); key(27);
+    /* Old OS API: metadata remains usable; read-only APIs still allow hex. */
+    api.size = offsetof(struct dc_native_api, vmu_file_write);
+    reload(); select_named("RAWSAVE");
+    assert(read_ok && !write_ok && button_enabled(C_HEX) && button_enabled(C_EXPORT));
+    key('h'); assert(!hex_writable && view == VIEW_HEX); key(27);
+    api.size = offsetof(struct dc_native_api, vmu_file_read);
+    reload(); assert(service_ok && !read_ok && !button_enabled(C_HEX));
+    api.size = sizeof(api);
+    /* Valid filename punctuation cannot inject GEM alert lines or buttons. */
+    format_card(); add_card_file("SAVE]|[", raw, 512, 0, 0); reload();
+    key('h'); key(0x3c00); key('f'); key('f');
+    writes = block_writes; confirm_answer = 0;
+    key(0x3f00);
+    assert(strstr(last_confirm, "SAVE]]||[") && block_writes == writes && hex_changes);
+    confirm_answer = 1; key(27);
+    /* Largest supported file: final byte, both panes, discard and reopen. */
+    format_card(); add_card_file("MAXIMUM", raw, MAX_FILE, 0, 0); reload();
+    key('h'); key(KEY_END); assert(hex_pos == MAX_FILE - 1);
+    click_id(C_H_EDIT); key(9); key('!'); assert(hex_changes == 1);
+    redraw(); confirm_answer = 0; click_id(C_H_BACK); assert(view == VIEW_HEX);
+    confirm_answer = 1; click_id(C_H_BACK); assert(view == VIEW_FILES);
+    key('h'); assert(!hex_changes && !memcmp(file_buffer, raw, MAX_FILE));
+    key(27);
+}
+
+static void test_sd_transfers(void)
+{
+    uint8_t save[1536], out[1537];
+    memset(save, 0, sizeof(save));
+    memcpy(save, "SD round trip", 13);
+    save[64] = 1; /* one icon */
+    put16(save + 72, 800);
+    fill(save + VMS_HEADER, 512 + 800, 43);
+    struct vms_info info = {.total = VMS_HEADER + 512 + 800};
+    vms_seal(save, &info);
+    assert(vms_parse(save, sizeof(save), &info) == VMS_OK);
+    format_card(); add_card_file("SAVE.001", save, sizeof(save), 0, 0);
+    reload(); view = VIEW_FILES; select_named("SAVE.001");
+    /* No SD: visible but disabled actions, including guarded keyboard paths. */
+    int reads = block_reads, writes = block_writes;
+    mounted_drives = 0x0c;
+    need_draw = 0; fake_time += 2000; step(0, 0, 0, 0);
+    assert(need_draw && !sd_read_drives && !sd_write_drives && block_reads == reads);
+    assert(!button_enabled(C_SD_IMPORT) && !button_enabled(C_SD_EXPORT));
+    choose_calls = confirm_calls = 0;
+    key(0x4000); assert(strstr(message, "No mounted SD"));
+    key(0x4100); assert(strstr(message, "No writable SD"));
+    assert(!choose_calls && !confirm_calls && block_writes == writes);
+    /* An SD with read-only E: and writable H:. To SD must start on H:, even
+     * after using the generic chooser on C: or remembering E: for imports. */
+    mounted_drives = 0x9c; readonly_drives = 0x18;
+    reload(); assert(sd_read_drives == 0x90 && sd_write_drives == 0x80);
+    assert(button_enabled(C_SD_IMPORT) && button_enabled(C_SD_EXPORT));
+    strcpy(choose_dir, "C:\\PREVIOUS"); strcpy(sd_choose_dir, "E:\\SAVES");
+    strcpy(scripted_path, "H:\\BACKUPS"); strcpy(scripted_name, "SAVE.001");
+    confirm_answer = 0;
+    click_id(C_SD_EXPORT);
+    assert(last_choose_sd && last_choose_mask == 0x80 && !strcmp(last_choose_start, "H:\\"));
+    assert(!choose_sd_only && !strcmp(choose_dir, "C:\\PREVIOUS"));
+    assert(host_read("H:\\BACKUPS\\SAVE.001", out, sizeof(out)) == (size_t)-1);
+    confirm_answer = 1;
+    click_id(C_SD_EXPORT);
+    assert(host_read("H:\\BACKUPS\\SAVE.001", out, sizeof(out)) == sizeof(save));
+    assert(!memcmp(save, out, sizeof(save)) && strstr(message, "verified") && !strstr(message, "reset"));
+    assert(block_writes == writes); /* exporting never writes the VMU */
+    /* Existing SD backups require a separate replacement answer. */
+    host_write("H:\\BACKUPS\\SAVE.001", "existing backup", 15);
+    confirm_answer = 0; confirm_calls = 0;
+    click_id(C_SD_EXPORT);
+    assert(confirm_calls == 1 && strstr(last_confirm, "already exists"));
+    assert(host_read("H:\\BACKUPS\\SAVE.001", out, sizeof(out)) == 15 && !memcmp(out, "existing backup", 15));
+    confirm_answer = 1; click_id(C_SD_EXPORT);
+    assert(verify_file("H:\\BACKUPS\\SAVE.001", save, sizeof(save)));
+    /* Import the exported bytes, preserving headers, icons, payload, padding. */
+    strcpy(scripted_path, "H:\\BACKUPS\\SAVE.001"); strcpy(scripted_name, "RESTORED");
+    confirm_answer = 0; key(0x4000); assert(find_on_card("RESTORED") < 0 && block_writes == writes);
+    confirm_answer = 1; key(0x4000);
+    assert(fake_file_read(0, 0, "RESTORED", out, sizeof(out)) == sizeof(save) && !memcmp(save, out, sizeof(save)));
+    assert(vms_parse(out, sizeof(save), &info) == VMS_OK && strstr(message, "verified"));
+    writes = block_writes; confirm_answer = 0; confirm_calls = 0;
+    key(0x4000);
+    assert(confirm_calls == 1 && strstr(last_confirm, "Replace RESTORED") && block_writes == writes);
+    /* Read-only SD supports import but never export. Tab only cycles SDs. */
+    mounted_drives = 0x1c; readonly_drives = 0x18; reload();
+    assert(button_enabled(C_SD_IMPORT) && !button_enabled(C_SD_EXPORT));
+    host_write("E:\\COPY.VMS", save, sizeof(save));
+    strcpy(scripted_path, "E:\\COPY.VMS"); strcpy(scripted_name, "READONLY");
+    confirm_answer = 1; click_id(C_SD_IMPORT);
+    assert(last_choose_mask == 0x10 && !strcmp(last_choose_start, "E:\\"));
+    assert(fake_file_read(0, 0, "READONLY", out, sizeof(out)) == sizeof(save) && !memcmp(out, save, sizeof(save)));
+    mounted_drives = 0x9c;
+    choose_sd_only = 1; choose_writing = 0;
+    char dir[80] = "E:\\"; next_drive(dir); assert(!strcmp(dir, "H:\\"));
+    next_drive(dir); assert(!strcmp(dir, "E:\\"));
+    choose_writing = 1; next_drive(dir); assert(!strcmp(dir, "H:\\"));
+    next_drive(dir); assert(!strcmp(dir, "H:\\"));
+    choose_sd_only = choose_writing = 0;
+    /* Cancel and stale/invalid chooser paths never fall back to C:. */
+    reload(); choose_ok = 0; writes = block_writes; confirm_calls = 0;
+    key(0x4000); key(0x4100);
+    assert(!confirm_calls && !choose_sd_only && !strcmp(choose_dir, "C:\\PREVIOUS"));
+    choose_ok = 1; strcpy(scripted_path, "C:\\BACKUP.VMS");
+    key(0x4000); assert(strstr(message, "No mounted SD") && block_writes == writes);
+    strcpy(scripted_path, "C:\\"); key(0x4100);
+    assert(strstr(message, "No writable SD") && !confirm_calls);
+    /* Availability and write protection are checked again after confirmation. */
+    strcpy(scripted_path, "E:\\COPY.VMS"); strcpy(scripted_name, "MISSING");
+    lose_sd_on_confirm = 1; key(0x4000); lose_sd_on_confirm = 0;
+    assert(block_writes == writes && find_on_card("MISSING") < 0 && strstr(message, "No mounted SD"));
+    mounted_drives = 0x9c; readonly_drives = 0x18; reload(); select_named("SAVE.001");
+    strcpy(scripted_path, "H:\\BACKUPS"); strcpy(scripted_name, "SAVE.001");
+    protect_sd_on_confirm = 1; key(0x4100); protect_sd_on_confirm = 0;
+    assert(strstr(message, "No writable SD") && verify_file("H:\\BACKUPS\\SAVE.001", save, sizeof(save)));
+    assert(block_writes == writes);
+    /* Readback verification rejects truncation, corruption and extra bytes. */
+    host_write("E:\\CHECK.VMS", save, sizeof(save) - 1);
+    assert(!verify_file("E:\\CHECK.VMS", save, sizeof(save)));
+    memcpy(out, save, sizeof(save)); out[99] ^= 1;
+    host_write("E:\\CHECK.VMS", out, sizeof(save)); assert(!verify_file("E:\\CHECK.VMS", save, sizeof(save)));
+    memcpy(out, save, sizeof(save)); out[sizeof(save)] = 0;
+    host_write("E:\\CHECK.VMS", out, sizeof(out)); assert(!verify_file("E:\\CHECK.VMS", save, sizeof(save)));
+    /* Export failure is surfaced; locked VMU files stay unavailable. */
+    readonly_drives = 0x08; reload(); strcpy(scripted_path, "H:\\"); strcpy(scripted_name, "LOCK.BIN");
+    assert(!mkdir("H:\\LOCK.BIN", 0700)); key(0x4100); assert(strstr(message, "Could not write"));
+    add_card_file("LOCKED", save, sizeof(save), 1, 0); reload(); select_named("LOCKED");
+    assert(!button_enabled(C_SD_EXPORT)); writes = block_writes; key(0x4100); assert(block_writes == writes);
+    /* Volatile drives and old/failed system snapshots never count as SD. */
+    volatile_drives |= 0xf0; assert(!sd_drive_mask(0) && !sd_drive_mask(1));
+    volatile_drives = 0x04;
+    api.size = offsetof(struct dc_native_api, system_info); assert(!sd_drive_mask(0));
+    api.size = sizeof(api);
+    mounted_drives = 0x1c; readonly_drives = 0x08; reload();
 }
 
 int main(void)
@@ -613,6 +883,8 @@ int main(void)
     apply_icon_palette();
     for (int i = 0; i < 16; i++) assert(icon_slot[i] >= 0 && icon_slot[i] < 16);
     icon_leave();
+    test_hex();
+    test_sd_transfers();
     chdir("/");
     { char cmd[64]; snprintf(cmd, sizeof(cmd), "rm -rf %s", tmpdir); assert(!system(cmd)); }
     puts("VMU editor GUI logic against the file service: PASS");

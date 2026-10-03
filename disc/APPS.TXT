@@ -32,16 +32,22 @@ MONITOR.ACC - System Monitor, Desk > System Monitor
 Uptime, GEM free memory/history, KOS heap, C:/D: space and Maple devices.
 R refreshes; Space pauses/resumes; Up/Down scrolls devices.
 
-VMUTOOL.ACC - VMU Toolbox (READ ONLY), Desk > VMU Toolbox
-Lists connected cards, free blocks, files, timestamps and copy flags.
-Left/Right changes cards; Up/Down selects files; PgUp/PgDn moves 8 files.
-R refreshes. Connect a card then press R. Reads metadata only.
-No format, delete, write, restore, LCD changes or file-content operations.
-Supports standard 128 KiB VMU metadata; other layouts may be unsupported.
-
-VMUEDIT.PRG - VMU Editor (open from EmuDesk; fullscreen)
+VMUEDIT.PRG - VMU Toolbox (D:\UTILS; open from EmuDesk; fullscreen)
+One app for card directories, metadata, files, hex/ASCII, LCD and icons.
+The former VMUTOOL.ACC browser is now part of this program.
 Files: I import a file from C:/D:/SD onto the VMU, E export it as a raw file,
 N rename, D delete (all ask first), R refresh, Left/Right card, Esc quit.
+From SD [F6] / To SD [F7] import/export saves through an SD-only chooser.
+Enabled for mounted E:-H: volumes; export needs a writable volume. Tab switches
+SD volumes. Imports ask before replacing VMU saves; exports ask before replacing
+SD files and verify saved bytes. SD names are 8.3: restore the original VMU name
+when importing. Insert a FAT16 SD card and adapter before boot; no hot-swapping.
+H/Enter opens the selected file in a graphical hex/ASCII viewer. F2 enables
+editing; Tab switches panes; arrows/PgUp/PgDn/Home/End move; F3 jumps to
+a hex offset; F4 undoes/redoes the last byte; F5 saves after an explicit
+Overwrite/Cancel prompt (Cancel is default). Esc returns to Files and asks
+before discarding edits. Raw mode preserves size and does not fix checksums.
+Export a backup first. Changes stay in memory until Save is confirmed.
 L opens the 48x32 LCD editor: mouse left draws / right erases, arrows+Space,
 I invert C clear H/V flip Z undo, T live push to the VMU screen, L/S load or
 save a 1-bit BMP. C opens the icon editor for a VMS save (paint the 32x32

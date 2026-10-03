@@ -37,7 +37,7 @@ class NativeWindows(unittest.TestCase):
     def test_resident_utility_window_lifecycle(self):
         self.build_run("tests/accessory_host.c")
 
-    def test_control_monitor_and_vmu_frontends(self):
-        for define in ("TEST_CONTROL", "TEST_MONITOR", "TEST_VMUTOOL"):
+    def test_control_and_monitor_frontends(self):
+        for define in ("TEST_CONTROL", "TEST_MONITOR"):
             with self.subTest(utility=define):
                 self.build_run("tests/utility_host.c", ["-D"+define])

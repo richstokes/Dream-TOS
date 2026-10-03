@@ -26,8 +26,7 @@ into the Dreamcast programs; they are not imitations of those programs.
 | `CLOCK.ACC` | This project, GPL-2.0-or-later | Resident GEM desk accessory; analogue face, digital time/date, movable/resizable window over the desktop |
 | `CONTROL.ACC` | This project, GPL-2.0-or-later | Session input/display settings and live keyboard, mouse and controller diagnostics |
 | `MONITOR.ACC` | This project, GPL-2.0-or-later | Memory history, free disk space, uptime and Maple device list |
-| `VMUTOOL.ACC` | This project, GPL-2.0-or-later | Read-only card directory, space, file sizes, timestamps and copy flags |
-| `VMUEDIT.PRG` | This project, GPL-2.0-or-later | VMU file manager (import/export/rename/delete with confirmations), 48x32 LCD editor with live push and BMP/raw files, VMS save-icon editor; [details](ACCESSORIES.md#vmu-editor-vmuedit-prg) |
+| `VMUEDIT.PRG` | This project, GPL-2.0-or-later | Unified VMU Toolbox: card browser and metadata, hex/ASCII save viewer/editor with overwrite confirmation, file manager (import/export/rename/delete) with SD backup/restore shortcuts and verified exports, 48x32 LCD editor with live push and BMP/raw files, VMS save-icon editor; [details](ACCESSORIES.md#vmu-toolbox-vmueditprg) |
 | `FTP.PRG` | This project, GPL-2.0-or-later | [Anonymous FTP server](FTP.md): GEM drive/folder picker, SD support, passive uploads/downloads and file management |
 | `SDFORMAT.PRG` | This project, GPL-2.0-or-later | [SD card formatter](SD.md): graphical FAT16 quick format, C:/D: protection, metadata verification and remount or reboot prompt; in `D:\UTILS` |
 | `RUNTIME.PRG` | This project, GPL-2.0-or-later | Native libc, allocator, math and file-access diagnostic |
@@ -51,14 +50,14 @@ The read-only disc groups programs into DOS 8.3 folders:
 | `D:\UTILS` | `FTP`, `VMUEDIT`, `SDFORMAT`, `SYSINFO`, `BENCH`, `HELLO`, `VDITEST`, `RUNTIME`, all `.TTP` tools |
 
 `BENCH.DAT` lives beside the benchmark in `UTILS`. Guides, sample pictures,
-license notices and the five startup `.ACC` files stay at the root. AES scans
+license notices and the four startup `.ACC` files stay at the root. AES scans
 the root for accessories at boot. All three program folders are on the default
 EmuCON search path, so commands such as `editor`, `mines` and `ftp` work by name.
 
-Open APPS, GAMES or UTILS on D: in EmuDesk to find a program. All five desk accessories load
+Open APPS, GAMES or UTILS on D: in EmuDesk to find a program. All four desk accessories load
 automatically at boot; open them from **Desk**. See the
 [Dreamcast accessories guide](ACCESSORIES.md) for the control panel, monitor
-and read-only VMU toolbox. Use **Alt+D** to open the disc;
+and the unified VMU Toolbox program. Use **Alt+D** to open the disc;
 Up/Down scroll the directory. Alt+arrows move the GEM pointer, Alt+Space
 clicks, and Ctrl+O opens a selected program. The applications work with a
 Dreamcast keyboard. The three puzzle frontends also accept Maple mouse

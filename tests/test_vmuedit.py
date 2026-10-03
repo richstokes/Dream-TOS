@@ -1,11 +1,13 @@
-"""VMU Editor (VMUEDIT.PRG) on the host under ASan/UBSan.
+"""Unified VMU Toolbox (VMUEDIT.PRG) on the host under ASan/UBSan.
 
 * core: LCD bitmap operations, BMP import/export, VMS icon codec (CRC checked
   against the KOS routine), name helpers;
 * GUI logic: the real apps/ports/vmuedit.c driven by synthetic mouse/keyboard
   events, talking to the real VMU file-service engine and a KOS-vmufs double
   over an in-memory card (import, export, rename, delete, protection,
-  damaged and failing cards, LCD editing and live push, icon editing).
+  damaged and failing cards, LCD editing and live push, icon editing,
+  hex/ASCII editing, overwrite confirmation and stale-original checks,
+  SD export/import round trips, availability, write protection and readback).
 No real Dreamcast, VMU or display is involved."""
 import os
 from pathlib import Path

@@ -1,8 +1,7 @@
-# Dreamcast desk accessories
+# Dreamcast desk accessories and VMU Toolbox
 
-The CDI loads `CALC.ACC`, `CONTROL.ACC`, `MONITOR.ACC` and `VMUTOOL.ACC` at boot,
-alongside `CLOCK.ACC`. Open them from **Desk → Calculator**, **DC Control**, **System Monitor** or
-**VMU Toolbox**. They are native SH-4 GEM programs, and the desktop remains
+The CDI loads `CALC.ACC`, `CONTROL.ACC`, `MONITOR.ACC` and `CLOCK.ACC` at boot.
+Open them from **Desk → Calculator**, **DC Control**, **System Monitor** or **Clock**. They are native SH-4 GEM programs, and the desktop remains
 usable behind their windows. Do not launch `.ACC` files by double-clicking.
 
 Close a window or press **Esc** to hide it; choose its Desk entry to reopen
@@ -58,7 +57,7 @@ identical data do not rewrite the card. Failed loads leave the current settings
 unchanged. Full, missing,
 unformatted or damaged cards display an error. Foreign, protected or malformed
 VMS files named `EMUTOS.CFG` are not overwritten. Save verifies the data before
-reporting success. VMU Toolbox remains read-only.
+reporting success. Browsing in VMU Toolbox uses read commands only.
 
 Mouse speed does not change the Alt+arrow keyboard pointer or controller
 fallback speed; fractional movement is retained at slow mouse settings.
@@ -88,47 +87,37 @@ are different allocator views and should not be added as independent pools.
 scrolls the device list. Reopening the window refreshes the snapshot.
 C: is still temporary RAM storage and D: is still read-only.
 
-## VMU Toolbox (read only)
+<a id="vmu-toolbox-read-only"></a>
+<a id="vmu-editor-vmuedit-prg"></a>
 
-<img src="screenshots/vmu-toolbox.jpg" width="640" alt="Read-only VMU Toolbox listing synthetic test files, free blocks, copy flags and a selected file timestamp in Flycast">
+## VMU Toolbox (VMUEDIT.PRG)
 
-Lists connected VMUs/memory cards, their free/total user blocks, filenames,
-block counts, Data/Game type, copy-protection flag and modification time.
-Selecting a file also shows its allocated size, first block and header
-block offset. VMU blocks are 512 bytes; allocated size includes any file
-headers and padding. The screenshot uses synthetic test metadata.
+<img src="screenshots/vmu-toolbox-files.png" width="640" alt="Unified VMU Toolbox Files screen with card metadata and file, hex, LCD and icon actions in Flycast">
 
-- **Left/Right:** switch cards (A1 means port A, unit 1).
-- **Up/Down:** select a file; **Page Up/Page Down:** move eight files.
-- **R:** refresh the selected card. Connect a card, then press R to inspect it.
-- Mouse buttons switch cards/refresh; click a row to select it.
+`D:\UTILS\VMUEDIT.PRG` is the unified fullscreen graphical VMU program. Start
+it from EmuDesk. The former `VMUTOOL.ACC` directory browser is merged into
+this app and is no longer bundled or registered in the Desk menu. The program
+keeps the `VMUEDIT.PRG` filename for existing launch paths.
 
-The service issues **VMU block reads only**. It reads root, FAT and directory
-metadata on opening, card selection and explicit refresh. Its timer only
-enumerates connected devices and invalidates stale listings when it observes
-a device change. The Toolbox has no format, delete, restore, write, LCD-update or
-file-content operations, and stays read-only: use the
-[VMU Editor](#vmu-editor-vmuedit-prg) program to change a card. The displayed
-copy flag is metadata, not an action.
+The Files screen is the hub for card browsing, a hex/ASCII save viewer/editor,
+a 48x32 LCD editor and a VMS save-icon editor. It lists connected cards,
+free/total blocks, filenames, block counts, Data/Game type, copy flags and
+modification times. The selected file also shows its allocated bytes, first
+block and exact header block offset. Blocks are 512 bytes, including headers
+and padding. Mouse and controller pointer/A/B operate the graphical controls;
+keyboard shortcuts are shown on each screen.
 
-Supported layouts are standard 128 KiB VMU metadata with one FAT block and
-up to 16 directory blocks. Unformatted, unreadable, damaged or unsupported
-cards show a status message. Bounds, file chains, cycles and cross-links
-are checked before displaying a successful snapshot. Nonstandard expanded
-cards may be unsupported. Save descriptions/icons inside VMS payloads are
-not decoded. Physical hardware validation remains pending.
-
-## VMU Editor (VMUEDIT.PRG)
-
-`D:\UTILS\VMUEDIT.PRG` is a fullscreen program (start it from EmuDesk, not the Desk
-menu). It has three screens: a file manager, a 48x32 LCD editor and a VMS save-icon
-editor. It works on the same cards as the Toolbox and changes them only through
-the OS [VMU file service](NATIVE-ABI.md), which has the safety rules listed
-there. Mouse, keyboard and controller (pointer and A/B as mouse buttons) work
-everywhere; every screen shows its keys.
+Browsing reads metadata only, on opening, card selection and explicit refresh.
+The timer enumerates devices without reading cards and invalidates stale
+listings on observed device changes. No card formatting is offered. Supported
+layouts are standard 128 KiB VMUs with one FAT block and up to 16 directory
+blocks; damaged, unreadable or unsupported layouts show a reason. Writes use
+the validated [VMU file service](NATIVE-ABI.md).
 
 **Files** (card selector, directory, free blocks): `Left/Right` card, `Up/Down`
-file, `R` refresh (cards are never read in the background), then
+file, `Page Up/Page Down` move 10 files, `Home/End` first/last, `R` refresh
+(cards are never read in the background), then
+
 - `I` **import** a file from C:, D: or an SD drive (E:-H:) with a built-in file
   chooser (Enter opens, Backspace goes up, Tab changes drive). The default name
   is the file name without a `.VMS` extension, editable to 1-12 characters. It
@@ -145,14 +134,67 @@ file, `R` refresh (cards are never read in the background), then
   old one (it therefore needs free blocks equal to the file's size, refuses an
   existing target name, and gives the file a new timestamp and position).
 - `D` / `Delete` **delete** after a confirmation that defaults to Cancel.
+- **From SD / F6** imports a save from a mounted SD volume (E:-H:) to the
+  selected VMU. **To SD / F7** exports the selected VMU file to an SD folder.
+  These buttons open an SD-only chooser, remember its folder separately from
+  the general chooser, and use `Tab` to switch SD volumes. Export starts on a
+  writable SD volume; read-only SD volumes are available for import only.
+  The SD line lists mounted volumes and marks read-only ones `(RO)`. Unavailable
+  actions are disabled; the shortcuts never silently fall back to C:.
+- `H` / `Enter` opens the selected file in the hex/ASCII viewer.
 - `L` opens the LCD editor and `C` the icon editor for the selected file.
 
-Import, export, rename, delete and icon saves ask before acting, with the
+SD exports contain the exact allocated VMU bytes, including VMS headers,
+icons, payload and padding. The file is closed, re-opened and compared byte for
+byte before reporting success. Import uses the same verified VMU file service
+and overwrite confirmation as the general Import action. The name on the VMU
+is editable during import; restore its original name if the 8.3 SD filename
+was shortened. General `I`/`E` import/export still accept C:, D: (import only)
+and SD drives, and exports through either route are verified.
+
+Insert a FAT16 card and serial-port adapter **before booting**; SD hot-plugging
+is unsupported. See [SD preparation and limits](SD.md). Availability is checked
+again after choosing a path and before transferring. A missing/unmounted or
+write-protected destination reports an error. Readback/write errors never
+report a successful backup. Physical SD transfers remain unverified.
+
+Import, export, rename, delete, hex and icon saves ask before acting, with the
 destructive answer never the default. Files that are copy-protected, games
 (type 0xcc) or have an unusual header offset are listed but never overwritten,
 renamed or deleted (use the Dreamcast BIOS file manager for those). Damaged,
 unformatted or unsupported cards are shown with a reason and no write is
 attempted.
+
+<img src="screenshots/vmu-toolbox-hex.png" width="640" alt="VMU Toolbox hex and ASCII panes with edited bytes highlighted in red">
+
+**Hex/ASCII viewer/editor:** shows 16 bytes per row with hexadecimal offsets
+and a synchronized ASCII pane; nonprintable bytes appear as dots. It opens in
+**View** mode. Click a byte in either pane or use arrows, Page Up/Page Down,
+Home/End and the page buttons to navigate. `Tab` switches the active pane.
+
+- **Edit / F2** toggles editing. Type two hex digits per byte in the hex pane,
+  or printable characters in the ASCII pane. The cursor advances after a byte;
+  edits overwrite bytes in place and cannot grow or shrink the file.
+- **Go to / F3** jumps to a hexadecimal offset (optional `0x` prefix).
+- **Undo / F4** toggles undo/redo of the last byte edit, including both nibbles.
+- Changed bytes are red; the selection appears in both panes. The information
+  line shows the offset, byte value and original value; the header counts edits.
+- **Save / F5** names the original file and target card, explains that the entire
+  file will be overwritten, and offers **Overwrite / Cancel**, defaulting to
+  **Cancel**. Every save requires this confirmation. Only then does it re-read
+  the original and compare it byte for byte; a missing or changed original
+  prevents the write. The OS verifies the write by reading it back. Failed or
+  cancelled saves retain the edits, and **Files / Esc** asks before discarding.
+
+<img src="screenshots/vmu-toolbox-confirm.png" width="640" alt="Overwrite confirmation names the original save, warns about raw checksums and defaults to Cancel">
+
+Raw mode exposes the complete allocated file, including headers and padding.
+**It does not repair VMS CRCs or game-specific checksums.** Only the bytes you
+edit change. Export a backup before editing a save; use the icon editor for
+icon changes with automatic VMS CRC repair. Games and files with unusual
+header offsets can be viewed but not edited; copy-protected files cannot be
+opened. On older OS builds the browser remains available; content viewing
+requires the read API and editing requires the write API.
 
 **LCD editor** (48x32 monochrome): the 1:1 and 2x previews match what the VMU
 shows. Left button draws, right button erases (drag draws a gap-free line);
@@ -188,12 +230,13 @@ move to different blocks and gets a new timestamp. The OS keeps the old contents
 as a rollback copy and restores them if the write fails on a still-consistent
 card; a power cut or card removal in the middle of a write can still leave a card
 that needs checking in the console's own file manager. Keep the card connected
-while the message "keep the card connected" is shown. This was verified only
-on the host (see below); it has not been run on real VMUs or in Flycast.
+while the message "keep the card connected" is shown. Host tests exercise write
+failures and rollback; a confirmed raw overwrite has also passed in Flycast
+with isolated synthetic cards. Physical VMU writes remain unverified.
 
 To try the editor in Flycast without touching real saves, make an isolated card
-directory (the generator refuses to overwrite) and launch with it; unlike the
-Toolbox test, A1 here is expected to change:
+directory (the generator refuses to overwrite) and launch with it; A1 is
+expected to change when an edit is explicitly saved:
 
 ```sh
 python3 tools/vmu_fixture.py --editor build/vmu-edit-test
@@ -203,7 +246,16 @@ FLYCAST_VMU_DIR="$PWD/build/vmu-edit-test" FLYCAST_HOST_MOUSE_PORT=-1 \
 
 A1 then holds two VMS saves with icons (`ICONTEST`, three-frame `ANIMATED.001`), a
 raw file, a copy-protected file and a game, for import/export/rename/delete and
-icon editing; A2 is empty. This Flycast run has not been done yet.
+hex/ASCII and icon editing; A2 is empty.
+
+On 2026-10-03 the unified Toolbox passed an isolated Flycast check: Files,
+empty A2, LCD and icon views opened; hex and ASCII entry, undo/redo and
+navigation worked. Pressing Enter in the overwrite dialog cancelled and both
+card images retained their hashes. Explicitly choosing Overwrite changed only
+the first 11 bytes of `RAWDATA.BIN` to `VMU TOOLBOX`. Reopening the save showed
+the persisted bytes; an independent card-image check confirmed the remaining
+2037 bytes, all four other files and A2 were unchanged, and the card remained
+consistent. This run did not exercise icon writes or physical LCD output.
 
 Host tests (`tests/test_vmu_write.py`, `tests/test_vmuedit.py`) cover the file
 service against KOS's own unmodified `vmufs.c` and a step-for-step double: creation,
@@ -212,7 +264,14 @@ directory-full limits, deletion, name handling, cross-links/cycles/short and
 long chains/bad layouts refused with zero writes, copy-protected/game/odd
 files untouched, unreadable metadata, injected write failures and silent bit
 flips (with rollback or an honest verification failure), and the editor's
-import/export/rename/delete, LCD and icon behaviour through synthesized input.
+import/export/rename/delete, LCD, icon and hex/ASCII behaviour through synthesized
+input. Hex tests cover navigation, both editing panes, undo/redo, changed-byte
+tracking, cancelled confirmation/discard, changed originals, removal/read errors,
+write failure/retry, protection, older APIs and the 100 KiB file boundary.
+SD transfer tests cover exact VMS export/import round trips, overwrite cancellation
+on both destinations, absent/read-only/volatile volumes, SD-only drive selection,
+separate folder memory, loss of access after confirmation, write failures, and
+truncated/corrupt/overlong readback.
 `tools/vmu_fixture.py` provides the writable card model (`VmuCard`) and a
 consistency checker used as the independent oracle.
 
@@ -230,7 +289,7 @@ FLYCAST_VMU_DIR="$PWD/build/vmu-test" FLYCAST_HOST_MOUSE_PORT=-1 \
 ```
 
 The launch override is transient. A1 contains 12 entries using 24 blocks
-(176 of 200 free); A2 is empty. After a toolbox-only test, exit Flycast and verify both images:
+(176 of 200 free); A2 is empty. After a browsing-only test, exit Flycast and verify both images:
 
 ```sh
 python3 - <<'PY'
@@ -243,7 +302,8 @@ print('VMU images unchanged')
 PY
 ```
 
-Flycast validation covered settings/defaults/desktop colour, monitor
+Earlier Flycast validation (before the VMU apps were merged) covered
+settings/defaults/desktop colour, monitor
 pause/resume and device scrolling, populated and empty cards, file scrolling
 and timestamps, three accessory windows together, and reopening all three
 after a calculator launch/exit. Both synthetic VMU images and all 267
@@ -253,7 +313,8 @@ Host ASan/UBSan tests exercise settings validation, fractional mouse scaling,
 bounded metadata reads, malformed chains/cycles/cross-links, failed reads,
 read-only buffer integrity, frontends, hidden timers, cancelled/obscured
 clicks, window lifecycle and compatibility with older API tables. FAT-image
-checks verify all five relocated `.ACC` files are included on D:.
+checks verify the four relocated `.ACC` files, the single `VMUEDIT.PRG`, and
+the absence of the retired `VMUTOOL.ACC` on D:.
 
 For settings persistence, create a fresh fixture directory and launch with
 that `FLYCAST_VMU_DIR`. In DC Control, change all four settings, select **A2**
@@ -272,4 +333,4 @@ Sanitized host tests cover invalid settings, missing/full/damaged cards,
 foreign files, fragmented two-block saves, legacy migration with insufficient
 space, failed writes/readback, unchanged-save suppression, card
 selection, no periodic file I/O and compatibility with older API tables.
-Physical VMU write testing remains pending, for the settings save and for the VMU Editor.
+Physical VMU write testing remains pending, for the settings save and for VMU Toolbox.

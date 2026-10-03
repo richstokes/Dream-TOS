@@ -52,6 +52,24 @@ it sees one.
 - Long file names are not created or shown; TOS uses 8.3 names. Files that
   Windows saved with long names remain readable through their short names.
 
+## VMU save backups
+
+Open **D:\UTILS\VMUEDIT.PRG** (VMU Toolbox), choose a VMU and a save, then
+click **To SD / F7**. Choose the SD folder and filename; an existing backup
+requires replacement confirmation. Export preserves every allocated byte and
+verifies the saved file by reading it back.
+
+Use **From SD / F6** to choose a backup and import it to the selected VMU.
+Confirm the name on the VMU; use the original name if the SD copy has a shortened
+8.3 filename. Replacing an existing VMU save asks explicitly and defaults to
+Cancel. Imports retain the normal VMU protection and size checks.
+
+The SD chooser starts on a mounted E:-H: volume and `Tab` switches among SD
+volumes only. Import can read a read-only SD volume; export requires a writable
+one. Unavailable actions are disabled, and neither shortcut falls back to the
+volatile C: RAM disk. General Import/Export remains available for other drives.
+Insert the adapter and a supported FAT16 card before booting; do not hot-swap.
+
 ## Behaviour and limits
 
 - Applications: the Kilo editor and the image viewer save to any writable drive

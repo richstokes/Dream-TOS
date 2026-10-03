@@ -246,11 +246,23 @@ Pexec or crash isolation are implemented. BIOS/XBIOS/GEMDOS expose the subset
 needed by EmuDesk and the sample application; unsupported calls must not be
 assumed to work. EmuCON is enabled; see [command-line support and limits](COMMAND-LINE.md).
 
-The VMU file service and VMUEDIT.PRG have only host coverage
-(`tests/test_vmu_write.py`, `tests/test_vmuedit.py`: in-memory cards, KOS's
-`vmufs.c` compiled on the host, injected faults). They have not run on a real VMU or
-in Flycast, and real flash timing, card removal mid-write and `vmu_draw_lcd_rotated`
-orientation on a physical LCD are unverified; try a spare card first.
+VMU Toolbox (`VMUEDIT.PRG`) unifies the metadata browser and file, hex/ASCII,
+LCD and icon editors. Host ASan/UBSan tests (`tests/test_vmu_write.py`,
+`tests/test_vmuedit.py`) cover in-memory cards, KOS's `vmufs.c`, injected faults,
+confirmation cancellation, changed originals, both editing panes and boundaries.
+SD transfer tests exercise synthetic E:/H: files, exact VMS round trips, SD-only
+chooser masks, absent/read-only/volatile drives, cancelled replacements, loss of
+access after confirmation, failed writes and mismatched readback. Serial SD
+adapter transfers remain unverified on hardware; Flycast has no such adapter.
+A no-adapter Flycast check confirmed disabled SD controls and guarded F6/F7
+shortcuts; both isolated VMU image hashes stayed unchanged.
+On 2026-10-03, an isolated Flycast run checked all four views, empty-card state,
+hex/ASCII entry and undo/redo, Cancel as the default overwrite answer, and a
+confirmed overwrite/reopen. Independent inspection found exactly the intended
+11 changed bytes in `RAWDATA.BIN`; the other files and A2 were unchanged, and
+filesystem checks passed. See [screenshots and controls](ACCESSORIES.md#vmu-toolbox-vmueditprg).
+Real VMU flash timing, removal mid-write and physical LCD orientation remain
+unverified; icon writes still have host coverage only.
 
 Native desk accessories are supported. Control Panel settings can be saved to
 a VMU and restored at boot; this does not persist C: files. Test VMU writes

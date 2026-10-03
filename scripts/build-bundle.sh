@@ -30,6 +30,10 @@ if [[ "${1:-}" == --ssh-only ]]; then
  build_ssh
  exit 0
 fi
+if [[ "${1:-}" == --vmu-only ]]; then
+ appbuild VMUEDIT apps/ports/vmuedit.c apps/ports/vmuedit_core.c
+ exit 0
+fi
 puzzle_common=(apps/vendor/puzzles/{midend,drawing,misc,malloc,random,tree234,dsf,grid,penrose,penrose-legacy,hat,spectre,sort,tdq,findloop}.c)
 for game in fifteen mines net; do
  name=$(printf '%s' "$game" | tr '[:lower:]' '[:upper:]')
@@ -53,7 +57,7 @@ mv build/apps/CALC.PRG build/apps/CALC.ACC
 appbuild CLOCK apps/ports/clock.c
 mv build/apps/CLOCK.PRG build/apps/CLOCK.ACC
 
-for accessory in CONTROL MONITOR VMUTOOL; do
+for accessory in CONTROL MONITOR; do
  source_name=$(printf '%s' "$accessory" | tr '[:upper:]' '[:lower:]')
  appbuild "$accessory" "apps/ports/$source_name.c"
  mv "build/apps/$accessory.PRG" "build/apps/$accessory.ACC"

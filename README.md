@@ -119,12 +119,16 @@ Choose **Desk → Calculator** for the resident scientific calculator. Its windo
 shares the desktop with other windows; closing it or pressing Esc hides it and
 retains the expression and answer. See the [accessory guide](docs/ACCESSORIES.md#calculator).
 
-Three more native desk accessories are available from **Desk**:
+Two more native desk accessories are available from **Desk**:
 **DC Control** adjusts mouse speed, keyboard repeat and desktop colour, with
 VMU save/load and automatic restoration at boot;
-**System Monitor** shows memory, disk space and connected devices;
-**VMU Toolbox** browses card directories and metadata using read commands only;
-**VMUEDIT.PRG** is the VMU editor (file import/export/rename/delete, LCD and icon editors).
+**System Monitor** shows memory, disk space and connected devices.
+
+**VMU Toolbox** (`D:\UTILS\VMUEDIT.PRG`) combines card directories and metadata,
+file import/export/rename/delete, a graphical hex/ASCII save viewer/editor,
+and LCD and icon editors. **From SD / To SD** transfers saves to mounted SD
+volumes, with overwrite confirmations and verified exports. Browsing uses read commands only; saving raw edits
+requires confirmation before overwriting the original.
 See [screenshots, controls and VMU testing](docs/ACCESSORIES.md).
 
 ## Build and run

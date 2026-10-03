@@ -1,4 +1,4 @@
-/* VMU Editor: VMU file manager, 48x32 LCD editor and VMS save-icon editor.
+/* VMU Toolbox: card browser, hex/ASCII, LCD and VMS save-icon editors.
  * Native GEM application. GPL-2.0-or-later.
  *
  * Every card write goes through the OS vmu_file_* service, which validates the
@@ -18,15 +18,17 @@
 #include <string.h>
 
 enum { WHITE = 0, BLACK = 1, RED = 2, GREEN = 3, BLUE = 4, GREY = 8, DARK = 9 };
-enum { VIEW_FILES, VIEW_LCD, VIEW_ICON };
+enum { VIEW_FILES, VIEW_LCD, VIEW_ICON, VIEW_HEX };
 enum {
     C_NONE = -1, C_PREV, C_NEXT, C_REFRESH, C_IMPORT, C_EXPORT, C_RENAME, C_DELETE, C_LCD, C_ICON, C_QUIT,
     C_L_INVERT, C_L_CLEAR, C_L_FLIPH, C_L_FLIPV, C_L_UNDO, C_L_LIVE, C_L_LOAD, C_L_SAVE, C_L_SEND, C_L_BACK,
     C_L_LEFT, C_L_RIGHT, C_L_UP, C_L_DOWN,
     C_I_PREVF, C_I_NEXTF, C_I_FLIPH, C_I_FLIPV, C_I_FILL, C_I_UNDO, C_I_SAVE, C_I_BACK,
+    C_HEX, C_H_EDIT, C_H_GOTO, C_H_UNDO, C_H_SAVE, C_H_BACK, C_H_PREV, C_H_NEXT,
+    C_SD_IMPORT, C_SD_EXPORT,
     C_ROW = 100, C_PAL = 200
 };
-#define LIST_ROWS 12
+#define LIST_ROWS 10
 #define MAX_FILE DC_VMUF_MAX_BYTES
 
 /* ---- state --------------------------------------------------------------------- */
@@ -36,10 +38,25 @@ static int hot_count, view, need_draw = 1, old_buttons, press_hit = C_NONE, quit
 static char message[128];
 static int message_colour = BLACK;
 static struct dc_device_info cards[DC_SYSTEM_INFO_DEVICES];
-static int card_count, card_pos, service_ok, write_ok, lcd_ok;
+static int card_count, card_pos, service_ok, read_ok, write_ok, lcd_ok;
+static unsigned sd_read_drives, sd_write_drives;
 static struct dc_vmu_info card;
 static int selected, top;
 static uint8_t file_buffer[MAX_FILE];
+/* Hex editing keeps the exact original for change tracking and a pre-write
+ * comparison. No implicit checksum or header changes are made in raw mode. */
+static uint8_t hex_original[MAX_FILE];
+static char hex_name[13];
+static uint32_t hex_bytes, hex_pos, hex_top, hex_changes, hex_port, hex_unit;
+static int hex_writable, hex_edit, hex_ascii, hex_nibble, hex_have_undo;
+static uint32_t hex_undo_pos;
+static uint8_t hex_undo_value;
+#define HEX_COLS 16
+#define HEX_ROWS 16
+#define HEX_PAGE (HEX_COLS * HEX_ROWS)
+#define HEX_X 88
+#define ASCII_X 492
+#define HEX_Y 96
 /* LCD editor */
 static uint8_t lcd[LCD_BYTES], lcd_undo[LCD_BYTES];
 static int lcd_have_undo, lcd_dirty, lcd_live = 1, lcd_pending, pen, lcd_cx, lcd_cy, lcd_last_x = -1, lcd_last_y = -1,
@@ -102,16 +119,33 @@ static const char *error_text(long code)
 
 /* ---- cards --------------------------------------------------------------------- */
 static struct dc_system_info sysinfo;
+/* Serial SD partitions are mounted as E:-H:. Never treat C: as an SD fallback. */
+static unsigned sd_mask(const struct dc_system_info *info, int writing)
+{
+    if (info->version != DC_SYSTEM_INFO_VERSION) return 0;
+    unsigned mask = info->drive_mask & ~info->volatile_mask & 0xf0u;
+    return writing ? mask & ~info->readonly_mask : mask;
+}
+static unsigned sd_drive_mask(int writing)
+{
+    static struct dc_system_info info;
+    if (!APP_HAS(system_info) || dc_os->system_info(&info, sizeof(info)) != sizeof(info)) return 0;
+    return sd_mask(&info, writing);
+}
 static void scan_cards(void)
 {
     unsigned port = card_count ? cards[card_pos].port : 99, unit = card_count ? cards[card_pos].unit : 99;
     card_count = 0;
     card_pos = 0;
+    sd_read_drives = sd_write_drives = 0;
     service_ok = APP_HAS(vmu_info) && APP_HAS(system_info) && dc_os->system_info(&sysinfo, sizeof(sysinfo)) == sizeof(sysinfo);
-    write_ok = service_ok && APP_HAS(vmu_file_read) && APP_HAS(vmu_file_write) && APP_HAS(vmu_file_delete);
+    read_ok = service_ok && APP_HAS(vmu_file_read);
+    write_ok = read_ok && APP_HAS(vmu_file_write) && APP_HAS(vmu_file_delete);
     lcd_ok = APP_HAS(vmu_screen);
     if (!service_ok)
         return;
+    sd_read_drives = sd_mask(&sysinfo, 0);
+    sd_write_drives = sd_mask(&sysinfo, 1);
     for (unsigned i = 0; i < sysinfo.device_count && i < DC_SYSTEM_INFO_DEVICES; i++)
         if (sysinfo.devices[i].functions & 0x02000000) {
             cards[card_count] = sysinfo.devices[i];
@@ -297,20 +331,19 @@ static void draw_files(void)
     app_text(12, 47, card_label(line, sizeof(line)), BLACK);
     button(360, 30, 40, "<", C_PREV, card_count > 1);
     button(404, 30, 40, ">", C_NEXT, card_count > 1);
-    button(456, 30, 172, "Refresh [R]", C_REFRESH, card_count > 0);
+    button(456, 30, 172, "Refresh [R]", C_REFRESH, service_ok);
     if (!service_ok) {
         app_text(12, 100, "The VMU service is not available in this OS build.", RED);
         return;
     }
-    if (!write_ok)
-        app_text(12, 68, "This OS build has no VMU write service: the editor is read-only.", RED);
     if (!card_count) {
         app_text(12, 100, "No VMU or memory card is connected.", RED);
     } else if (card.status != DC_VMU_OK) {
         app_text(12, 100, card_status_text(card.status), RED);
     } else {
-        snprintf(line, sizeof(line), "%lu of %lu blocks free, %lu files (512 bytes per block; 200 blocks = 100 KiB)",
-                 (unsigned long)card.free_blocks, (unsigned long)card.total_blocks, (unsigned long)card.file_count);
+        snprintf(line, sizeof(line), "%lu / %lu blocks free   %lu files   512 B/block%s",
+                 (unsigned long)card.free_blocks, (unsigned long)card.total_blocks, (unsigned long)card.file_count,
+                 write_ok ? "" : "   READ ONLY OS");
         app_text(12, 68, line, BLACK);
         app_box(12, 76, 616, 18, BLACK);
         app_text(16, 90, "NAME           BLOCKS  KIND   COPY       MODIFIED", WHITE);
@@ -328,24 +361,36 @@ static void draw_files(void)
             app_text(16, 116, "This card has no files.", BLACK);
         const struct dc_vmu_file *f = selected_file();
         if (f) {
-            snprintf(line, sizeof(line), "%s: %lu bytes in %lu blocks, first block %lu%s", f->name,
-                     (unsigned long)(f->blocks * 512), (unsigned long)f->blocks, (unsigned long)f->first_block,
-                     f->header_block ? ", has header offset" : "");
-            app_text(12, 350, line, DARK);
+            snprintf(line, sizeof(line), "%s: %lu bytes   first block %lu   header +%lu blocks", f->name,
+                     (unsigned long)(f->blocks * 512), (unsigned long)f->first_block, (unsigned long)f->header_block);
+            app_text(12, 312, line, DARK);
         }
     }
     draw_message(366);
     const struct dc_vmu_file *f = selected_file();
     int can_write = write_ok && card_ready();
     int plain = f && f->type == 0x33 && !f->protected_file && !f->header_block;
+    if (sd_read_drives) {
+        snprintf(line, sizeof(line), "SD:");
+        for (int d = 4; d < 8; d++)
+            if (sd_read_drives & (1u << d)) {
+                size_t n = strlen(line);
+                snprintf(line + n, sizeof(line) - n, " %c:%s", 'A' + d,
+                         sd_write_drives & (1u << d) ? "" : "(RO)");
+            }
+    } else snprintf(line, sizeof(line), "SD: no mounted card");
+    app_text(12, 347, line, sd_read_drives ? BLACK : DARK);
+    button(328, 330, 150, "From SD [F6]", C_SD_IMPORT, sd_read_drives && can_write);
+    button(486, 330, 142, "To SD [F7]", C_SD_EXPORT, sd_write_drives && read_ok && f && !f->protected_file);
     button(12, 392, 150, "Import [I]", C_IMPORT, can_write);
-    button(170, 392, 150, "Export [E]", C_EXPORT, write_ok && f && !f->protected_file);
+    button(170, 392, 150, "Export [E]", C_EXPORT, read_ok && f && !f->protected_file);
     button(328, 392, 150, "Rename [N]", C_RENAME, can_write && plain);
     button(486, 392, 142, "Delete [D]", C_DELETE, can_write && plain);
-    button(12, 422, 150, "LCD [L]", C_LCD, card_count > 0);
+    button(12, 422, 150, "LCD [L]", C_LCD, 1);
     button(170, 422, 150, "Icon [C]", C_ICON, write_ok && plain);
+    button(328, 422, 150, "Hex/ASCII [H]", C_HEX, read_ok && f && !f->protected_file);
     button(486, 422, 142, "Quit [Esc]", C_QUIT, 1);
-    status_bar("I import E export N rename D delete L LCD C icon R refresh Esc quit");
+    status_bar("Files: arrows select | H hex/ASCII | L LCD | C icon | R refresh | Esc quit");
 }
 static void ensure_visible(void)
 {
@@ -437,6 +482,8 @@ static struct entry entries[MAX_ENTRIES];
 static int entry_count;
 static char dta_buffer[44] __attribute__((aligned(4)));
 static char choose_dir[80] = "";
+static char sd_choose_dir[80] = "";
+static int choose_sd_only, choose_writing;
 static int entry_order(const void *a, const void *b)
 {
     const struct entry *x = a, *y = b;
@@ -483,13 +530,28 @@ static void list_directory(const char *dir)
 static unsigned drive_mask(void)
 {
     static struct dc_system_info info;
-    if (APP_HAS(system_info) && dc_os->system_info(&info, sizeof(info)) == sizeof(info) && info.drive_mask)
+    if (APP_HAS(system_info) && dc_os->system_info(&info, sizeof(info)) == sizeof(info) && info.version == DC_SYSTEM_INFO_VERSION)
         return info.drive_mask;
     return 0x0c; /* C: and D: */
 }
+static unsigned chooser_drive_mask(void)
+{
+    return choose_sd_only ? sd_drive_mask(choose_writing) : drive_mask();
+}
+static int path_on_drives(const char *path, unsigned mask)
+{
+    if (!path[0] || path[1] != ':') return 0;
+    unsigned d = (unsigned)(toupper((unsigned char)path[0]) - 'A');
+    return d < 26 && (mask & (1u << d));
+}
+static void first_drive(char *dir, unsigned mask)
+{
+    for (int d = 0; d < 26; d++)
+        if (mask & (1u << d)) { snprintf(dir, 80, "%c:\\", 'A' + d); return; }
+}
 static void next_drive(char *dir)
 {
-    unsigned mask = drive_mask();
+    unsigned mask = chooser_drive_mask();
     int d = toupper((unsigned char)dir[0]) - 'A';
     for (int i = 1; i <= 26; i++) {
         int n = (d + i) % 26;
@@ -534,7 +596,9 @@ static void draw_chooser(const char *title, int pick_dir, int selected_entry, in
     button(244, 390, 110, "Drive [Tab]", C_ROW - 3, 1);
     button(360, 390, 150, "Use folder [S]", C_ROW - 4, pick_dir);
     button(516, 390, 112, "Cancel [Esc]", C_ROW - 5, 1);
-    app_status(pick_dir ? "Choose a folder: Enter opens, S uses the current folder" : "Choose a file: Enter opens or selects");
+    app_status(choose_sd_only ? (pick_dir ? "SD only: Tab changes volume, Enter opens, S uses folder, Esc cancels"
+                                                       : "SD only: Tab changes volume, Enter opens/selects, Esc cancels")
+                             : (pick_dir ? "Choose a folder: Enter opens, S uses the current folder" : "Choose a file: Enter opens or selects"));
 }
 static int real_choose(const char *title, int pick_dir, char *out, size_t cap)
 {
@@ -628,6 +692,37 @@ static int real_choose(const char *title, int pick_dir, char *out, size_t cap)
     return result;
 }
 
+static int sd_path_ok(const char *path, int writing)
+{
+    if (path_on_drives(path, sd_drive_mask(writing))) return 1;
+    say(RED, writing ? "No writable SD volume at that path. No file was exported."
+                    : "No mounted SD volume at that path. Nothing was imported.");
+    return 0;
+}
+static int choose_transfer(int writing, int sd_only, char *out, size_t cap)
+{
+    const char *title = writing ? "Export: choose the destination folder" : "Import: choose the file to copy onto the VMU";
+    if (!sd_only) return ui_choose(title, writing, out, cap);
+    unsigned mask = sd_drive_mask(writing);
+    if (!mask) {
+        say(RED, writing ? "No writable SD volume. Insert a FAT16 SD card before booting."
+                        : "No mounted SD volume. Insert a FAT16 SD card before booting.");
+        return 0;
+    }
+    char previous[sizeof(choose_dir)];
+    memcpy(previous, choose_dir, sizeof(previous));
+    memcpy(choose_dir, sd_choose_dir, sizeof(choose_dir));
+    if (!path_on_drives(choose_dir, mask)) first_drive(choose_dir, mask);
+    choose_sd_only = 1;
+    choose_writing = writing;
+    int ok = ui_choose(writing ? "To SD: choose a folder for the selected VMU save"
+                               : "From SD: choose a save to import onto the VMU", writing, out, cap);
+    memcpy(sd_choose_dir, choose_dir, sizeof(sd_choose_dir));
+    memcpy(choose_dir, previous, sizeof(choose_dir));
+    choose_sd_only = choose_writing = 0;
+    return ok && sd_path_ok(out, writing);
+}
+
 /* ---- host file helpers --------------------------------------------------------- */
 static long file_size(const char *path)
 {
@@ -663,6 +758,20 @@ static int write_file(const char *path, const uint8_t *data, size_t n)
     int ok = fwrite(data, 1, n, f) == n;
     if (fclose(f))
         ok = 0;
+    return ok;
+}
+static int verify_file(const char *path, const uint8_t *data, size_t n)
+{
+    uint8_t block[512];
+    FILE *f = fopen(path, "rb");
+    if (!f) return 0;
+    int ok = 1;
+    for (size_t at = 0; at < n; at += sizeof(block)) {
+        size_t count = n - at < sizeof(block) ? n - at : sizeof(block);
+        if (fread(block, 1, count, f) != count || memcmp(block, data + at, count)) { ok = 0; break; }
+    }
+    if (fgetc(f) != EOF || ferror(f)) ok = 0;
+    if (fclose(f)) ok = 0;
     return ok;
 }
 /* Refuses read-only and unmounted drives before any attempt. */
@@ -717,13 +826,13 @@ static void busy_note(const char *what)
     snprintf(s, sizeof(s), "%s - keep the card connected...", what);
     app_status(s);
 }
-static void do_import(void)
+static void do_import(int sd_only)
 {
     const struct dc_device_info *dev = current_card();
     char path[100], name[13], text[260], suggestion[13];
     if (!write_ok || !card_ready() || !dev)
         return;
-    if (!ui_choose("Import: choose the file to copy onto the VMU", 0, path, sizeof(path)))
+    if (!choose_transfer(0, sd_only, path, sizeof(path)))
         return;
     long size = file_size(path);
     if (size < 0) { say(RED, "Cannot open %s.", path); return; }
@@ -758,6 +867,8 @@ static void do_import(void)
     }
     if (!ui_confirm(text, existing >= 0 ? "Replace" : "Copy"))
         return;
+    if (sd_only && !sd_path_ok(path, 0)) return;
+    if (sd_only) app_status("Reading save - keep the SD card connected...");
     size_t got = 0;
     if (!read_file(path, file_buffer, MAX_FILE, &got) || got != (size_t)size) { say(RED, "Could not read %s.", path); return; }
     busy_note("Writing the VMU");
@@ -772,16 +883,16 @@ static void do_import(void)
             ui_alert(error_text(r));
     }
 }
-static void do_export(void)
+static void do_export(int sd_only)
 {
     const struct dc_device_info *dev = current_card();
     const struct dc_vmu_file *f = selected_file();
     char folder[100], path[120], name[13], text[260], dos[13], why[80], vname[13];
-    if (!write_ok || !f || !dev)
+    if (!read_ok || !f || !dev)
         return;
     snprintf(vname, sizeof(vname), "%s", f->name);
     if (f->blocks * 512 > MAX_FILE || f->protected_file) { say(RED, "%s", error_text(f->protected_file ? DC_VMUF_PROTECTED : DC_VMUF_TOO_BIG)); return; }
-    if (!ui_choose("Export: choose the destination folder", 1, folder, sizeof(folder)))
+    if (!choose_transfer(1, sd_only, folder, sizeof(folder)))
         return;
     dos_name_for_vmu(vname, dos);
     snprintf(name, sizeof(name), "%s", dos);
@@ -806,8 +917,13 @@ static void do_export(void)
     busy_note("Reading the VMU");
     long r = dc_os->vmu_file_read(dev->port, dev->unit, vname, file_buffer, MAX_FILE);
     if (r < 0) { say(RED, "%s", error_text(r)); return; }
+    if (sd_only && !sd_path_ok(path, 1)) return;
+    if (!drive_writable(path, why, sizeof(why))) { say(RED, "%s", why); return; }
+    app_status("Writing backup - keep the destination drive connected...");
     if (!write_file(path, file_buffer, (size_t)r)) { say(RED, "Could not write %s (disk full or protected).", path); return; }
-    say(BLACK, "Saved %s (%ld bytes) as a raw VMS image%s.", path, r, dc_drive_note(path[0]));
+    app_status("Verifying backup - keep the destination drive connected...");
+    if (!verify_file(path, file_buffer, (size_t)r)) { say(RED, "Export NOT verified: %s. Check the destination before using this backup.", path); return; }
+    say(BLACK, "Saved %s (%ld raw bytes); read back and verified%s.", path, r, dc_drive_note(path[0]));
 }
 static void do_delete(void)
 {
@@ -882,6 +998,240 @@ static void do_rename(void)
         if (d == DC_VMUF_VERIFY)
             ui_alert(error_text(d));
     }
+}
+
+/* ---- raw hex/ASCII viewer and editor -------------------------------------------- */
+static void hex_move(long offset)
+{
+    if (offset < 0) offset = 0;
+    if ((uint32_t)offset >= hex_bytes) offset = hex_bytes - 1;
+    hex_pos = (uint32_t)offset;
+    if (hex_pos < hex_top) hex_top = hex_pos / HEX_COLS * HEX_COLS;
+    if (hex_pos >= hex_top + HEX_PAGE)
+        hex_top = (hex_pos / HEX_COLS - HEX_ROWS + 1) * HEX_COLS;
+    hex_nibble = 0;
+    need_draw = 1;
+}
+static void hex_open(void)
+{
+    const struct dc_device_info *dev = current_card();
+    const struct dc_vmu_file *f = selected_file();
+    if (!read_ok || !f || !dev) return;
+    if (f->protected_file) { say(RED, "%s", error_text(DC_VMUF_PROTECTED)); return; }
+    if (!f->blocks || f->blocks > MAX_FILE / 512) { say(RED, "%s", error_text(DC_VMUF_TOO_BIG)); return; }
+    busy_note("Reading the VMU");
+    long r = dc_os->vmu_file_read(dev->port, dev->unit, f->name, file_buffer, MAX_FILE);
+    if (r < 0) { say(RED, "%s", error_text(r)); return; }
+    if ((uint32_t)r != f->blocks * 512) { say(RED, "The file size changed. Refresh the directory and try again."); return; }
+    hex_bytes = (uint32_t)r;
+    memcpy(hex_original, file_buffer, hex_bytes);
+    snprintf(hex_name, sizeof(hex_name), "%s", f->name);
+    hex_port = dev->port;
+    hex_unit = dev->unit;
+    hex_writable = write_ok && f->type == 0x33 && !f->header_block;
+    hex_pos = hex_top = hex_changes = 0;
+    hex_edit = hex_ascii = hex_nibble = hex_have_undo = 0;
+    view = VIEW_HEX;
+    say(BLACK, hex_writable ? "View mode. Choose Edit [F2] to change bytes; Save [F5] asks first."
+                           : "Read only: games, unusual headers or an OS without the write service.");
+}
+static void hex_put(uint32_t at, uint8_t value)
+{
+    if (file_buffer[at] != hex_original[at]) hex_changes--;
+    file_buffer[at] = value;
+    if (file_buffer[at] != hex_original[at]) hex_changes++;
+    need_draw = 1;
+}
+static void hex_type(int ch)
+{
+    if (!hex_edit || !hex_writable) return;
+    int digit = ch >= '0' && ch <= '9' ? ch - '0' :
+                ch >= 'a' && ch <= 'f' ? ch - 'a' + 10 :
+                ch >= 'A' && ch <= 'F' ? ch - 'A' + 10 : -1;
+    if (hex_ascii ? (ch < 32 || ch > 126) : digit < 0) return;
+    if (hex_ascii || !hex_nibble) {
+        hex_undo_pos = hex_pos;
+        hex_undo_value = file_buffer[hex_pos];
+        hex_have_undo = 1;
+    }
+    if (hex_ascii) {
+        hex_put(hex_pos, (uint8_t)ch);
+        hex_move(hex_pos + 1);
+    } else if (!hex_nibble) {
+        hex_put(hex_pos, (uint8_t)((digit << 4) | (file_buffer[hex_pos] & 15)));
+        hex_nibble = 1;
+    } else {
+        hex_put(hex_pos, (uint8_t)((file_buffer[hex_pos] & 0xf0) | digit));
+        hex_move(hex_pos + 1);
+    }
+    message[0] = 0;
+}
+static void hex_undo(void)
+{
+    if (!hex_have_undo) return;
+    uint8_t value = file_buffer[hex_undo_pos];
+    hex_put(hex_undo_pos, hex_undo_value);
+    hex_undo_value = value;
+    hex_move(hex_undo_pos);
+    message[0] = 0;
+}
+static void hex_goto(void)
+{
+    char input[16], *end;
+    snprintf(input, sizeof(input), "%05lX", (unsigned long)hex_pos);
+    if (!ui_prompt("Go to byte offset (hex, e.g. 0200):", input, sizeof(input))) return;
+    /* At most five digits are needed for the largest VMU file. Avoid strtoul
+     * overflow differences between the 32-bit target and the host tests. */
+    const char *p = input;
+    if (p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) p += 2;
+    size_t digits = strlen(p);
+    if (!digits || digits > 5) { say(RED, "Enter a hexadecimal offset within the file."); return; }
+    for (size_t i = 0; i < digits; i++)
+        if (!isxdigit((unsigned char)p[i])) { say(RED, "Enter a hexadecimal offset within the file."); return; }
+    unsigned long pos = strtoul(p, &end, 16);
+    if (*end || pos >= hex_bytes) { say(RED, "That offset is outside this file."); return; }
+    hex_move((long)pos);
+    message[0] = 0;
+}
+static void hex_save(void)
+{
+    if (!hex_writable || !hex_changes) return;
+    char text[240], alert_name[25];
+    /* GEM alert delimiters are legal VMU filename characters. Quote them so
+     * the filename cannot end the warning or replace the Cancel button. */
+    size_t n = 0;
+    for (size_t i = 0; hex_name[i]; i++) {
+        if (hex_name[i] == '|' || hex_name[i] == ']') alert_name[n++] = hex_name[i];
+        alert_name[n++] = hex_name[i];
+    }
+    alert_name[n] = 0;
+    snprintf(text, sizeof(text), "Overwrite ORIGINAL %s|on %c%lu? %lu edited bytes.|All %lu bytes will be rewritten.|Raw edit: checksums are NOT fixed.|Export a backup first if unsure.",
+             alert_name, 'A' + (int)hex_port, (unsigned long)hex_unit, (unsigned long)hex_changes,
+             (unsigned long)hex_bytes);
+    if (!ui_confirm(text, "Overwrite")) return;
+    /* The card may have been swapped while editing or inside the dialog.
+     * Compare the complete source again after confirmation, before any write. */
+    uint8_t *check = malloc(MAX_FILE);
+    if (!check) { say(RED, "Not enough memory to verify the original. Edits are kept."); return; }
+    busy_note("Checking the original");
+    long r = dc_os->vmu_file_read(hex_port, hex_unit, hex_name, check, MAX_FILE);
+    int same = r == (long)hex_bytes && !memcmp(check, hex_original, hex_bytes);
+    free(check);
+    if (r < 0) { say(RED, "%s", error_text(r)); return; }
+    if (!same) {
+        say(RED, "The original file changed or the card was replaced. No write made; edits kept.");
+        return;
+    }
+    busy_note("Writing the VMU");
+    r = dc_os->vmu_file_write(hex_port, hex_unit, hex_name, file_buffer, hex_bytes, DC_VMUF_OVERWRITE);
+    after_card_change(hex_name);
+    if (r >= 0) {
+        memcpy(hex_original, file_buffer, hex_bytes);
+        hex_changes = 0;
+        hex_have_undo = hex_nibble = 0;
+        say(BLACK, "%s overwritten; read back and verified. No automatic checksum repair.", hex_name);
+    } else {
+        say(RED, "%s", error_text(r));
+        if (r == DC_VMUF_VERIFY) ui_alert(error_text(r));
+    }
+}
+static void hex_leave(void)
+{
+    if (hex_changes && !ui_confirm("Discard unsaved hex/ASCII edits?|Your edits have not been saved.", "Discard")) return;
+    view = VIEW_FILES;
+    message[0] = 0;
+    need_draw = 1;
+}
+static void draw_hex(void)
+{
+    char line[100];
+    clear_screen();
+    snprintf(line, sizeof(line), "Hex/ASCII - %c%lu / %s", 'A' + (int)hex_port, (unsigned long)hex_unit, hex_name);
+    app_text(12, 47, line, BLACK);
+    button(432, 30, 94, "< Page", C_H_PREV, hex_pos > 0);
+    button(534, 30, 94, "Page >", C_H_NEXT, hex_pos + 1 < hex_bytes);
+    snprintf(line, sizeof(line), "%lu bytes | %s | %lu changed | %s pane (Tab switches)", (unsigned long)hex_bytes,
+             hex_edit ? "EDIT" : "VIEW", (unsigned long)hex_changes, hex_ascii ? "ASCII" : "HEX");
+    app_text(12, 68, line, BLACK);
+    app_box(12, 76, 616, 18, BLACK);
+    app_text(16, 90, "OFFSET", WHITE);
+    for (int col = 0; col < HEX_COLS; col++) {
+        snprintf(line, sizeof(line), "%02X", col);
+        app_text(HEX_X + col * 24, 90, line, WHITE);
+    }
+    app_text(ASCII_X, 90, "ASCII", WHITE);
+    app_line(480, 76, 480, HEX_Y + HEX_ROWS * 16, BLACK);
+    for (int row = 0; row < HEX_ROWS; row++) {
+        uint32_t start = hex_top + row * HEX_COLS;
+        int y = HEX_Y + row * 16;
+        if (start >= hex_bytes) break;
+        snprintf(line, sizeof(line), "%05lX", (unsigned long)start);
+        app_text(16, y + 13, line, DARK);
+        for (int col = 0; col < HEX_COLS && start + col < hex_bytes; col++) {
+            uint32_t at = start + col;
+            int hx = HEX_X + col * 24, ax = ASCII_X + col * 8;
+            int chosen = at == hex_pos, changed = file_buffer[at] != hex_original[at];
+            int ink = chosen ? WHITE : changed ? RED : BLACK;
+            if (chosen) {
+                app_box(hx - 1, y, 18, 16, BLUE);
+                app_box(ax, y, 8, 16, BLUE);
+            }
+            snprintf(line, sizeof(line), "%02X", file_buffer[at]);
+            app_text(hx, y + 13, line, ink);
+            line[0] = file_buffer[at] >= 32 && file_buffer[at] <= 126 ? file_buffer[at] : '.';
+            line[1] = 0;
+            app_text(ax, y + 13, line, ink);
+            if (chosen) {
+                int x = hex_ascii ? ax : hx + hex_nibble * 8;
+                app_line(x, y + 15, x + 7, y + 15, WHITE);
+            }
+        }
+    }
+    snprintf(line, sizeof(line), "Offset %05lX (%lu)  Byte %02X / %u  Original %02X | Changed bytes in red",
+             (unsigned long)hex_pos, (unsigned long)hex_pos, file_buffer[hex_pos], file_buffer[hex_pos], hex_original[hex_pos]);
+    app_text(12, 370, line, BLACK);
+    draw_message(388);
+    button(12, 422, 112, hex_edit ? "View [F2]" : "Edit [F2]", C_H_EDIT, hex_writable);
+    button(132, 422, 112, "Go to [F3]", C_H_GOTO, 1);
+    button(252, 422, 112, "Undo [F4]", C_H_UNDO, hex_have_undo);
+    button(372, 422, 112, "Save [F5]", C_H_SAVE, hex_writable && hex_changes);
+    button(492, 422, 136, "Files [Esc]", C_H_BACK, 1);
+    status_bar("Raw bytes: checksums are NOT repaired. Arrows/PgUp/PgDn/Home/End move.");
+}
+static void hex_key(int key)
+{
+    int scan = key & 0xff00, ch = key & 255;
+    if (scan == KEY_LEFT) hex_move((long)hex_pos - 1);
+    else if (scan == KEY_RIGHT) hex_move(hex_pos + 1);
+    else if (scan == KEY_UP) hex_move((long)hex_pos - HEX_COLS);
+    else if (scan == KEY_DOWN) hex_move(hex_pos + HEX_COLS);
+    else if (scan == 0x4900) hex_move((long)hex_pos - HEX_PAGE);
+    else if (scan == 0x5100) hex_move(hex_pos + HEX_PAGE);
+    else if (scan == KEY_HOME) hex_move(0);
+    else if (scan == KEY_END) hex_move(hex_bytes - 1);
+    else if (ch == 27) hex_leave();
+    else if (ch == 9) { hex_ascii = !hex_ascii; hex_nibble = 0; need_draw = 1; }
+    else if (scan == 0x3c00 && hex_writable) { hex_edit = !hex_edit; hex_nibble = 0; need_draw = 1; }
+    else if (scan == 0x3d00) hex_goto();
+    else if (scan == 0x3e00) hex_undo();
+    else if (scan == 0x3f00) hex_save();
+    else hex_type(ch);
+}
+static void hex_click(int mx, int my)
+{
+    if (my < HEX_Y || my >= HEX_Y + HEX_ROWS * 16) return;
+    int col, ascii;
+    if (mx >= ASCII_X && mx < ASCII_X + HEX_COLS * 8) {
+        col = (mx - ASCII_X) / 8;
+        ascii = 1;
+    } else if (mx >= HEX_X && mx < HEX_X + HEX_COLS * 24 && (mx - HEX_X) % 24 < 16) {
+        col = (mx - HEX_X) / 24;
+        ascii = 0;
+    } else return;
+    uint32_t at = hex_top + (my - HEX_Y) / 16 * HEX_COLS + col;
+    if (at >= hex_bytes) return;
+    hex_move(at);
+    hex_ascii = ascii;
 }
 
 /* ---- LCD editor ---------------------------------------------------------------- */
@@ -1556,12 +1906,22 @@ static void command(int id)
     case C_PREV: select_card(-1); need_draw = 1; break;
     case C_NEXT: select_card(1); need_draw = 1; break;
     case C_REFRESH: scan_cards(); read_card(); message[0] = 0; break;
-    case C_IMPORT: do_import(); break;
-    case C_EXPORT: do_export(); break;
+    case C_IMPORT: do_import(0); break;
+    case C_EXPORT: do_export(0); break;
+    case C_SD_IMPORT: do_import(1); break;
+    case C_SD_EXPORT: do_export(1); break;
     case C_RENAME: do_rename(); break;
     case C_DELETE: do_delete(); break;
     case C_LCD: enter_lcd(); break;
     case C_ICON: icon_open(); break;
+    case C_HEX: hex_open(); break;
+    case C_H_EDIT: hex_key(0x3c00); break;
+    case C_H_GOTO: hex_goto(); break;
+    case C_H_UNDO: hex_undo(); break;
+    case C_H_SAVE: hex_save(); break;
+    case C_H_BACK: hex_leave(); break;
+    case C_H_PREV: hex_move((long)hex_pos - HEX_PAGE); break;
+    case C_H_NEXT: hex_move(hex_pos + HEX_PAGE); break;
     case C_QUIT: quit_app(); break;
     case C_L_INVERT: case C_L_CLEAR: case C_L_FLIPH: case C_L_FLIPV: case C_L_UNDO:
     case C_L_LEFT: case C_L_RIGHT: case C_L_UP: case C_L_DOWN: lcd_operation(id); break;
@@ -1602,6 +1962,9 @@ static void files_key(int key)
     else if (ch == 'd' || key == KEY_DELETE) command(C_DELETE);
     else if (ch == 'l') command(C_LCD);
     else if (ch == 'c') command(C_ICON);
+    else if (ch == 'h' || ch == 13) command(C_HEX);
+    else if (scan == 0x4000) command(C_SD_IMPORT);
+    else if (scan == 0x4100) command(C_SD_EXPORT);
 }
 static unsigned long last_scan;
 static void watch_devices(void)
@@ -1613,8 +1976,10 @@ static void watch_devices(void)
     last_scan = now;
     struct dc_device_info before[DC_SYSTEM_INFO_DEVICES];
     int count = card_count, pos = card_pos;
+    unsigned old_sd_read = sd_read_drives, old_sd_write = sd_write_drives;
     memcpy(before, cards, sizeof(before));
     scan_cards();
+    if (sd_read_drives != old_sd_read || sd_write_drives != old_sd_write) need_draw = 1;
     int changed = count != card_count;
     for (int i = 0; !changed && i < count; i++)
         changed = before[i].port != cards[i].port || before[i].unit != cards[i].unit;
@@ -1631,6 +1996,8 @@ static void draw_all(void)
         draw_lcd();
     else if (view == VIEW_ICON)
         draw_icon();
+    else if (view == VIEW_HEX)
+        draw_hex();
     else
         draw_files();
 }
@@ -1641,6 +2008,7 @@ static void step(int key, int mx, int my, int b)
     if (key) {
         if (view == VIEW_LCD) lcd_key(key);
         else if (view == VIEW_ICON) icon_key(key);
+        else if (view == VIEW_HEX) hex_key(key);
         else files_key(key);
         if (quitting)
             return;
@@ -1651,6 +2019,7 @@ static void step(int key, int mx, int my, int b)
             int x, y;
             if (view == VIEW_LCD && lcd_cell_at(mx, my, &x, &y)) { lcd_stroke = 1; lcd_canvas(mx, my, b, 1); }
             else if (view == VIEW_ICON && icon_cell_at(mx, my, &x, &y)) { icon_stroke = 1; icon_canvas(mx, my, b, 1); }
+            else if (view == VIEW_HEX && (b & 1)) hex_click(mx, my);
         }
     } else if (b & 3) {
         if (lcd_stroke > 0 && view == VIEW_LCD) lcd_canvas(mx, my, b, 0);
@@ -1685,7 +2054,7 @@ int app_main(int argc, char **argv)
 {
     (void)argc;
     (void)argv;
-    if (!app_begin("VMUEDIT - VMU file manager, LCD and icon editor"))
+    if (!app_begin("VMU Toolbox - Files, Hex/ASCII, LCD and Icons"))
         return 1;
     atexit(app_end);
     save_palette();

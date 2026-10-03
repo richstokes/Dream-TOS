@@ -239,13 +239,15 @@ Accessories are loaded at boot, not by double-clicking their `.ACC` file.
 state on both window close and `AC_CLOSE`. Hidden calculators wait only for
 messages; visible ones use the usual clipped drawing and input event loop.
 
-`CONTROL.ACC`, `MONITOR.ACC` and `VMUTOOL.ACC` use `apps/lib/accessory.c` for
+`CONTROL.ACC` and `MONITOR.ACC` use `apps/lib/accessory.c` for
 this lifecycle, visible-rectangle painting, keyboard window movement and
 release-triggered buttons. Hidden accessories wait only for AES messages.
 The control panel samples cached input at 200 ms; the monitor samples system
-state at one second. VMU Toolbox's one-second timer enumerates devices only;
-opening, switching cards and explicit refresh read metadata. It uses a static
-snapshot buffer so foreground process cleanup cannot invalidate it.
+state at one second. VMU Toolbox is now the foreground `VMUEDIT.PRG`, combining
+metadata browsing with the file, hex/ASCII, LCD and icon editors. Its one-second
+timer enumerates devices only while browsing; opening, switching cards and
+explicit refresh read metadata. Raw hex saves require confirmation, compare the
+original bytes again, then call the verified file service with overwrite enabled.
 
 Control Panel loads the first valid VMU settings save during accessory
 initialization. Its timer only enumerates devices and samples cached input;

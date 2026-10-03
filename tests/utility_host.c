@@ -9,8 +9,6 @@
 #include "../apps/ports/control.c"
 #elif defined(TEST_MONITOR)
 #include "../apps/ports/monitor.c"
-#else
-#include "../apps/ports/vmutool.c"
 #endif
 #undef opened
 static struct dc_system_info fixture;
@@ -110,16 +108,6 @@ int main(void)
     for(int i=0;i<70;i++)refresh();assert(samples==60);
     int old=next_sample;key(' ');assert(!tick() && next_sample==old);key('r');assert(next_sample!=old);
     monitor.window.handle=-1;int16_t m[8]={40};accessory_message(&monitor,m);assert(opened==1);
-#else
-    utility_opened();assert(ready && card_count==2 && card.file_count==12 && card_reads==1);
-    int reads=card_reads;assert(!tick() && card_reads==reads); /* no background card I/O */
-    key(KEY_RIGHT);assert(selected_card==1 && card.port==1 && card_reads==reads+1);
-    for(int i=0;i<20;i++)key(KEY_DOWN);assert(selected_file==11 && top_file==4);
-    fixture.device_count=1;assert(tick() && selected_card==0 && card.status==DC_VMU_NOT_READ);
-    key('r');assert(card.status==0 && card.port==0);
-    fail_card=1;key('r');assert(card.status==DC_VMU_IO && !card.file_count);
-    fixture.device_count=0;assert(tick() && !card_count && card.status==DC_VMU_ABSENT);
-    toolbox.window.handle=-1;int16_t m[8]={40};accessory_message(&toolbox,m);assert(opened==1);
 #endif
     assert(!updates && !mouse_hidden && !mouse_control);
     puts("Accessory controls, queried values and device changes: PASS");return 0;

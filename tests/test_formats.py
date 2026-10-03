@@ -113,7 +113,8 @@ class Formats(unittest.TestCase):
     def test_native_accessories_are_packaged(self):
         image=(ROOT/'build/disc/DISC.IMG').read_bytes()
         entries=[image[i:i+32] for i in range(65*512,73*512,32)]
-        for name in ('CALC', 'CLOCK', 'CONTROL', 'MONITOR', 'VMUTOOL'):
+        self.assertNotIn('VMUTOOL.ACC', FatVolume(image).entries())
+        for name in ('CALC', 'CLOCK', 'CONTROL', 'MONITOR'):
             with self.subTest(accessory=name):
                 expected=native.convert((ROOT/f'build/apps/{name}.elf').read_bytes())
                 self.assertEqual((ROOT/f'build/apps/{name}.ACC').read_bytes(),expected)

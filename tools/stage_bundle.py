@@ -33,7 +33,9 @@ def stage(root, dest):
     for folder in APP_GROUPS:
         (dest/folder).mkdir(parents=True, exist_ok=True)
     # AES discovers startup accessories at the boot volume's root.
-    for accessory in ('CALC', 'CLOCK', 'CONTROL', 'MONITOR', 'VMUTOOL'):
+    # Remove the retired browser even when staging into an older bundle.
+    (dest/'VMUTOOL.ACC').unlink(missing_ok=True)
+    for accessory in ('CALC', 'CLOCK', 'CONTROL', 'MONITOR'):
         shutil.copy2(root/'build/apps'/f'{accessory}.ACC', dest)
     for tool in CLI_TOOLS + NET_TOOLS + SSH_TOOLS:
         shutil.copy2(root/'build/apps'/f'{tool}.TTP', dest/'UTILS')
