@@ -64,9 +64,13 @@ Tested on real Dreamcast hardware and seems to work.
     </td>
   </tr>
   <tr>
-    <td colspan="2" align="center">
+    <td width="50%" align="center">
       <a href="docs/screenshots/ssh-client.png"><img src="docs/screenshots/ssh-client.png" width="480" alt="Dream TOS SSH client connected to an OpenSSH server, showing remote commands, an 80 by 30 xterm terminal and coloured output"></a><br>
       <strong>SSH remote terminal</strong>
+    </td>
+    <td width="50%" align="center">
+      <a href="docs/screenshots/vmu-toolbox-hex.png"><img src="docs/screenshots/vmu-toolbox-hex.png" width="480" alt="VMU Toolbox hex and ASCII save editor with synchronized byte selection, changed bytes in red, undo and confirmed saving"></a><br>
+      <strong>VMU Toolbox (hex / ASCII editor)</strong>
     </td>
   </tr>
 </table>
