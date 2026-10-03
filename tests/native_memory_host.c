@@ -11,6 +11,49 @@ AESPD *rlr;
 void *dc_alloc(size_t bytes) { return calloc(1, bytes); }
 void dc_free(void *p) { free(p); }
 
+/* GCC ASan retains native.c's API table even with --gc-sections. Supply its
+ * service dependencies without linking the console hardware into this test.
+ * None belongs to memory ownership: fail immediately if one is ever called. */
+#define UNUSED_SERVICE(result, name, args) \
+    result name args { fputs("Unexpected native service: " #name "\n", stderr); abort(); }
+UNUSED_SERVICE(long, trap1, (int opcode, ...))
+UNUSED_SERVICE(LONG, super, (WORD opcode, void *pb))
+UNUSED_SERVICE(void, dc_vdi, (void *pb))
+UNUSED_SERVICE(void, dc_poll, (void))
+UNUSED_SERVICE(unsigned long, dc_millis, (void))
+UNUSED_SERVICE(long, dc_system_info, (void *buffer, uint32_t bytes))
+UNUSED_SERVICE(long, dc_input_config, (int write, void *buffer, uint32_t bytes))
+UNUSED_SERVICE(long, dc_input_snapshot, (void *buffer, uint32_t bytes))
+UNUSED_SERVICE(long, dc_vmu_info, (uint32_t port, uint32_t unit, void *buffer, uint32_t bytes))
+UNUSED_SERVICE(long, dc_control_store, (int write, uint32_t port, uint32_t unit, void *buffer, uint32_t bytes))
+UNUSED_SERVICE(long, dc_net_info, (void *buffer, uint32_t bytes))
+UNUSED_SERVICE(long, dc_net_ping, (const uint8_t ip[4], uint32_t seq, uint32_t size,
+                                  uint32_t timeout_ms, void *result, uint32_t bytes))
+UNUSED_SERVICE(long, dc_net_resolve, (const char *host, uint32_t timeout_ms, uint8_t ip[4]))
+UNUSED_SERVICE(long, dc_audio_open, (uint32_t rate, uint32_t channels))
+UNUSED_SERVICE(long, dc_audio_close, (void))
+UNUSED_SERVICE(long, dc_audio_write, (const int16_t *pcm, uint32_t frames))
+UNUSED_SERVICE(long, dc_audio_space, (void))
+UNUSED_SERVICE(long, dc_audio_set, (uint32_t what, uint32_t value))
+UNUSED_SERVICE(long, dc_audio_info, (void *buffer, uint32_t bytes))
+UNUSED_SERVICE(long, dc_vmu_file_read, (uint32_t port, uint32_t unit, const char *name,
+                                      void *buffer, uint32_t bytes))
+UNUSED_SERVICE(long, dc_vmu_file_write, (uint32_t port, uint32_t unit, const char *name,
+                                       const void *data, uint32_t bytes, uint32_t flags))
+UNUSED_SERVICE(long, dc_vmu_file_delete, (uint32_t port, uint32_t unit, const char *name))
+UNUSED_SERVICE(long, dc_vmu_screen, (uint32_t port, uint32_t unit, const void *bitmap, uint32_t bytes))
+UNUSED_SERVICE(long, dc_tcp_listen, (uint32_t port))
+UNUSED_SERVICE(long, dc_tcp_accept, (int handle, uint8_t peer[4]))
+UNUSED_SERVICE(long, dc_tcp_recv, (int handle, void *buffer, uint32_t bytes))
+UNUSED_SERVICE(long, dc_tcp_send, (int handle, const void *buffer, uint32_t bytes))
+UNUSED_SERVICE(long, dc_tcp_port, (int handle))
+UNUSED_SERVICE(long, dc_tcp_close, (int handle))
+UNUSED_SERVICE(long, dc_tcp_connect, (const uint8_t ip[4], uint32_t port))
+UNUSED_SERVICE(long, dc_tcp_connected, (int handle))
+UNUSED_SERVICE(long, dc_sd_card_info, (void *buffer, uint32_t bytes))
+UNUSED_SERVICE(long, dc_sd_card_format, (uint32_t target, uint32_t action))
+#undef UNUSED_SERVICE
+
 int main(void)
 {
     assert(dc_native_memory_owner() == run);
