@@ -45,7 +45,8 @@ static const struct dc_native_api api = {DC_NATIVE_ABI, sizeof(api), trap1,
                                          dc_vmu_file_read, dc_vmu_file_write, dc_vmu_file_delete, dc_vmu_screen,
                                          dc_tcp_listen, dc_tcp_accept, dc_tcp_recv, dc_tcp_send,
                                          dc_tcp_port, dc_tcp_close,
-                                         dc_sd_card_info, dc_sd_card_format};
+                                         dc_sd_card_info, dc_sd_card_format,
+                                         dc_tcp_connect, dc_tcp_connected};
 static jmp_buf term_context;
 static int executing;
 static long exit_status;

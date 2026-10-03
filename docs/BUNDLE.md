@@ -207,3 +207,10 @@ The CDI also includes native `GREP`, `WC`, `HEAD`, `TAIL`, `SORT`, `HEXDUMP`,
 with Ctrl+Z and use their names without extensions. See [the command-line
 guide](COMMAND-LINE.md), or `D:\CLI.TXT`. These tools are GPL-2.0-or-later;
 EXPR uses the existing TinyExpr dependency and its bundled notice.
+
+## SSH terminal
+
+`UTILS/SSH.TTP` supports SSH-2 password, keyboard-interactive and OpenSSH-key
+login over the shared KOS stack. See [SSH setup](SSH.md), including the required
+private seed on writable storage. It is GPL-3.0-or-later; wolfSSH, wolfCrypt,
+libvterm and OpenBSD bcrypt notices are included in the disc root.

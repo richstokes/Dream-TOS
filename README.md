@@ -63,6 +63,12 @@ Tested on real Dreamcast hardware and seems to work.
       <strong>SD card formatter</strong>
     </td>
   </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <a href="docs/screenshots/ssh-client.png"><img src="docs/screenshots/ssh-client.png" width="480" alt="Dream TOS SSH client connected to an OpenSSH server, showing remote commands, an 80 by 30 xterm terminal and coloured output"></a><br>
+      <strong>SSH remote terminal</strong>
+    </td>
+  </tr>
 </table>
 
 Captured from the native SH-4 build running in Flycast. Click an image for full size.
@@ -76,7 +82,7 @@ using the keyboard, and RAM-disk file operations.
 - Input: Maple keyboard and mouse; controller fallback when no mouse is attached.
 - C: 4 MiB FAT16 RAM disk. Contents disappear at reset.
 - D: read-only FAT16 volume embedded in the CD's ISO9660 filesystem.
-- Network: Broadband Adapter (DHCP, ping, DNS), command-line tools, and a [graphical anonymous FTP server](docs/FTP.md) with SD/folder sharing; see [networking](docs/NETWORKING.md).
+- Network: Broadband Adapter (DHCP, ping, DNS), command-line tools, and a [graphical anonymous FTP server](docs/FTP.md) with SD/folder sharing, plus an [SSH remote terminal](docs/SSH.md) with password, interactive and SD-card key login; see [networking](docs/NETWORKING.md).
 - E:–H: writable FAT16 volumes from an SD card on the serial port (jj1odm/DreamShell-style adapter). Use `D:\UTILS\SDFORMAT.PRG` for the graphical FAT16 formatter, with C:/D: protection and automatic remount or a reboot prompt; see [SD card support](docs/SD.md). SD transfers remain untested on hardware.
 - 68000 binary compatibility is absent.
 
@@ -103,7 +109,7 @@ at the disc root. `UTILS` keeps the folder name within the DOS 8.3 limit.
 The **EmuCON command prompt** is available through **File → Execute EmuCON**
 or **Ctrl+Z**; type `exit` to return to the desktop. It includes file commands,
 history, Tab completion and output redirection, plus twelve native text and
-system utilities and three network tools (`ping`, `nslookup`, `ifconfig`) on D:. See the [command-line guide](docs/COMMAND-LINE.md)
+system utilities and four network tools (`ping`, `nslookup`, `ifconfig`, `ssh`) on D:. See the [command-line guide](docs/COMMAND-LINE.md)
 or read `D:\CLI.TXT` for commands and examples.
 
 The menu bar shows a **24-hour clock** at the upper right, using the console's

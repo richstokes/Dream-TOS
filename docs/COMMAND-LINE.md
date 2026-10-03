@@ -54,6 +54,7 @@ Network tools (need a Broadband Adapter; see [networking](NETWORKING.md)):
 | --- | --- |
 | `ifconfig` | Adapter state, MAC, IPv4 address, netmask, gateway, DNS and packet counters. |
 | `ping [-c N] [-s BYTES] [-w MS] HOST` | ICMP echo to an address or name; default 4 probes of 56 bytes, 2 s timeout. Ctrl+C prints the summary. |
+| `ssh [-p PORT] [-i KEY] [user@]HOST` | [SSH terminal](SSH.md), password/interactive or SD-card key login; prepare a private seed first. |
 | `nslookup HOST` | IPv4 lookup through the DHCP-provided DNS server. |
 
 Examples:

@@ -289,3 +289,11 @@ converts LF to CR/LF; redirected files retain the original bytes. Console
 input is line-oriented with echo, Backspace and Ctrl+D/Ctrl+Z EOF. Ctrl+C
 terminates the active foreground console application during input/output.
 Command tails support up to 30 arguments with quoted fields.
+
+The appended outbound TCP calls are `tcp_connect(ipv4, port)` and
+`tcp_connected(handle)`. Connect returns an owned handle immediately, including
+while connecting. Poll completion: 0 is established, -8 means pending, -9 is a
+connection error. Close failed or cancelled handles. Invalid arguments return
+-64; outbound ports must be 1..65535. After completion use the same partial
+`tcp_recv` / `tcp_send` and termination cleanup as accepted connections.
+Applications check table size and both callback pointers before calling them.

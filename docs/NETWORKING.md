@@ -8,7 +8,7 @@ network. The serial port is left alone: the W5500 serial adapter probe that
 SD cards.
 
 Applications access networking through optional callbacks in `struct
-dc_native_api` for status, ping, DNS and non-blocking TCP listeners; see
+dc_native_api` for status, ping, DNS and non-blocking TCP listeners and outbound connections; see
 [NATIVE-ABI](NATIVE-ABI.md). KallistiOS supplies the shared IP, TCP and UDP
 implementation underneath these calls. The FTP protocol engine and DNS reply
 validation are application/service code above that stack.
@@ -21,6 +21,7 @@ The current integrations already share the adapter, DHCP lease and IP stack:
 
 | Application | Native service | KallistiOS backend |
 |---|---|---|
+| `SSH.TTP` | `net_info`, `net_resolve`, `tcp_*` | Outbound TCP with wolfSSH/wolfCrypt above the shared stack |
 | `FTP.PRG` | `net_info`, `tcp_*` | Interface snapshot and TCP sockets |
 | `PING.TTP` | `net_info`, `net_resolve`, `net_ping` | Interface, UDP DNS queries and ICMP |
 | `NSLOOKUP.TTP` | `net_info`, `net_resolve` | Interface and UDP DNS queries |
@@ -35,8 +36,8 @@ and [poll interface](https://github.com/KallistiOS/KallistiOS/blob/cd340378043f0
 
 For future app work:
 
-- Add non-blocking outbound TCP connection and completion/error reporting for
-  clients such as HTTP or IRC. Preserve partial I/O, EOF and retry semantics.
+- Reuse `tcp_connect` / `tcp_connected` for new clients such as HTTP or IRC.
+  These preserve partial I/O, EOF and retry semantics, as exercised by SSH.
 - Add UDP send/receive with peer addresses and readiness polling when a
   datagram-based app needs them. Expose asynchronous DNS completion for GUI
   clients; the current `net_resolve` call waits while servicing OS input.
@@ -89,12 +90,16 @@ nslookup example.com
 when no server answers), "no adapter" when none is found, or the adapter's
 addresses. `ping` needs a configured adapter; names are resolved first through
 the DNS server the DHCP lease supplied. Ctrl+C stops it with a summary.
-Reverse lookups, outbound TCP connections, UDP sockets, IPv6 and static
+Reverse lookups, UDP sockets, IPv6 and static
 configuration are not exposed to applications yet.
 
 **D:\UTILS\FTP.PRG** is a [graphical anonymous FTP server](FTP.md). Choose a drive or
 folder (including mounted SD volumes), then Start. It uses the same stack via
 the non-blocking TCP native API, with passive connections on port 21.
+
+**D:\UTILS\SSH.TTP** is an [SSH remote terminal](SSH.md), supporting password,
+interactive and private-key login with pinned host fingerprints. It uses the
+same TCP adapter; no second TCP/IP stack is introduced.
 
 DNS uses `src/dreamcast/dns.c`, not KOS `getaddrinfo`: the KOS resolver does
 not check the transaction ID, and a late duplicate reply to an earlier query

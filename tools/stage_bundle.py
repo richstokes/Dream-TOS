@@ -12,6 +12,7 @@ APP_GROUPS = {
 APPS = tuple(app for group in APP_GROUPS.values() for app in group)
 CLI_TOOLS = ('GREP', 'WC', 'HEAD', 'TAIL', 'SORT', 'HEXDUMP', 'CKSUM', 'DATE', 'DF', 'FREE', 'UNAME', 'EXPR')
 NET_TOOLS = ('PING', 'NSLOOKUP', 'IFCONFIG')
+SSH_TOOLS = ('SSH',)
 NOTICES = {
     'COPYING.TXT': 'COPYING',
     'WORMGPL.TXT': 'apps/vendor/gemworm/license.txt',
@@ -20,6 +21,11 @@ NOTICES = {
     'STBLIC.TXT': 'apps/vendor/stb/LICENSE',
     'TINYLIC.TXT': 'apps/vendor/tinyexpr/LICENSE',
     'NEWLIB.TXT': 'apps/vendor/newlib/COPYING.NEWLIB',
+    'SSHGPL.TXT': 'apps/vendor/wolfssl/COPYING',
+    'SSHLICE.TXT': 'apps/vendor/wolfssh/LICENSING',
+    'CRYPTLIC.TXT': 'apps/vendor/wolfssl/LICENSING',
+    'VTERMLIC.TXT': 'apps/vendor/libvterm/LICENSE',
+    'BCRYPT.TXT': 'apps/vendor/bcrypt/COPYING',
     'MP3LIC.TXT': 'apps/vendor/minimp3/LICENSE',
 }
 
@@ -29,7 +35,7 @@ def stage(root, dest):
     # AES discovers startup accessories at the boot volume's root.
     for accessory in ('CALC', 'CLOCK', 'CONTROL', 'MONITOR', 'VMUTOOL'):
         shutil.copy2(root/'build/apps'/f'{accessory}.ACC', dest)
-    for tool in CLI_TOOLS + NET_TOOLS:
+    for tool in CLI_TOOLS + NET_TOOLS + SSH_TOOLS:
         shutil.copy2(root/'build/apps'/f'{tool}.TTP', dest/'UTILS')
     for folder, apps in APP_GROUPS.items():
         for app in apps:

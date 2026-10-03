@@ -74,7 +74,7 @@ class Formats(unittest.TestCase):
             for name in programs:
                 self.assertEqual(volume.read(f'{folder}/{name}.PRG'),
                                  (ROOT/f'build/apps/{name}.PRG').read_bytes())
-        for name in ('PING', 'NSLOOKUP', 'IFCONFIG'):
+        for name in ('PING', 'NSLOOKUP', 'IFCONFIG', 'SSH'):
             self.assertEqual(volume.read(f'UTILS/{name}.TTP'),
                              (ROOT/f'build/apps/{name}.TTP').read_bytes())
         self.assertEqual(volume.read('UTILS/BENCH.DAT'), bytes(range(256)) * 1024)

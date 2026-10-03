@@ -243,3 +243,14 @@ of settings persistence remains pending.
 The patched development Flycast build installed locally is used on macOS 27;
 the stock installed build was unable to start reliably in this environment.
 The image contains no Flycast-specific runtime dependencies.
+
+## SSH client
+
+See [SSH setup and verification](SSH.md). `bash scripts/test-ssh.sh` builds the
+real client and TCP adapter under ASan/UBSan, runs terminal/seed/trust-store and
+native keyboard checks, then ten live Paramiko protocol cases (requires
+`tests/ssh-requirements.txt` in `build/ssh-venv`). Tests include password,
+interactive and encrypted RSA/ECDSA/Ed25519 identities, multi-factor login,
+host-key pin reuse/refusal, rekeying and receive-window exhaustion. Native
+Flycast checks against OpenSSH cover shell input, 80x30 PTY, Vim navigation/
+redraw, Ctrl+C, rekey and local disconnect. No test credentials enter the CDI.

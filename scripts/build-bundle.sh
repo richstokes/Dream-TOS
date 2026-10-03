@@ -17,6 +17,15 @@ appbuild() {
  "$KOS_CC" "${flags[@]}" "${runtime[@]}" "$@" -Wl,--start-group -lm -lc -lgcc -Wl,--end-group -o "build/apps/$name.elf"
  python3 tools/native_app.py "build/apps/$name.elf" "build/apps/$name.PRG"
 }
+build_ssh() {
+ source scripts/ssh-sources.sh
+ appbuild SSH apps/ssh/platform_dc.c "${ssh_flags[@]}" "${ssh_sources[@]}"
+ mv build/apps/SSH.PRG build/apps/SSH.TTP
+}
+if [[ "${1:-}" == --ssh-only ]]; then
+ build_ssh
+ exit 0
+fi
 puzzle_common=(apps/vendor/puzzles/{midend,drawing,misc,malloc,random,tree234,dsf,grid,penrose,penrose-legacy,hat,spectre,sort,tdq,findloop}.c)
 for game in fifteen mines net; do
  name=$(printf '%s' "$game" | tr '[:lower:]' '[:upper:]')
@@ -59,3 +68,5 @@ for tool in ping nslookup ifconfig; do
  appbuild "$name" apps/ports/net_tools.c "-DNET_TOOL=\"$tool\""
  mv "build/apps/$name.PRG" "build/apps/$name.TTP"
 done
+
+build_ssh

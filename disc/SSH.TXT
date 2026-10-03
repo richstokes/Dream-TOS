@@ -1,0 +1,32 @@
+SSH REMOTE TERMINAL
+===================
+Run from EmuCON (Ctrl+Z):
+  ssh alice@example.com
+  ssh -p 2222 alice@example.com
+  ssh -i E:\SSH\ID_ED255 alice@example.com
+
+First, on your computer:
+  python3 tools/prepare_ssh.py /Volumes/SD/SSH
+Use your actual card path. Insert the card before launching SSH.
+The first writable persistent drive is used (normally E:):
+  E:\SSH\SEED.BIN  - private random seed, rotated before every connection
+  E:\SSH\HOSTS.TXT - remembered server fingerprints
+Override with -s SEEDFILE and -K HOSTSFILE. No SD defaults to volatile C:.
+Keep seeds private. Never restore old seed copies or share them across devices.
+For C:, generate a fresh seed every boot. Missing/damaged/unwritable seeds fail.
+
+Passwords, interactive challenges and OpenSSH private keys are supported.
+Keys: Ed25519, RSA <=4096 bits, ECDSA P-256/384/521. Unencrypted or OpenSSH's
+bcrypt/AES-256-CTR encrypted keys; passphrases are prompted, never arguments.
+Use DOS 8.3 filenames. Prompts currently accept printable ASCII.
+-a key, -a password or -a interactive restricts the authentication method.
+
+Verify a new server's SHA256 fingerprint with its administrator, then type yes.
+Changed keys are refused. HOSTS.TXT must be writable and stored securely.
+
+80 columns, 30 rows, TERM=xterm. Remote UTF-8 is decoded; unavailable font
+glyphs are approximated. Colour, scrolling regions and alternate screens work.
+Ctrl+C / Ctrl+D go to the server. Arrows, navigation and F1-F12 are supported.
+Ctrl+] then . disconnects; p/n browses scrollback; r requests a rekey.
+Ctrl+] twice sends Ctrl+]. Logout restores the local console.
+No forwarding, SCP or SFTP. Full instructions: docs/SSH.md in the source tree.

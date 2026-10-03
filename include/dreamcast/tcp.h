@@ -18,5 +18,9 @@ long dc_tcp_recv(int handle, void *buffer, uint32_t bytes);
 long dc_tcp_send(int handle, const void *buffer, uint32_t bytes);
 long dc_tcp_port(int handle);
 long dc_tcp_close(int handle);
+/* Outbound connection: returns a handle immediately. Poll connected() until
+ * 0 (connected), AGAIN (pending) or IO (failed); then close on any failure. */
+long dc_tcp_connect(const uint8_t ip[4], uint32_t port);
+long dc_tcp_connected(int handle);
 void dc_tcp_cleanup(void);
 #endif
