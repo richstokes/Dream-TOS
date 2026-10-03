@@ -17,7 +17,6 @@ appbuild() {
  "$KOS_CC" "${flags[@]}" "${runtime[@]}" "$@" -Wl,--start-group -lm -lc -lgcc -Wl,--end-group -o "build/apps/$name.elf"
  python3 tools/native_app.py "build/apps/$name.elf" "build/apps/$name.PRG"
 }
-appbuild CALC apps/ports/calc.c apps/vendor/tinyexpr/tinyexpr.c -Iapps/vendor/tinyexpr
 puzzle_common=(apps/vendor/puzzles/{midend,drawing,misc,malloc,random,tree234,dsf,grid,penrose,penrose-legacy,hat,spectre,sort,tdq,findloop}.c)
 for game in fifteen mines net; do
  name=$(printf '%s' "$game" | tr '[:lower:]' '[:upper:]')
@@ -35,6 +34,8 @@ appbuild VMUEDIT apps/ports/vmuedit.c apps/ports/vmuedit_core.c
 appbuild FTP apps/ports/ftp.c apps/ports/ftp_core.c apps/ports/ftp_fs.c
 
 # Accessories use the same validated native format, with a resident AES entry.
+appbuild CALC apps/ports/calc.c apps/vendor/tinyexpr/tinyexpr.c -Iapps/vendor/tinyexpr
+mv build/apps/CALC.PRG build/apps/CALC.ACC
 appbuild CLOCK apps/ports/clock.c
 mv build/apps/CLOCK.PRG build/apps/CLOCK.ACC
 

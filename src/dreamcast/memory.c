@@ -17,6 +17,7 @@ typedef struct block {
     ULONG reserved[5];
 } Block;
 static Block *arena;
+extern PD *dc_native_memory_owner(void);
 static void merge(void)
 {
     for (Block *b = arena; b && b->next;) {
@@ -59,7 +60,7 @@ void *xmalloc(long n)
     for (Block *b = arena; b; b = b->next)
         if (!b->owner && b->bytes >= size) {
             split(b, size);
-            b->owner = run;
+            b->owner = dc_native_memory_owner();
             return b + 1;
         }
     return NULL;

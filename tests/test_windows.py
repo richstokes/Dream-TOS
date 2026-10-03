@@ -26,6 +26,10 @@ class NativeWindows(unittest.TestCase):
     def test_clock_accessory_lifecycle_and_midnight(self):
         self.build_run("tests/clock_host.c")
 
+    def test_calculator_accessory_lifecycle_and_state(self):
+        self.build_run("tests/calc_accessory_host.c", [
+            "-Iapps/vendor/tinyexpr", "apps/vendor/tinyexpr/tinyexpr.c"])
+
     def test_resident_utility_window_lifecycle(self):
         self.build_run("tests/accessory_host.c")
 

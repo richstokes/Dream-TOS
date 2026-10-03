@@ -9,7 +9,8 @@
 #define COLS 6
 #define ROWS 5
 #define KEY_COUNT (COLS * ROWS)
-static AppWindow window;
+static AppWindow window = {.handle = -1};
+static int menu_id;
 static struct { int x, y, w, h, dx, dy, chars; } layout = {0, 0, 480, 360, 76, 40, 54};
 #define KEY_X 10
 #define KEY_Y 124
@@ -302,7 +303,7 @@ static void draw(void)
     vp[0] = 0;
     vp[1] = 13;
     vdi_call(12, 1, 0);
-    text(10, 116, calc.message[0] ? calc.message : "ans: last answer   AC: clear   Esc: quit",
+    text(10, 116, calc.message[0] ? calc.message : "ans: last answer   AC: clear   Esc: close",
          calc.error ? RED : INK);
     for (int i = 0; i < KEY_COUNT; i++) {
         int x = KEY_X + (i % COLS) * KEY_DX, y = KEY_Y + (i / COLS) * KEY_DY;
@@ -323,11 +324,6 @@ static void draw(void)
     }
     text(10, layout.h - 20, "Tab/arrows: keypad  Space: press  Enter: =", INK);
     text(10, layout.h - 4, "Ctrl+arrows: move  +Shift: size  F5: full", INK);
-}
-static void finish(void)
-{
-    app_window_close(&window);
-    app_end();
 }
 static int window_key(int key, int modifiers)
 {
@@ -353,51 +349,97 @@ static int window_key(int key, int modifiers)
     resize_layout();
     return 1;
 }
+/* Return true when the user wants to hide the accessory window. */
+static int window_event(const AppEvent *e)
+{
+    int redraw = 0;
+    if (e->flags & APP_MESSAGE) {
+        int result = app_window_message(&window, e->message);
+        if (result == WINDOW_CLOSE)
+            return 1;
+        if (result == WINDOW_CHANGED) {
+            resize_layout();
+            redraw = 1;
+        } else if (result == WINDOW_REDRAW) {
+            AppRect damage = window.work;
+            if (e->message[0] == 20)
+                damage = (AppRect){e->message[4], e->message[5], e->message[6], e->message[7]};
+            app_window_redraw(&window, damage, draw);
+        }
+    }
+    int key = (e->flags & APP_KEY) ? e->key : 0;
+    if (window_key(key, e->modifiers)) {
+        redraw = 1;
+    } else if (e->flags & (APP_KEY | APP_BUTTON | APP_TIMER)) {
+        int inside = app_window_contains(&window, e->x, e->y);
+        /* Timer samples update hover, but must not turn another window's
+         * mouse press into a calculator click. */
+        int buttons = (e->flags & APP_BUTTON) ? e->buttons : e->buttons & calc.buttons;
+        int result = event(key, inside ? e->x - layout.x : -1,
+                           inside ? e->y - layout.y : -1, buttons);
+        if (result < 0)
+            return 1;
+        redraw |= result;
+    }
+    if (redraw)
+        app_window_redraw(&window, window.work, draw);
+    return 0;
+}
+static void accessory_event(const AppEvent *e)
+{
+    if (e->flags & APP_MESSAGE) {
+        if (e->message[0] == 41) { /* AC_CLOSE: AES already discarded the window. */
+            window.handle = -1;
+            calc.buttons = 0;
+            calc.pressed = calc.hover = -1;
+            return;
+        }
+        if (e->message[0] == 40 && e->message[4] == menu_id) { /* AC_OPEN */
+            if (window.handle < 0) {
+                if (!app_window_open(&window, "Calculator", 480, 360, 432, 328))
+                    return;
+                calc.buttons = 0;
+                resize_layout();
+            } else {
+                int16_t top[8] = {21, 0, 0, window.handle};
+                app_window_message(&window, top);
+            }
+            app_window_redraw(&window, window.work, draw);
+            return;
+        }
+    }
+    if (window.handle >= 0 && window_event(e)) {
+        app_window_close(&window);
+        calc.buttons = 0;
+        calc.pressed = calc.hover = -1;
+    }
+}
 int app_main(int argc, char **argv)
 {
-    if (argc > 1 && !strcmp(argv[1], "TEST"))
-        return fabs(te_interp("sqrt(144)+2^3", 0) - 20) > 1e-9;
+    (void)argc;
+    (void)argv;
     if (!app_begin_windowed())
         return 1;
-    if (!app_window_open(&window, "Calculator", 480, 360, 432, 328)) {
-        app_alert("Unable to open the calculator window.");
+    reset();
+    ai[0] = ag[2];
+    aa[0] = (intptr_t)"  Calculator";
+    aes_call(35, 1, 1, 1); /* menu_register */
+    menu_id = ao[0];
+    if (menu_id < 0) {
         app_end();
         return 1;
     }
-    atexit(finish);
-    reset();
-    resize_layout();
-    app_window_redraw(&window, window.work, draw);
     for (;;) {
-        AppEvent e;
-        app_window_event(&e, 20, calc.buttons);
-        int redraw = 0;
-        if (e.flags & APP_MESSAGE) {
-            int result = app_window_message(&window, e.message);
-            if (result == WINDOW_CLOSE)
-                break;
-            if (result == WINDOW_CHANGED) {
-                resize_layout();
-                redraw = 1;
-            } else if (result == WINDOW_REDRAW) {
-                AppRect damage = window.work;
-                if (e.message[0] == 20)
-                    damage = (AppRect){e.message[4], e.message[5], e.message[6], e.message[7]};
-                app_window_redraw(&window, damage, draw);
-            }
-        }
-        if (window_key(e.key, e.modifiers)) {
-            redraw = 1;
+        AppEvent e = {0};
+        if (window.handle >= 0) {
+            app_window_event(&e, 20, calc.buttons);
         } else {
-            int inside = app_window_contains(&window, e.x, e.y);
-            int result = event(e.key, inside ? e.x - layout.x : -1,
-                               inside ? e.y - layout.y : -1, e.buttons);
-            if (result < 0)
-                break;
-            redraw |= result;
+            memset(ai, 0, sizeof(ai));
+            ai[0] = APP_MESSAGE; /* No timer or input polling while hidden. */
+            aa[0] = (intptr_t)e.message;
+            aes_call(25, 16, 7, 1);
+            e.flags = ao[0];
         }
-        if (redraw)
-            app_window_redraw(&window, window.work, draw);
+        accessory_event(&e);
     }
-    return 0;
 }

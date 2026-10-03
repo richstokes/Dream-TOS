@@ -8,6 +8,8 @@ Alt+C opens the RAM disk. Alt+D opens this disc.
 Open APPS for everyday programs, GAMES for games, UTILS for tools.
 All program folders are on the EmuCON search path (Ctrl+Z).
 APPS.TXT has the full program list and controls; CLI.TXT covers commands.
+Desk > Calculator opens the resident calculator beside other windows.
+Close or Esc hides it; reopen from Desk to keep the expression and answer.
 
 UTILS\HELLO.PRG is a separately compiled native SH-4 GEM application.
 Run it to create C:\NATIVE.TXT and display a GEM alert.

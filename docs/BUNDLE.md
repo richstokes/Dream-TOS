@@ -15,7 +15,7 @@ into the Dreamcast programs; they are not imitations of those programs.
 | `EDITOR.PRG` | [Kilo](https://github.com/antirez/kilo), BSD-2-Clause | Plain-text editing, open/save/save-as, search, C syntax colours, CRLF input |
 | `IMAGES.PRG` | [stb_image](https://github.com/nothings/stb), MIT/public domain | PNG/JPEG/BMP, 16-colour quantization, greyscale, mirror, BMP export |
 | `PAINT.PRG` | This project, GPL-2.0-or-later | 16-colour paint: pencil, brush, shapes, fill, picker, multi-level undo, BMP open/save |
-| `CALC.PRG` | [tinyexpr](https://github.com/codeplea/tinyexpr), zlib | Movable/resizable GEM window, graphical keypad, editable expression and result display, scientific functions and `ans` |
+| `CALC.ACC` | [tinyexpr](https://github.com/codeplea/tinyexpr), zlib | Resident **Desk → Calculator** window, graphical keypad, scientific functions and `ans`; expression and answer survive closing and foreground program switches |
 | `WORM.PRG` | [GEM Worm](https://github.com/ArmstrongJ/gemworm), GPL-3.0-or-later | Original movement, field renderer, food and high-score code; new fullscreen GEM interface |
 | `BLOCKS.PRG` | This project, GPL-2.0-or-later | Original falling-block game: 10x20 well, SRS-style turns and kicks, 7-bag, hold, ghost piece, levels, top-5 scores |
 | `FIFTEEN.PRG` | [Simon Tatham's puzzles](https://www.chiark.greenend.org.uk/~sgtatham/puzzles/), MIT | Sliding tiles, undo/redo, new game, RAM-disk saves |
@@ -45,16 +45,16 @@ The read-only disc groups programs into DOS 8.3 folders:
 
 | Folder | Programs |
 | --- | --- |
-| `D:\APPS` | `CALC`, `EDITOR`, `IMAGES`, `PAINT`, `MP3` |
+| `D:\APPS` | `EDITOR`, `IMAGES`, `PAINT`, `MP3` |
 | `D:\GAMES` | `FIFTEEN`, `MINES`, `NET`, `WORM`, `BLOCKS` |
 | `D:\UTILS` | `FTP`, `VMUEDIT`, `SYSINFO`, `BENCH`, `HELLO`, `VDITEST`, `RUNTIME`, all `.TTP` tools |
 
 `BENCH.DAT` lives beside the benchmark in `UTILS`. Guides, sample pictures,
-license notices and the four startup `.ACC` files stay at the root. AES scans
+license notices and the five startup `.ACC` files stay at the root. AES scans
 the root for accessories at boot. All three program folders are on the default
-EmuCON search path, so commands such as `calc`, `mines` and `ftp` work by name.
+EmuCON search path, so commands such as `editor`, `mines` and `ftp` work by name.
 
-Open APPS, GAMES or UTILS on D: in EmuDesk to find a program. All four desk accessories load
+Open APPS, GAMES or UTILS on D: in EmuDesk to find a program. All five desk accessories load
 automatically at boot; open them from **Desk**. See the
 [Dreamcast accessories guide](ACCESSORIES.md) for the control panel, monitor
 and read-only VMU toolbox. Use **Alt+D** to open the disc;
@@ -79,8 +79,9 @@ buttons and movement. Flycast verification primarily used the keyboard.
   Display/export uses 16 colours; larger-than-384-pixel-tall images fit the
   viewing area. The export retains the decoded image dimensions.
 - Paint: mouse (left/right button = foreground/background colour) or keyboard. Tools P pen, B brush, X eraser, L line, R rectangle, F filled rectangle, E ellipse, K filled ellipse, G fill, I picker, H pan; colours 0-9 and !@#$%^, `[` `]` cycle, Tab swaps; `+`/`-` size; U/Ctrl+Z undo, Y/Ctrl+Y redo, C clear; arrows move a cross and Space/Return draw with the foreground/background colour (Alt+arrows and Alt+Space also work); Ctrl+N/O/S/A new/open/save/save-as (BMP, defaulting to the SD drive), `?` help. The 640x480 canvas scrolls in the view (Pan tool, Home/End/PgUp/PgDn, or drag past the edge); undo keeps up to 64 changed rectangles within 1 MiB. Opens the IMAGES viewer's BMP exports.
-- Calculator: click the graphical keypad or type an expression; Return or
-  `=` evaluates, Ctrl+U / AC clears all, Esc exits. Tab selects the keypad,
+- Calculator: choose **Desk → Calculator**. Click the graphical keypad or type
+  an expression; Return or `=` evaluates, Ctrl+U / AC clears all. Esc hides the
+  accessory, retaining its calculation. Tab selects the keypad,
   arrows move between buttons, and Space presses the focused button.
   Typing returns to the expression; Left/Right, Home/End, Backspace and
   Delete edit it. Click the expression to position the caret. DEL on the

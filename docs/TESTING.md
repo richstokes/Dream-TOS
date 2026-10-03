@@ -2,6 +2,22 @@
 
 ## Verified in Flycast
 
+Calculator is now accessory-only. Earlier checks below involving the `calc`
+command used the former standalone program; open the current calculator from
+**Desk → Calculator**.
+
+2026-10-03, calculator accessory: the rebuilt CDI loads all five accessories.
+**Desk → Calculator** evaluates `7+8` as `15` while the desktop remains active;
+File → Open opens a D: folder beside it, and the Desk entry raises the existing
+calculator. Esc hides it. After entering EmuCON, launching/exiting `calc`, and
+returning to EmuDesk, reopening the accessory retains `7+8 = 15`; `ans+2` then
+evaluates to `17`. Ctrl+Shift+arrows resize it and Ctrl+arrows move it beside
+the folder. This used an isolated Flycast profile with no VMU attached.
+Host tests pass, including accessory lifecycle/input/state,
+resident heap ownership across foreground cleanup, unload reclamation, and
+the relocated `CALC.ACC` payload in the disc image. Real-hardware accessory
+validation remains pending.
+
 2026-10-03, grouped application bundle: EmuDesk displays `APPS`, `GAMES` and
 `UTILS` on D:. Boot-time loader, runtime and EmuCON checks pass with the new
 paths, and all four root-level accessories still load. Bare-name `calc`,

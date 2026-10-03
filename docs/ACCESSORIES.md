@@ -1,7 +1,7 @@
 # Dreamcast desk accessories
 
-The CDI loads `CONTROL.ACC`, `MONITOR.ACC` and `VMUTOOL.ACC` at boot, alongside
-`CLOCK.ACC`. Open them from **Desk → DC Control**, **System Monitor** or
+The CDI loads `CALC.ACC`, `CONTROL.ACC`, `MONITOR.ACC` and `VMUTOOL.ACC` at boot,
+alongside `CLOCK.ACC`. Open them from **Desk → Calculator**, **DC Control**, **System Monitor** or
 **VMU Toolbox**. They are native SH-4 GEM programs, and the desktop remains
 usable behind their windows. Do not launch `.ACC` files by double-clicking.
 
@@ -10,6 +10,22 @@ or raise it. Drag the GEM title and size gadgets, or use **Ctrl+arrows** to
 move and **Ctrl+Shift+arrows** to resize. Starting or exiting a foreground
 program hides accessory windows; the accessories remain resident. Hidden
 accessories wait for messages without running their periodic updates.
+
+## Calculator
+
+**Desk → Calculator** opens or raises a movable, resizable scientific calculator.
+The close box or Esc hides it without clearing its expression, last answer,
+or error. Reopen it from Desk to continue; AC or Ctrl+U clears the calculation.
+Use the graphical keypad or type expressions, including `ans` for the last
+answer. Tab/arrows/Space operate the keypad. Ctrl+arrows move the window,
+Ctrl+Shift+arrows resize it, and F5 toggles full size.
+
+This is cooperative AES accessory execution: the desktop and other accessory
+windows remain usable. Foreground program switches can discard accessory
+windows; reopen Calculator from Desk when available and its calculation will
+still be there. Fullscreen programs that own the screen/input can prevent
+access to accessories while they run. This does not add preemptive multitasking
+between foreground programs. A hidden calculator waits only for AES messages.
 
 ## Dreamcast Control Panel
 
@@ -237,7 +253,7 @@ Host ASan/UBSan tests exercise settings validation, fractional mouse scaling,
 bounded metadata reads, malformed chains/cycles/cross-links, failed reads,
 read-only buffer integrity, frontends, hidden timers, cancelled/obscured
 clicks, window lifecycle and compatibility with older API tables. FAT-image
-checks verify all four relocated `.ACC` files are included on D:.
+checks verify all five relocated `.ACC` files are included on D:.
 
 For settings persistence, create a fresh fixture directory and launch with
 that `FLYCAST_VMU_DIR`. In DC Control, change all four settings, select **A2**

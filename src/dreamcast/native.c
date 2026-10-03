@@ -53,6 +53,16 @@ static PD child;
 static jmp_buf acc_term[NUM_ACCS];
 static int acc_active[NUM_ACCS];
 struct native_image { UBYTE *code; ULONG entry; };
+PD *dc_native_memory_owner(void)
+{
+    int pid = rlr ? rlr->p_pid : 0;
+    /* GEMDOS run still describes the foreground program during AES accessory
+     * dispatch. Use the resident image as an opaque allocation-owner token,
+     * so libc caches and other accessory state survive foreground Pterm. */
+    if (pid >= 2 && pid < NUM_PDS && acc_active[pid - 2])
+        return (PD *)rlr->p_ldaddr;
+    return run;
+}
 long dc_native_terminate(int status)
 {
     int pid = rlr ? rlr->p_pid : 0;
@@ -141,6 +151,7 @@ LONG dc_native_acc_load(const char *path)
 void dc_native_acc_free(LONG address)
 {
     struct native_image *image = (void *)address;
+    dc_free_process_memory((PD *)image);
     dc_free(image->code);
     dc_free(image);
 }

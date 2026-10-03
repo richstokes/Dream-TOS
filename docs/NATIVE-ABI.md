@@ -221,10 +221,12 @@ registers a Desk-menu entry with `menu_register`, then waits in `evnt_multi`.
 
 `AC_OPEN` opens or tops its window; `WM_CLOSED` hides it without `appl_exit` or
 `Pterm`. `AC_CLOSE` invalidates its window handle because the shell resets
-windows when switching the foreground program. Keep persistent allocations
-in initialization, before the first message wait: classic TOS accessories
-share the foreground GEMDOS process, whose later allocations are reclaimed
-at program exit. The bundled accessories perform no later application heap allocations.
+windows when switching the foreground program. Native accessory GEMDOS heap
+allocations belong to the resident image, even though the foreground GEMDOS
+process remains current during AES dispatch. They survive foreground program
+exit and are reclaimed when the accessory is unloaded. This also protects
+the calculator's lazy newlib number-conversion caches; temporary tinyexpr
+trees are freed after each calculation.
 A hidden clock waits only for messages; a visible clock also uses a timer
 and paints through the window manager's visible rectangles.
 
@@ -232,6 +234,10 @@ Foreground `Pexec` remains single-tasking. Accessory termination has its own
 SH-4 jump target and cannot terminate the foreground program. A returning
 accessory is parked in a message wait so that it cannot strand the scheduler.
 Accessories are loaded at boot, not by double-clicking their `.ACC` file.
+
+`CALC.ACC` registers **Calculator**, opens on `AC_OPEN`, and preserves calculation
+state on both window close and `AC_CLOSE`. Hidden calculators wait only for
+messages; visible ones use the usual clipped drawing and input event loop.
 
 `CONTROL.ACC`, `MONITOR.ACC` and `VMUTOOL.ACC` use `apps/lib/accessory.c` for
 this lifecycle, visible-rectangle painting, keyboard window movement and

@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 
 APP_GROUPS = {
-    'APPS': ('CALC', 'EDITOR', 'IMAGES', 'PAINT', 'MP3'),
+    'APPS': ('EDITOR', 'IMAGES', 'PAINT', 'MP3'),
     'GAMES': ('FIFTEEN', 'MINES', 'NET', 'WORM', 'BLOCKS'),
     'UTILS': ('FTP', 'VMUEDIT', 'SYSINFO', 'BENCH', 'HELLO', 'VDITEST', 'RUNTIME'),
 }
@@ -27,7 +27,7 @@ def stage(root, dest):
     for folder in APP_GROUPS:
         (dest/folder).mkdir(parents=True, exist_ok=True)
     # AES discovers startup accessories at the boot volume's root.
-    for accessory in ('CLOCK', 'CONTROL', 'MONITOR', 'VMUTOOL'):
+    for accessory in ('CALC', 'CLOCK', 'CONTROL', 'MONITOR', 'VMUTOOL'):
         shutil.copy2(root/'build/apps'/f'{accessory}.ACC', dest)
     for tool in CLI_TOOLS + NET_TOOLS:
         shutil.copy2(root/'build/apps'/f'{tool}.TTP', dest/'UTILS')

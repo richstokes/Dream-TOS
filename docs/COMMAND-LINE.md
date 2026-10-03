@@ -73,9 +73,11 @@ editor C:\NOTES.TXT
 exit
 ```
 
-The existing graphical applications, including `editor`, `calc` and `images`,
+The existing graphical applications, including `editor` and `images`,
 can be launched by name. Closing them restores the console. Their usual
 memory and filesystem restrictions apply.
+The calculator opens through **Desk → Calculator**. For calculations in the
+console, use `expr`, for example `expr "sqrt(144)+2^3"`.
 
 ## Redirection and limits
 

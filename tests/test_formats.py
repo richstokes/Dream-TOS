@@ -59,7 +59,7 @@ class Formats(unittest.TestCase):
     def test_grouped_programs_are_packaged(self):
         volume = FatVolume((ROOT/'build/disc/DISC.IMG').read_bytes())
         expected = {
-            'APPS': {'CALC', 'EDITOR', 'IMAGES', 'PAINT', 'MP3'},
+            'APPS': {'EDITOR', 'IMAGES', 'PAINT', 'MP3'},
             'GAMES': {'FIFTEEN', 'MINES', 'NET', 'WORM', 'BLOCKS'},
             'UTILS': {'FTP', 'VMUEDIT', 'SYSINFO', 'BENCH', 'HELLO', 'VDITEST', 'RUNTIME'},
         }
@@ -69,6 +69,7 @@ class Formats(unittest.TestCase):
             self.assertEqual(attr, 0x10)
             self.assertEqual(size, 0)
             programs = {name[:-4] for name in volume.entries(cluster) if name.endswith('.PRG')}
+            self.assertNotIn('CALC', programs)
             self.assertLessEqual(names, programs)
             for name in programs:
                 self.assertEqual(volume.read(f'{folder}/{name}.PRG'),
@@ -112,7 +113,7 @@ class Formats(unittest.TestCase):
     def test_native_accessories_are_packaged(self):
         image=(ROOT/'build/disc/DISC.IMG').read_bytes()
         entries=[image[i:i+32] for i in range(65*512,73*512,32)]
-        for name in ('CLOCK', 'CONTROL', 'MONITOR', 'VMUTOOL'):
+        for name in ('CALC', 'CLOCK', 'CONTROL', 'MONITOR', 'VMUTOOL'):
             with self.subTest(accessory=name):
                 expected=native.convert((ROOT/f'build/apps/{name}.elf').read_bytes())
                 self.assertEqual((ROOT/f'build/apps/{name}.ACC').read_bytes(),expected)

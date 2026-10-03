@@ -89,7 +89,7 @@ Open D: in EmuDesk, then choose a folder:
 
 | Folder | Contents |
 | --- | --- |
-| `APPS` | Calculator, editor, image viewer, paint and MP3/WAV player |
+| `APPS` | Editor, image viewer, paint and MP3/WAV player |
 | `GAMES` | Blocks, Fifteen, Mines, Net and Worm |
 | `UTILS` | FTP server, VMU editor, system information, benchmark, diagnostics and command-line tools |
 
@@ -109,6 +109,10 @@ It updates automatically and leaves room for application menu titles.
 The **Clock desk accessory** also loads at boot. Choose **Desk → Clock** for an
 analogue and digital clock over the live desktop. Close or press Esc to hide
 it, then reopen it from the same menu. See the [clock screenshot and controls](docs/BUNDLE.md#clock-desk-accessory).
+
+Choose **Desk → Calculator** for the resident scientific calculator. Its window
+shares the desktop with other windows; closing it or pressing Esc hides it and
+retains the expression and answer. See the [accessory guide](docs/ACCESSORIES.md#calculator).
 
 Three more native desk accessories are available from **Desk**:
 **DC Control** adjusts mouse speed, keyboard repeat and desktop colour, with
