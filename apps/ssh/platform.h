@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 uint32_t ssh_now(void);
+uint32_t ssh_wallclock(void); /* Public RTC value, not cryptographic entropy. */
+void ssh_make_parent(const char *path); /* Best-effort single parent directory. */
 void ssh_idle(void);
 int ssh_key(void); /* TOS scan code in bits 16..23, ASCII in bits 0..7; 0 if none */
 unsigned ssh_modifiers(void); /* libvterm: Shift=1, Alt=2, Ctrl=4 */

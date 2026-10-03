@@ -248,9 +248,16 @@ The image contains no Flycast-specific runtime dependencies.
 
 See [SSH setup and verification](SSH.md). `bash scripts/test-ssh.sh` builds the
 real client and TCP adapter under ASan/UBSan, runs terminal/seed/trust-store and
-native keyboard checks, then ten live Paramiko protocol cases (requires
+native keyboard checks, then fifteen live Paramiko protocol cases (requires
 `tests/ssh-requirements.txt` in `build/ssh-venv`). Tests include password,
 interactive and encrypted RSA/ECDSA/Ed25519 identities, multi-factor login,
-host-key pin reuse/refusal, rekeying and receive-window exhaustion. Native
+host-key pin reuse/refusal, rekeying and receive-window exhaustion. Optional
+seed coverage includes explicit acceptance, cancellation before TCP, missing
+fingerprint-folder creation, encrypted-key login and host-key refusal with
+weak randomness, and preserving damaged seeds without replacing them. Native
 Flycast checks against OpenSSH cover shell input, 80x30 PTY, Vim navigation/
-redraw, Ctrl+C, rekey and local disconnect. No test credentials enter the CDI.
+redraw, Ctrl+C, rekey and local disconnect. A native Flycast check against the
+local Paramiko fixture also verified declining the risk prompt, accepting it
+on a fresh C: drive, automatic fingerprint-folder creation, password login,
+logout and saving only HOSTS.TXT (no weak seed file). No test credentials enter
+the CDI.

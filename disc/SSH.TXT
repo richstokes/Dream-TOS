@@ -5,7 +5,12 @@ Run from EmuCON (Ctrl+Z):
   ssh -p 2222 alice@example.com
   ssh -i E:\SSH\ID_ED255 alice@example.com
 
-First, on your computer:
+Seed preparation is optional but recommended. Without a usable seed, SSH
+warns that weak clock/timing randomness may expose passwords, session traffic
+or private keys. Type risk to accept for this connection; Enter cancels.
+Acceptance is not saved. Weak randomness is never saved as a prepared seed.
+
+For secure seed setup, on your computer:
   python3 tools/prepare_ssh.py /Volumes/SD/SSH
 Use your actual card path. Insert the card before launching SSH.
 The first writable persistent drive is used (normally E:):
@@ -13,7 +18,10 @@ The first writable persistent drive is used (normally E:):
   E:\SSH\HOSTS.TXT - remembered server fingerprints
 Override with -s SEEDFILE and -K HOSTSFILE. No SD defaults to volatile C:.
 Keep seeds private. Never restore old seed copies or share them across devices.
-For C:, generate a fresh seed every boot. Missing/damaged/unwritable seeds fail.
+For C:, generate a fresh seed every boot if you want to use a prepared seed.
+A usable prepared seed skips the warning. Missing/damaged/unwritable seeds
+offer the risk prompt. The folder for saved host fingerprints is created
+automatically; nested custom paths require their ancestor folders to exist.
 
 Passwords, interactive challenges and OpenSSH private keys are supported.
 Keys: Ed25519, RSA <=4096 bits, ECDSA P-256/384/521. Unencrypted or OpenSSH's

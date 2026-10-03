@@ -8,10 +8,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 static const char *input;
+static int allow_sampling;
+static uint32_t ticks;
 static char output[32768];static size_t written;
-uint32_t ssh_now(void){return 0;}
-void ssh_idle(void){assert(!"unexpected input wait");}
+uint32_t ssh_now(void){return ticks;}
+uint32_t ssh_wallclock(void){return 0x5d410123;}
+void ssh_make_parent(const char*p){char dir[260];const char*last=strrchr(p,'/');if(!last||last==p||(size_t)(last-p)>=sizeof(dir))return;memcpy(dir,p,last-p);dir[last-p]=0;mkdir(dir,0700);}
+void ssh_idle(void){assert(allow_sampling);ticks++;}
 int ssh_key(void){return input&&*input?(unsigned char)*input++:0;}
 unsigned ssh_modifiers(void){return 0;}
 void ssh_output(const char*p,size_t n){if(written+n<sizeof(output)){memcpy(output+written,p,n);written+=n;output[written]=0;}}
@@ -58,7 +63,8 @@ static void trust(void)
     input="yes\r";assert(!ssh_host_check("hosts","host",2222,b,sizeof(b)));
     FILE*f=fopen("hosts","ab");assert(f);fputs("broken",f);fclose(f);
     input=NULL;assert(ssh_host_check("hosts","host",22,a,sizeof(a))<0);
-    input="yes\r";assert(ssh_host_check("missing/hosts","other",22,a,sizeof(a))<0);
+    input="yes\r";assert(ssh_host_check("missing/child/hosts","other",22,a,sizeof(a))<0);
+    input="yes\r";assert(!ssh_host_check("newdir/hosts","other",22,a,sizeof(a)));
 }
 static void seed(void)
 {
@@ -68,6 +74,13 @@ static void seed(void)
     assert(!ssh_seed_open("seed"));assert(!ssh_entropy(rnd,sizeof(rnd)));ssh_seed_close();assert(ssh_entropy(rnd,sizeof(rnd))<0);
     f=fopen("seed","rb");assert(fread(next,1,104,f)==104);fclose(f);assert(memcmp(old,next,104));
     next[12]^=1;f=fopen("seed","wb");fwrite(next,1,104,f);fclose(f);assert(ssh_seed_open("seed")<0);
+    allow_sampling=1;assert(!ssh_seed_insecure(10));assert(!ssh_entropy(rnd,sizeof(rnd)));
+    unsigned char first[32];memcpy(first,rnd,32);ssh_seed_close();
+    assert(ssh_entropy(rnd,sizeof(rnd))<0);
+    assert(!ssh_seed_insecure(20));assert(!ssh_entropy(rnd,sizeof(rnd)));
+    assert(memcmp(first,rnd,32));ssh_seed_close();allow_sampling=0;
+    f=fopen("seed","rb");assert(fread(old,1,104,f)==104);fclose(f);assert(!memcmp(old,next,104));
+    assert(!fopen("SEED.BIN","rb"));
 }
 int main(void){
     uint8_t ip[4];assert(!ssh_resolve_target("192.168.1.248",ip));assert(ip[0]==192&&ip[3]==248);

@@ -5,11 +5,20 @@ IPv4 stack. Launch it from EmuCON (Ctrl+Z). A network adapter, DHCP lease and
 reachable SSH server are required; internet hosts work through the network's
 normal gateway. No forwarding, SCP, SFTP or remote-command mode is included.
 
-## One-time preparation
+## Optional seed preparation (recommended)
 
-The Dreamcast has no cryptographic hardware random source. The SDK's
-clock/RAM random generator is unsuitable for SSH keys. Provision a private
-random seed from a computer before connecting:
+You can launch `ssh alice@example.com` without preparing a seed. If the seed
+is missing, damaged or cannot be updated, SSH displays a warning and asks you
+to type `risk` to continue for that connection. Enter, any other answer or
+Ctrl+C cancels before connecting. Acceptance is not saved.
+
+The Dreamcast has no cryptographic hardware random source. Continuing without
+a prepared seed uses weak clock/timing randomness: an attacker may predict
+encryption keys and expose passwords, session traffic or private keys. This
+mode never saves its weak randomness as a prepared seed. Host-fingerprint
+verification still applies.
+
+For secure seed setup, provision a private random seed from a computer:
 
 ```sh
 python3 tools/prepare_ssh.py /Volumes/SD/SSH
@@ -19,17 +28,19 @@ Use your mounted card's actual path. This creates `SSH/SEED.BIN`, using the
 computer's secure random source. The helper refuses to overwrite an existing
 seed. Keep the file private; do not restore an old backup or use copies on
 multiple consoles. Each connection derives and writes the next seed, closes
-and rereads it **before** producing SSH session randomness. A missing, damaged
-or unwritable seed prevents login. If a seed is lost or corrupted, delete it
-and generate a fresh one on the computer. Power loss during its update can
-require this recovery.
+and rereads it **before** producing SSH session randomness. A usable prepared
+seed is always preferred and skips the risk prompt. If a seed is lost or
+corrupted, delete it and generate a fresh one on the computer to restore this
+mode. Power loss during its update can require this recovery.
 
 Insert the card before launching SSH. The first writable persistent drive
 (normally **E:**) supplies the defaults `E:\SSH\SEED.BIN` and
-`E:\SSH\HOSTS.TXT`. The folder must exist. Other drives and paths work with
-`-s` and `-K`. Without an SD card the default is C:, but it disappears at reset:
-provision a **fresh** seed for each boot and preserve trusted fingerprints
-separately. Never put a reusable seed or private identity on a public disc image.
+`E:\SSH\HOSTS.TXT`. SSH creates the fingerprint file's folder when saving a new
+trusted host, if needed. Other drives and paths work with `-s` and `-K`; for
+nested custom paths, create the ancestor folders first. Without an SD card the
+default is C:, but it disappears at reset: to use a prepared seed, provision a
+**fresh** one for each boot, and preserve trusted fingerprints separately.
+Never put a reusable seed or private identity on a public disc image.
 
 For key login, copy an **OpenSSH-format** private key to the card, using an 8.3
 filename such as `E:\SSH\ID_ED255`. The corresponding public key must already

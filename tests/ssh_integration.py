@@ -68,7 +68,7 @@ class LiveSSH(unittest.TestCase):
         self.seed=create_seed(self.folder)
         self.hosts=self.folder/'HOSTS.TXT'
     def tearDown(self):self.tmp.cleanup()
-    def run_session(self, mode='password', identity=None, cipher=None, rekey=False, partial=False, trusted=False, reject=False):
+    def run_session(self, mode='password', identity=None, cipher=None, rekey=False, partial=False, trusted=False, reject=False, seed_state="secure", hosts_missing=False):
         key=paramiko.PKey.from_path(identity,password=b'key secret') if identity else None
         server=Server('multi' if partial else mode,key)
         listener=socket.socket();listener.bind(('127.0.0.1',0));listener.listen(1);listener.settimeout(15)
@@ -104,10 +104,20 @@ class LiveSSH(unittest.TestCase):
             import base64
             digest=hashlib.sha256(self.hostkey.asbytes()).digest() if trusted else bytes(32)
             self.hosts.write_text(f'127.0.0.1 {port} SHA256:'+base64.b64encode(digest).decode().rstrip('=')+'\n')
-        before=self.seed.read_bytes()
+        if seed_state=='missing':self.seed.unlink()
+        elif seed_state=='corrupt':self.seed.write_bytes(b'damaged seed')
+        if hosts_missing:self.hosts=self.folder/'NEW'/'HOSTS.TXT'
+        # Rebuild the hosts argument after choosing an initially missing folder.
+        args[args.index('-K')+1]=str(self.hosts)
+        before=self.seed.read_bytes() if self.seed.exists() else None
         child=pexpect.spawn(str(BINARY),args,encoding='utf8',codec_errors='replace',timeout=20)
         log=[];child.logfile_read=type('Log',(),{'write':lambda _,s:log.append(s),'flush':lambda _:None})()
         try:
+            if seed_state!='secure':
+                child.expect_exact('Type risk to continue for this connection (Enter cancels): ')
+                self.assertIn('weak clock/timing randomness',''.join(log))
+                self.assertIn('private keys',''.join(log))
+                child.send('risk\r')
             if identity:child.expect_exact('Key passphrase: ');child.send('key secret\r')
             if reject:
                 child.expect_exact('HOST KEY CHANGED');child.expect(pexpect.EOF);child.close()
@@ -121,7 +131,11 @@ class LiveSSH(unittest.TestCase):
             child.expect_exact('READY');child.send('hello\x03world\r')
             child.expect_exact('Connection closed.');child.expect(pexpect.EOF);child.close()
             self.assertEqual(child.exitstatus,7, ''.join(log))
-            self.assertNotEqual(before,self.seed.read_bytes())
+            if seed_state=='secure':
+                self.assertNotEqual(before,self.seed.read_bytes())
+                self.assertNotIn('Type risk',''.join(log))
+            elif before is None:self.assertFalse(self.seed.exists())
+            else:self.assertEqual(before,self.seed.read_bytes())
             self.assertIn('SHA256:',self.hosts.read_text())
             self.assertNotIn('correct horse',''.join(log))
             self.assertIn('FINISHED',''.join(log))
@@ -133,6 +147,27 @@ class LiveSSH(unittest.TestCase):
         finally:
             child.close(force=True);thread.join(3)
         self.assertFalse(errors,errors)
+    def test_missing_seed_accepts_risk_and_makes_host_folder(self):
+        self.run_session(seed_state='missing',hosts_missing=True)
+    def test_corrupt_seed_accepts_risk_without_replacing_it(self):
+        self.run_session(seed_state='corrupt')
+    def test_weak_randomness_with_encrypted_identity(self):
+        self.run_session('key',self.keys['ed25519'],seed_state='missing')
+    def test_weak_randomness_still_rejects_changed_host(self):
+        self.run_session(seed_state='missing',reject=True)
+    def test_declined_risk_never_connects(self):
+        self.seed.unlink()
+        with socket.socket() as listener:
+            listener.bind(('127.0.0.1',0));listener.listen(1);listener.settimeout(.1)
+            for answer in ('\r','yes\r','risky\r','\x03'):
+                with self.subTest(answer=repr(answer)):
+                    child=pexpect.spawn(str(BINARY),['-s',str(self.seed),'-K',str(self.hosts),
+                        '-p',str(listener.getsockname()[1]),'tester@127.0.0.1'],encoding='utf8',timeout=5)
+                    child.expect_exact('Type risk to continue for this connection (Enter cancels): ')
+                    child.send(answer);child.expect_exact('Connection cancelled.');child.expect(pexpect.EOF);child.close()
+                    self.assertEqual(child.exitstatus,1)
+                    with self.assertRaises(socket.timeout):listener.accept()
+                    self.assertFalse(self.seed.exists());self.assertFalse(self.hosts.exists())
     def test_password(self):self.run_session()
     def test_saved_host(self):self.run_session(trusted=True)
     def test_changed_host_refuses_credentials(self):self.run_session(reject=True)
@@ -145,10 +180,10 @@ class LiveSSH(unittest.TestCase):
     def test_missing_corrupt_seed_and_cli(self):
         for args,text,code in [(['-h'],'Usage:',0),(['-p','0','host'],'Usage:',2),
             (['tester@127.0.0.1','-s',str(self.folder/'absent')],'Cannot load',1)]:
-            out=subprocess.run([str(BINARY),*args],capture_output=True,timeout=5)
+            out=subprocess.run([str(BINARY),*args],input=b'\r',capture_output=True,timeout=5)
             self.assertEqual(out.returncode,code);self.assertIn(text,out.stdout.decode())
         self.seed.write_bytes(b'corrupt')
-        out=subprocess.run([str(BINARY),'-s',str(self.seed),'tester@127.0.0.1'],capture_output=True,timeout=5)
+        out=subprocess.run([str(BINARY),'-s',str(self.seed),'tester@127.0.0.1'],input=b'\r',capture_output=True,timeout=5)
         self.assertEqual(out.returncode,1);self.assertIn(b'Cannot load',out.stdout)
 
 if __name__=='__main__':unittest.main(verbosity=2)

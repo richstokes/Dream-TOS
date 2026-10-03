@@ -40,6 +40,7 @@ int ssh_host_check(const char *path,const char *host,unsigned port,const unsigne
     ssh_print(actual);ssh_print("\r\nVerify this fingerprint through a trusted source.\r\n");
     if(ssh_prompt("Trust and save this server? Type yes: ",answer,sizeof(answer),1)||strcmp(answer,"yes"))return -1;
     if(lines>=1024)return -1;
+    ssh_make_parent(path);
     f=fopen(path,"ab");
     if(!f){ssh_print("Cannot save server fingerprint; refusing login.\r\n");return -1;}
     int failed=fprintf(f,"%s %u %s\n",host,port,actual)<0;

@@ -27,7 +27,7 @@ static void usage(void)
       "Usage: ssh [-p port] [-l user] [-i key] [-s seed] [-K hosts]\r\n"
       "           [-a key|password|interactive] [user@]host\r\n"
       "Defaults: first writable drive's \\SSH\\SEED.BIN and HOSTS.TXT.\r\n"
-      "Prepare a private seed with tools/prepare_ssh.py on your computer.\r\n"
+      "A prepared seed is recommended; without one, accept the risk prompt.\r\n"
       "Keys: OpenSSH Ed25519, RSA or ECDSA; optional AES-CTR passphrase.\r\n"
       "In session: Ctrl+] then . disconnects; p/n scrolls; r rekeys.\r\n"
       "Ctrl+] twice sends Ctrl+]. Ctrl+C goes to the remote terminal.\r\n");
@@ -223,8 +223,17 @@ int ssh_main(int argc,char **argv)
     if(!c->user[0])goto done;
     if(ssh_seed_open(c->seed)) {
         ssh_print("Cannot load and rotate private seed: ");ssh_print(c->seed);
-        ssh_print("\r\nRun tools/prepare_ssh.py on your computer and copy its SSH folder\r\n"
-                  "to a writable drive (normally the SD card). See docs/SSH.md.\r\n");goto done;
+        ssh_print("\r\nWARNING: Continuing uses weak clock/timing randomness.\r\n"
+                  "An attacker may predict encryption keys and expose passwords,\r\n"
+                  "session traffic or private keys. A prepared seed is recommended.\r\n"
+                  "Run tools/prepare_ssh.py on your computer for secure seed setup.\r\n");
+        char answer[16];uint32_t started=ssh_now();
+        int accepted=!ssh_prompt("Type risk to continue for this connection (Enter cancels): ",
+                                 answer,sizeof(answer),1)&&!strcmp(answer,"risk");
+        ssh_wipe(answer,sizeof(answer));
+        if(!accepted){ssh_print("Connection cancelled.\r\n");goto done;}
+        if(ssh_seed_insecure(started)){ssh_print("Could not initialize random generator.\r\n");goto done;}
+        ssh_print("Continuing with weak randomness for this connection.\r\n");
     }
     if(c->key_path&&ssh_key_load(c->key_path,&c->key))goto done;
     uint8_t ip[4];ssh_print("Resolving ");ssh_print(c->host);ssh_print("...\r\n");

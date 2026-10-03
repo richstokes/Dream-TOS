@@ -4,8 +4,18 @@
 #include "drives.h"
 #include "dreamcast/net.h"
 #include "dreamcast/control.h"
+#include <string.h>
 #define HAS(m) (dc_os->size >= offsetof(struct dc_native_api,m)+sizeof(dc_os->m) && dc_os->m)
 uint32_t ssh_now(void) { return (uint32_t)dc_os->millis(); }
+uint32_t ssh_wallclock(void)
+{return ((uint32_t)dc_os->gemdos(0x2a)<<16)|(uint16_t)dc_os->gemdos(0x2c);}
+void ssh_make_parent(const char *path)
+{
+    char dir[260];const char *last=strrchr(path,'\\');
+    if(!last||last-path<=2||(size_t)(last-path)>=sizeof(dir))return;
+    memcpy(dir,path,last-path);dir[last-path]=0;
+    dc_os->gemdos(0x39,dir);
+}
 void ssh_idle(void) { dc_os->yield(); }
 static unsigned last_modifiers;
 int ssh_key(void)

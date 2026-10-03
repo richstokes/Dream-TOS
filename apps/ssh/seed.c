@@ -1,11 +1,13 @@
 /* wolfCrypt Hash_DRBG seeded from a user-provisioned, rotating secret file.
- * Never use the Dreamcast clock/RAM PRNG for SSH. GPL-3.0-or-later. */
+ * Explicit opt-in permits a weak timing/RTC seed for one connection.
+ * GPL-3.0-or-later. */
 #include "platform.h"
 #include "seed.h"
 #include <stdio.h>
 #include <string.h>
 #include <wolfssl/wolfcrypt/random.h>
 #include <wolfssl/wolfcrypt/sha256.h>
+#include <wolfssl/wolfcrypt/sha512.h>
 #include <wolfssl/wolfcrypt/hash.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 static WC_RNG master;
@@ -55,4 +57,32 @@ done:
     ssh_wipe(record,sizeof(record));ssh_wipe(next,sizeof(next));ssh_wipe(check,sizeof(check));ssh_wipe(digest,sizeof(digest));
     if(!ok)ssh_seed_close();
     return ok?0:-1;
+}
+
+int ssh_seed_insecure(uint32_t prompt_started)
+{
+    /* Hashing only conditions the inputs; it does not make clocks or human
+     * response timing into a secure random source. Never persist this output
+     * in SEED.BIN, where a later launch could mistake it for a provisioned seed. */
+    wc_Sha512 hash;
+    uint32_t sample[4]={prompt_started,0,0,0};
+    int rc;
+    ssh_seed_close();
+    rc=wc_InitSha512(&hash);
+    if(rc)return -1;
+    for(unsigned i=0;i<32&&!rc;i++) {
+        sample[1]=ssh_now();sample[2]=ssh_wallclock();sample[3]=i;
+        rc=wc_Sha512Update(&hash,(const unsigned char *)sample,sizeof(sample));
+        ssh_idle();
+    }
+    if(!rc)rc=wc_Sha512Final(&hash,bootstrap);
+    wc_Sha512Free(&hash);ssh_wipe(&hash,sizeof(hash));ssh_wipe(sample,sizeof(sample));
+    if(!rc) {
+        available=sizeof(bootstrap);
+        rc=wc_InitRng(&master);
+        if(!rc){initialized=1;ready=1;}
+    }
+    available=0;ssh_wipe(bootstrap,sizeof(bootstrap));
+    if(rc)ssh_seed_close();
+    return rc?-1:0;
 }

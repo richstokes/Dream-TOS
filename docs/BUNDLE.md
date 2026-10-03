@@ -211,6 +211,7 @@ EXPR uses the existing TinyExpr dependency and its bundled notice.
 ## SSH terminal
 
 `UTILS/SSH.TTP` supports SSH-2 password, keyboard-interactive and OpenSSH-key
-login over the shared KOS stack. See [SSH setup](SSH.md), including the required
-private seed on writable storage. It is GPL-3.0-or-later; wolfSSH, wolfCrypt,
+login over the shared KOS stack. See [SSH setup](SSH.md), including recommended
+private seed preparation and the option to accept weak randomness instead.
+It is GPL-3.0-or-later; wolfSSH, wolfCrypt,
 libvterm and OpenBSD bcrypt notices are included in the disc root.

@@ -13,9 +13,14 @@ Libraries are pinned in ../vendor/sources.json. wolfCrypt is configured for
 portable C, single-threaded use, SHA-2, modern curves and constant-time ECC/
 blinded RSA, without TLS, assembly or the SDK RNG. SP math is limited to
 4096-bit RSA. The seed callback uses wolfCrypt Hash_DRBG, initialized from a
-private 512-bit OS-generated seed. Next-run state is persisted first. Master
-DRBG reseeding fails closed if its built-in request limit is exhausted; start
-a new connection to initialize from the rotated file.
+private 512-bit OS-generated seed when available. Next-run state is persisted
+first. If seed validation or rotation fails, the user can explicitly type
+`risk` to allow weak randomness for that connection. This fallback hashes
+public RTC/timing samples with SHA-512 before initializing Hash_DRBG; hashing
+does not make those samples secure. It never writes a seed file. The prompt
+defaults to cancellation and precedes DNS, TCP and authentication. Host-key
+pinning remains mandatory in both modes. Master DRBG reseeding fails closed if
+its built-in request limit is exhausted; start a new connection to reinitialize.
 
 Two explicitly conditional wolfSSH changes in src/internal.c:
 

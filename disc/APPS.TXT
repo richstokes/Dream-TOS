@@ -157,6 +157,6 @@ STBLIC.TXT, TINYLIC.TXT, MP3LIC.TXT and NEWLIB.TXT. See ARTWORK.TXT for samples.
 SSH.TTP - secure command-line remote terminal (UTILS)
 Password, interactive/MFA and OpenSSH private-key logins, including SD keys.
 80x30 xterm terminal, colour, alternate screens, scrollback and rekeying.
-Requires a private seed created on your computer. Read SSH.TXT first.
+Seed preparation is recommended; a risk prompt lets you skip it. Read SSH.TXT.
 GPL-3.0-or-later; see SSHGPL.TXT, SSHLICE.TXT, CRYPTLIC.TXT, VTERMLIC.TXT
 and BCRYPT.TXT.

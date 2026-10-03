@@ -3,6 +3,7 @@
 #include "platform.h"
 #include "dreamcast/tcp.h"
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <sys/select.h>
 #include <termios.h>
 #include <unistd.h>
@@ -12,6 +13,8 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 uint32_t ssh_now(void){struct timespec t;clock_gettime(CLOCK_MONOTONIC,&t);return (uint32_t)(t.tv_sec*1000+t.tv_nsec/1000000);}
+uint32_t ssh_wallclock(void){return (uint32_t)time(NULL);}
+void ssh_make_parent(const char*path){char dir[260];const char*last=strrchr(path,'/');if(!last||last==path||(size_t)(last-path)>=sizeof(dir))return;memcpy(dir,path,last-path);dir[last-path]=0;mkdir(dir,0700);}
 void ssh_idle(void){struct timespec t={0,1000000};nanosleep(&t,NULL);}
 int ssh_key(void){fd_set f;FD_ZERO(&f);FD_SET(0,&f);struct timeval t={0,0};unsigned char c;if(select(1,&f,NULL,NULL,&t)>0&&read(0,&c,1)==1)return c;return 0;}
 unsigned ssh_modifiers(void){return 0;}
