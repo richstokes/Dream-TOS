@@ -4,7 +4,7 @@
 #include "app.h"
 typedef struct { int16_t x, y, w, h; } AppRect;
 typedef struct {
-    int handle, full, min_w, min_h;
+    int handle, full, min_w, min_h, kind;
     AppRect desktop, border, work, restore;
 } AppWindow;
 typedef struct {
@@ -15,6 +15,9 @@ enum { APP_KEY = 1, APP_BUTTON = 2, APP_MESSAGE = 16, APP_TIMER = 32 };
 enum { WINDOW_IGNORE, WINDOW_REDRAW, WINDOW_CHANGED, WINDOW_CLOSE };
 int app_window_open(AppWindow *w, const char *title, int width, int height,
                     int min_width, int min_height);
+/* Add standard GEM gadgets, e.g. scroll arrows/sliders, for an application. */
+int app_window_open_kind(AppWindow *w, const char *title, int width, int height,
+                        int min_width, int min_height, int kind);
 void app_window_close(AppWindow *w);
 void app_window_bounds(AppWindow *w, AppRect bounds);
 void app_window_full(AppWindow *w);

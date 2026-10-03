@@ -20,10 +20,10 @@ static void update(int begin)
     ai[0] = begin;
     aes_call(107, 1, 1, 0);
 }
-static AppRect borders(int width, int height)
+static AppRect borders(int width, int height, int kind)
 {
     ai[0] = 0; /* WC_BORDER */
-    ai[1] = KIND;
+    ai[1] = kind;
     ai[2] = ai[3] = 0;
     ai[4] = width;
     ai[5] = height;
@@ -52,21 +52,27 @@ void app_window_bounds(AppWindow *w, AppRect r)
 int app_window_open(AppWindow *w, const char *title, int width, int height,
                     int min_width, int min_height)
 {
+    return app_window_open_kind(w, title, width, height, min_width, min_height, KIND);
+}
+int app_window_open_kind(AppWindow *w, const char *title, int width, int height,
+                        int min_width, int min_height, int kind)
+{
     memset(w, 0, sizeof(*w));
     w->handle = -1;
+    w->kind = kind;
     if (!get(0, WF_WORK, &w->desktop))
         return 0;
-    AppRect minimum = borders(min_width, min_height);
+    AppRect minimum = borders(min_width, min_height, kind);
     if (minimum.w > w->desktop.w || minimum.h > w->desktop.h)
         return 0;
     w->min_w = minimum.w;
     w->min_h = minimum.h;
-    AppRect r = borders(width, height);
+    AppRect r = borders(width, height, kind);
     if (r.w > w->desktop.w) r.w = w->desktop.w;
     if (r.h > w->desktop.h) r.h = w->desktop.h;
     r.x = w->desktop.x + (w->desktop.w - r.w) / 2;
     r.y = w->desktop.y + (w->desktop.h - r.h) / 2;
-    ai[0] = KIND;
+    ai[0] = kind;
     memcpy(ai + 1, &w->desktop, sizeof(w->desktop));
     aes_call(100, 5, 1, 0);
     if (ao[0] < 0)

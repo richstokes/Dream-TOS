@@ -71,8 +71,6 @@ Tested on real Dreamcast hardware and seems to work.
   </tr>
 </table>
 
-Captured from the native SH-4 build running in Flycast. Click an image for full size.
-
 The bootable CDI runs on real Dreamcast hardware and in Flycast. In Flycast,
 verified operations include launching a separately compiled SH-4 GEM application
 and returning to the desktop, reading files from the disc, creating folders
@@ -158,9 +156,7 @@ bundled applications/accessories. Network uploads can serve D: from the host
 through dcload, as described below.
 Add files or folders with DOS 8.3 names to `disc/` and rebuild to include them on D:.
 
-For repeated real-console testing, `python3 scripts/test-console.py` can cycle
-the configured Shelly plug, wait for dcload-ip, upload the ELF and serve D: from
-the Mac. See [network-upload hardware testing](docs/TESTING.md#network-upload-hardware-testing)
+See [network-upload hardware testing](docs/TESTING.md#network-upload-hardware-testing)
 for setup, overrides and logs.
 
 For keyboard-only Flycast testing, detach the host mouse route:

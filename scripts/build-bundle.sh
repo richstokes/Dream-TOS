@@ -22,6 +22,10 @@ build_ssh() {
  appbuild SSH apps/ssh/platform_dc.c "${ssh_flags[@]}" "${ssh_sources[@]}"
  mv build/apps/SSH.PRG build/apps/SSH.TTP
 }
+if [[ "${1:-}" == --editor-only ]]; then
+ appbuild EDITOR apps/ports/editor.c apps/ports/editor_core.c apps/ports/editor_file.c
+ exit 0
+fi
 if [[ "${1:-}" == --ssh-only ]]; then
  build_ssh
  exit 0
@@ -31,7 +35,7 @@ for game in fifteen mines net; do
  name=$(printf '%s' "$game" | tr '[:lower:]' '[:upper:]')
  appbuild "$name" apps/ports/puzzle.c "${puzzle_common[@]}" "apps/vendor/puzzles/$game.c" -Iapps/vendor/puzzles -DHAVE_STDINT_H
  done
-appbuild EDITOR apps/ports/editor.c
+appbuild EDITOR apps/ports/editor.c apps/ports/editor_core.c apps/ports/editor_file.c
 appbuild WORM apps/ports/worm.c apps/vendor/gemworm/{field,player,scores}.c -Iapps/vendor/gemworm
 appbuild BLOCKS apps/ports/blocks.c apps/ports/blocks_core.c
 appbuild IMAGES apps/ports/viewer.c -Iapps/vendor/stb
