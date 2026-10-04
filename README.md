@@ -25,7 +25,7 @@ Bundled are a selection of games, apps and utilities. Suggestions welcome.
   <tr>
     <td width="50%" align="center">
       <a href="docs/screenshots/desktop.jpg"><img src="docs/screenshots/desktop.jpg" width="480" alt="EmuDesk running on Dreamcast with the read-only D: drive open"></a><br>
-      <strong>EmuDesk desktop</strong>
+      <strong>DreamTOS desktop</strong>
     </td>
     <td width="50%" align="center">
       <a href="docs/screenshots/image-viewer.jpg"><img src="docs/screenshots/image-viewer.jpg" width="480" alt="Native image viewer displaying the bundled Sonic fan-art sample in 16 colours"></a><br>
