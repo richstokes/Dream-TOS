@@ -34,8 +34,8 @@ Bundled are a selection of games, apps and utilities. Suggestions welcome.
   </tr>
   <tr>
     <td width="50%" align="center">
-      <a href="docs/screenshots/text-editor-window.png"><img src="docs/screenshots/text-editor-window.png" width="480" alt="Windowed Kilo editor with native menus, line numbers, scrollbars and word wrapping"></a><br>
-      <strong>Kilo text editor</strong>
+      <a href="docs/screenshots/text-editor-window.png"><img src="docs/screenshots/text-editor-window.png" width="480" alt="DreamEdit with native menus, line numbers, scrollbars and word wrapping"></a><br>
+      <strong>DreamEdit text editor</strong>
     </td>
     <td width="50%" align="center">
       <a href="docs/screenshots/net-puzzle.jpg"><img src="docs/screenshots/net-puzzle.jpg" width="480" alt="Simon Tatham's Net puzzle running natively with five connected tiles"></a><br>
@@ -94,7 +94,7 @@ The bootable CDI runs on real Dreamcast hardware and in Flycast.
 - E:–H: writable FAT16 volumes from an SD card on the serial port (jj1odm/DreamShell-style adapter). Use `D:\UTILS\SDFORMAT.PRG` for the graphical FAT16 formatter, with C:/D: protection and automatic remount or a reboot prompt; see [SD card support](docs/SD.md). SD transfers remain untested on hardware.
 - 68000 binary compatibility is absent.
 
-The CDI includes a [native application bundle](docs/BUNDLE.md): Kilo text editor,
+The CDI includes a [native application bundle](docs/BUNDLE.md): DreamEdit text editor,
 an image viewer with two sample pictures and BMP export, a 16-colour paint program with undo and BMP save/open, a scientific
 calculator in a movable, resizable GEM window, a [native benchmark](docs/BENCHMARK.md),
 GEM Worm, Blocks (a falling-block game), Paint, a VMU editor, Simon Tatham's Fifteen, Mines and Net, and an [MP3/WAV player](docs/AUDIO.md) that plays files from the SD card. Sources and licenses are
@@ -107,7 +107,7 @@ Open D: in EmuDesk, then choose a folder:
 
 | Folder | Contents |
 | --- | --- |
-| `APPS` | Editor, image viewer, paint and MP3/WAV player |
+| `APPS` | DreamEdit, image viewer, paint and MP3/WAV player |
 | `GAMES` | Blocks, Fifteen, Mines, Net and Worm |
 | `UTILS` | FTP server, VMU editor, FAT16 SD card formatter, system information, benchmark, diagnostics and command-line tools |
 

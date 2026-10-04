@@ -1,4 +1,4 @@
-/* Kilo - native GEM text editor. GPL-2.0-or-later.
+/* DreamEdit - native GEM text editor. GPL-2.0-or-later.
  * The original terminal engine has been replaced by a checked document model.
  * The vendored BSD Kilo source remains unmodified for provenance. */
 #include "app.h"
@@ -408,7 +408,7 @@ static void draw(void)
 static void refresh(int all)
 {
     layout(); clamp_view();
-    snprintf(title, sizeof(title), "Kilo - %s%s", filename[0] ? filename : "Untitled", ed_dirty(&doc) ? " *" : "");
+    snprintf(title, sizeof(title), "DreamEdit - %s%s", filename[0] ? filename : "Untitled", ed_dirty(&doc) ? " *" : "");
     if (strcmp(title, last_title)) {
         snprintf(last_title, sizeof(last_title), "%s", title);
         uint32_t p = (uint32_t)(uintptr_t)title;
@@ -489,7 +489,7 @@ static void command(int c)
     ed_break_group(&doc); doc.error = NULL; preferred_col = -1;
     switch (c) {
     case C_ABOUT:
-        app_alert("Kilo text editor|1 MiB / 32768 lines|Undo, clipboard, search and GEM windows.|F3 next match; Shift+F3 previous."); force_redraw = 1; break;
+        app_alert("DreamEdit text editor|1 MiB / 32768 lines|Undo, clipboard, search and GEM windows.|F3 next match; Shift+F3 previous.|Originally based on Kilo (BSD-2-Clause)."); force_redraw = 1; break;
     case C_NEW:
         if (may_discard() && ed_load(&doc, "", 0)) {
             filename[0] = 0; top = left = 0; set_syntax(); force_redraw = 1;
@@ -578,7 +578,7 @@ static void menu_build(void)
     /* AES rewrites the first dropdown with desk accessories. Reserve six slots. */
     menu[9] = object(18, 20, 0, 0xff1100, 0, 0, 264, 16); menu[9].head = menu[9].tail = 10;
     for (int i = 10; i < 18; ++i) menu[i] = object(9, 28, 0, (intptr_t)"-------------------------------", 0, (i - 10) * 16, 264, 16);
-    menu[10].spec = (intptr_t)"  About Kilo..."; menu_action[10] = C_ABOUT; menu[11].state = 8;
+    menu[10].spec = (intptr_t)"  About DreamEdit..."; menu_action[10] = C_ABOUT; menu[11].state = 8;
     struct Item { const char *label; int command; };
     static const struct Item file[] = {{"  New                 ^N", C_NEW}, {"  Open...             ^O", C_OPEN},
         {"  Save                ^S", C_SAVE}, {"  Save as...     Shift^S", C_SAVE_AS}, {"  Quit                ^Q", C_QUIT}};
@@ -731,7 +731,7 @@ int app_main(int argc, char **argv)
     if (!ed_init(&doc)) return 1;
     if (!app_begin_windowed()) { ed_free(&doc); return 1; }
     menu_build();
-    if (!app_window_open_kind(&window, "Kilo text editor", 608, 414, 320, 180,
+    if (!app_window_open_kind(&window, "DreamEdit text editor", 608, 414, 320, 180,
         1 | 2 | 4 | 8 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048)) {
         app_alert("Unable to open the editor window"); finish(); return 1;
     }

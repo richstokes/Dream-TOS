@@ -5,14 +5,14 @@ native GEM AES/VDI calls and GEMDOS file access. There is no 68000 emulator,
 SDL emulator, browser or host-side application doing the work.
 
 The bundle combines a port of an existing Atari GEM application (GEM Worm)
-with new GEM frontends for established portable open-source C projects.
-Kilo, tinyexpr, stb_image and Simon Tatham's puzzles are **not presented as
+with native programs and new GEM frontends for established portable open-source C projects.
+tinyexpr, stb_image and Simon Tatham's puzzles are **not presented as
 original Atari applications**. Their real upstream engines are compiled
 into the Dreamcast programs; they are not imitations of those programs.
 
 | Program | Upstream and license | Native features |
 |---|---|---|
-| `EDITOR.PRG` | Native Kilo frontend and checked editor model, GPL-2.0-or-later; original [Kilo](https://github.com/antirez/kilo) source retained under BSD-2-Clause | GEM windows/menus, undo/redo, selection/clipboard, search/replace, wrapping, C colours, byte-preserving saves |
+| `EDITOR.PRG` (DreamEdit) | Native frontend and checked editor model, GPL-2.0-or-later; originally based on [Kilo](https://github.com/antirez/kilo), whose source is retained under BSD-2-Clause | GEM windows/menus, undo/redo, selection/clipboard, search/replace, wrapping, C colours, byte-preserving saves |
 | `IMAGES.PRG` | [stb_image](https://github.com/nothings/stb), MIT/public domain | PNG/JPEG/BMP, 16-colour quantization, greyscale, mirror, BMP export |
 | `PAINT.PRG` | This project, GPL-2.0-or-later | 16-colour paint: pencil, brush, shapes, fill, picker, multi-level undo, BMP open/save |
 | `CALC.ACC` | [tinyexpr](https://github.com/codeplea/tinyexpr), zlib | Resident **Desk → Calculator** window, graphical keypad, scientific functions and `ans`; expression and answer survive closing and foreground program switches |
@@ -70,7 +70,7 @@ buttons and movement. Flycast verification primarily used the keyboard.
   (the emulated RTC in Flycast), in 24-hour format with GEMDOS two-second
   precision. Starting or exiting a foreground program hides its window; the
   accessory remains resident and can be reopened from the desktop.
-- Editor: a resizable GEM window with File/Edit/Search/View menus, mouse selection,
+- DreamEdit: a resizable GEM window with File/Edit/Search/View menus, mouse selection,
   scrollbars and native file selectors. Ctrl+N/O/S create/open/save; Ctrl+Shift+S
   saves as; Ctrl+Q closes. Unsaved work gets Save/Discard/Cancel on new/open/close.
   Ctrl+Z/Y undo/redo (Ctrl+Shift+Z also redoes); Ctrl+X/C/V cut/copy/paste;
@@ -165,9 +165,11 @@ sources use the compiler's normal alignment; GEM structs explicitly use
 no-ops. Memory is owned by the native process and reclaimed on termination.
 The native ABI's optional `millis` callback supplies monotonic game timing.
 
-Kilo now uses a checked, byte-preserving document model in `editor_core.c`,
-separate staged file I/O, and a GEM frontend; the original vendored Kilo source
-is retained unmodified. Undo records store changed spans, allocation failures
+DreamEdit began as a Kilo port and now uses a checked, byte-preserving document
+model in `editor_core.c`, separate staged file I/O, and a GEM frontend. The original
+vendored Kilo source is retained unmodified, with its BSD-2-Clause license.
+The executable remains `EDITOR.PRG`, so existing shortcuts and scripts keep working.
+Undo records store changed spans, allocation failures
 leave edits unapplied, and file loads stage the new document before replacing
 the old one. C/C++ highlighting tracks multiline comments and colours keywords,
 types, strings, numbers and preprocessor directives. Visible rows are compared
@@ -203,7 +205,7 @@ Flycast, using the native CDI and keyboard input:
   Window move/resize and full-size/restore retain the result. Native GEM
   full-size and close gadgets work with the keyboard-controlled pointer.
   Closing the window restores EmuDesk with unchanged desktop colours.
-- Editor: selection/copy/paste, undo/redo, search/replace, wrap/resize/scroll,
+- DreamEdit: selection/copy/paste, undo/redo, search/replace, wrap/resize/scroll,
   save to C:/SD, reopen, and cancel/save/discard on close.
 - Viewer: both PNG samples; mirror/greyscale; BMP export to C: and reopen.
 - Fifteen: tile movement, save, new game, restore saved board.

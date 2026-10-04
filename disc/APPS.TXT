@@ -78,7 +78,7 @@ S stops; Esc or close quits. Keep this app open while transferring.
 Interrupted uploads may leave partial files. C: is erased at reset.
 Native networking requires disc/GDEMU boot, not dcload-ip.
 
-EDITOR.PRG - Kilo GEM text editor
+EDITOR.PRG - DreamEdit GEM text editor
 Resizable window, menus, file picker, mouse selection and scrollbars.
 Ctrl+N/O/S new/open/save; Ctrl+Shift+S save as; Ctrl+Q quit.
 Ctrl+Z/Y undo/redo; Ctrl+X/C/V cut/copy/paste; Ctrl+A select all.

@@ -72,7 +72,7 @@ Insert the adapter and a supported FAT16 card before booting; do not hot-swap.
 
 ## Behaviour and limits
 
-- Applications: the Kilo editor and the image viewer save to any writable drive
+- Applications: DreamEdit and the image viewer save to any writable drive
   (C: or E:-H:). Puzzle saves and Worm high scores go to the first mounted SD
   drive, falling back to C:; puzzle loads also look on C:. The MP3 player ([audio](AUDIO.md)) browses and plays `.MP3`/`.WAV` files from any mounted drive, defaulting to the SD card. The System Monitor
   lists every mounted drive. The [FTP server](FTP.md) can share an SD drive or
