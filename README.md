@@ -11,7 +11,9 @@ code is compiled for the Dreamcast.
 
 ## Why?
 
-Back in the day, I was fascinated with the idea of making the Dreamcast more of a “home computer”. Friends had Ataris, Amigas, etc, but I only had consoles :-) The Dreamcast was well-suited, having keyboard, mouse and ethernet support. I remember trying an early FreeBSD CD on the console and running some basic commands circa 2001.
+Back in the day, I was fascinated with the idea of making the Dreamcast more of a “home computer”. Friends had Ataris, Amigas, etc, but I only had consoles :-) 
+
+The Dreamcast was well-suited, having keyboard, mouse and ethernet support. I remember trying an early FreeBSD CD on the console and running some basic commands circa 2001.
 
 This project aims to port a period-correct desktop/graphical OS. I chose this port of Atari's TOS because it's open source. Amiga workbench or even RiscOS would be interesting to try also, but I wanted something that I could freely distribute.
 
