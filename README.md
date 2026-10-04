@@ -2,15 +2,21 @@
 
 [Download the latest CDI](https://github.com/richstokes/Dream-TOS/releases/download/continuous/DreamTOS.cdi)
 or browse [GitHub releases](https://github.com/richstokes/Dream-TOS/releases/tag/continuous).
-Successful CI builds from `main` update these downloads; see [CI details](docs/CI.md).
 
 Dream TOS is a native SH-4 port of [EmuTOS](https://emutos.sourceforge.io/), using KallistiOS
 for Dreamcast hardware. The actual EmuDesk, AES, VDI and GEMDOS filesystem C
-code is compiled for the Dreamcast. **There is no 68000 emulator.** Existing
+code is compiled for the Dreamcast. **This is not an emulator!** Existing
 Atari executables cannot run; applications must be rebuilt for this port's
 [native ABI](docs/NATIVE-ABI.md).
 
-Tested on real Dreamcast hardware and seems to work.
+## Why?
+
+Back in the day, I was often fascinated with the idea of making the Dreamcast more of a “home computer”. Friends had Ataris, Amigas, etc, but I only had consoles :-) The Dreamcast was well-suited, having keyboard, mouse and ethernet support. I remember trying an early FreeBSD CD on the console and running some basic commands circa 2001.
+
+This project aims to port a period-correct desktop/graphical OS. I chose this port of Atari's TOS because it's open source. Amiga workbench or even RiscOS would be interesting to try also, but I wanted something that I could freely distribute.
+
+Bundled are a selection of games, apps and utilities. Suggestions welcome. 
+
 
 <table>
   <tr>
