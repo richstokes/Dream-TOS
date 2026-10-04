@@ -17,7 +17,7 @@ The Dreamcast was well-suited, having keyboard, mouse and ethernet support. I re
 
 This project aims to port a period-correct desktop/graphical OS. I chose this port of Atari's TOS because it's open source. Amiga workbench or even RiscOS would be interesting to try also, but I wanted something that I could freely distribute.
 
-Bundled are a selection of games, apps and utilities. Suggestions welcome. 
+Bundled are a selection of games, apps and utilities. Suggestions welcome if there is something you would like to see added. 
 
 ## Screenshots
 
