@@ -1,12 +1,12 @@
 # Dream TOS
 
-[Download the latest CDI](https://github.com/richstokes/Dream-TOS/releases/download/continuous/DreamTOS.cdi)
-or browse [GitHub releases](https://github.com/richstokes/Dream-TOS/releases/tag/continuous).
+[Download the latest CDI!](https://github.com/richstokes/Dream-TOS/releases/download/continuous/DreamTOS.cdi)
 
 Dream TOS is a native SH-4 port of [EmuTOS](https://emutos.sourceforge.io/), using KallistiOS
 for Dreamcast hardware. The actual EmuDesk, AES, VDI and GEMDOS filesystem C
-code is compiled for the Dreamcast. **This is not an emulator!** Existing
-Atari executables cannot run; applications must be rebuilt for this port's
+code is compiled for the Dreamcast. 
+
+**This is not an emulator!** Existing Atari executables cannot run; applications must be rebuilt for this port's
 [native ABI](docs/NATIVE-ABI.md).
 
 ## Why?
