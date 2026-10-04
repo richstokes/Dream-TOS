@@ -17,6 +17,7 @@ This project aims to port a period-correct desktop/graphical OS. I chose this po
 
 Bundled are a selection of games, apps and utilities. Suggestions welcome. 
 
+## Screenshots
 
 <table>
   <tr>
