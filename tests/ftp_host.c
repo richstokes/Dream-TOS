@@ -204,6 +204,10 @@ int main(int argc, char **argv)
     }
     ftp_stop(&server);
     dc_tcp_cleanup();
-    assert(server.file == -1 && !server.listener && !server.control && !server.data && !server.passive);
+    assert(!server.listener && !ftp_clients(&server));
+    for (int i = 0; i < FTP_SESSIONS; i++) {
+        FtpSession *c = &server.sessions[i];
+        assert(c->file == -1 && !c->control && !c->data && !c->passive);
+    }
     return 0;
 }

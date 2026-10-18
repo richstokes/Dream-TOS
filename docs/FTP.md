@@ -44,7 +44,10 @@ Keyboard: **C–H** select a mounted drive, **Up/Down** select a folder,
 - Supports PASV/EPSV, LIST/NLST/MLSD, CWD/CDUP/PWD, SIZE, RETR/STOR,
   MKD/RMD/DELE, RNFR/RNTO, ABOR and common client setup commands. File transfers
   require TYPE I (or L 8); TYPE A is accepted for directory listings.
-- One client, a 4 KiB transfer buffer and bounded work per event-loop tick.
+- Up to three simultaneous clients or logins (FileZilla and similar clients
+  browse on one login and transfer on others); further connections get `421`.
+  Each session has a 4 KiB transfer buffer, and work per event-loop tick is
+  bounded and shared between active transfers.
   Data connections time out after 30 seconds without progress; idle control
   sessions time out after five minutes. Passive data connections must come
   from the control connection's IPv4 address.

@@ -105,8 +105,9 @@ static void draw(void)
         text_at(12, 144, line, 1);
         text_at(12, 178, server.writable ? "Read / write - clients can replace or delete files." : "Read-only drive - browsing and downloads.", 1);
         text_at(12, 206, "Use passive mode and binary file transfers.", 1);
-        text_at(12, 230, "One client at a time. Keep this application open.", 1);
-        snprintf(line, sizeof(line), "Transferred: %lu KiB", (unsigned long)(server.transferred / 1024));
+        text_at(12, 230, "Keep this application open while clients are connected.", 1);
+        snprintf(line, sizeof(line), "Clients: %d of %d    Transferred: %lu KiB", ftp_clients(&server),
+                 FTP_SESSIONS, (unsigned long)(server.transferred / 1024));
         text_at(12, 270, line, 1);
     } else {
         for (int i = 0; drive_letters[i]; i++) {

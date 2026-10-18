@@ -190,6 +190,45 @@ class FTPTests(unittest.TestCase):
         with self.assertRaises(ftplib.error_temp):
             ftp.storbinary('STOR EMPTY.BIN', io.BytesIO())
 
+    def test_concurrent_logins_like_filezilla(self):
+        # FileZilla lists on one login, then opens more logins for transfers.
+        ftp = self.start()
+        port = ftp.sock.getpeername()[1]
+        self.assertEqual(set(ftp.nlst()), {'HELLO.TXT', 'SUB'})
+        others = []
+        try:
+            for _ in range(2):
+                other = ftplib.FTP(timeout=5)
+                other.connect('127.0.0.1', port)
+                self.assertTrue(other.login().startswith('230'))
+                others.append(other)
+            payload = bytes(range(256)) * 64
+            others[0].storbinary('STOR UP.BIN', io.BytesIO(payload))
+            read = bytearray()
+            others[1].retrbinary('RETR UP.BIN', read.extend)
+            self.assertEqual(read, payload)
+            ftp.voidcmd('TYPE I')
+            others[0].voidcmd('TYPE I')
+            with ftp.transfercmd('RETR HELLO.TXT') as a, others[0].transfercmd('RETR UP.BIN') as b:
+                self.assertEqual(a.makefile('rb').read(), b'Hello\r\n')
+                self.assertEqual(b.makefile('rb').read(), payload)
+            self.assertTrue(ftp.voidresp().startswith('226'))
+            self.assertTrue(others[0].voidresp().startswith('226'))
+            # A fourth login is turned away promptly; the 421 is best effort.
+            with self.assertRaises((ftplib.error_temp, EOFError)) as full:
+                ftplib.FTP(timeout=5).connect('127.0.0.1', port)
+            if isinstance(full.exception, ftplib.error_temp):
+                self.assertTrue(str(full.exception).startswith('421'))
+            others.pop().quit()
+            extra = ftplib.FTP(timeout=5)
+            extra.connect('127.0.0.1', port)
+            others.append(extra)
+            self.assertEqual(extra.pwd(), '/')
+        finally:
+            for other in others:
+                other.close()
+        self.assertTrue(ftp.voidcmd('NOOP').startswith('200'))
+
     def test_idle_timeout(self):
         ftp = self.start()
         self.inject('I')
